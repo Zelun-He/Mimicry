@@ -20,6 +20,11 @@ combat tests, save migration, and a manual browser playtest before release.
   Five distinct pixel-painted forest scenes, 36 original illustrated card faces,
   a clearer chain queue, premium shop card previews, and a non-blocking first-turn
   guide. This pass changes presentation, not combat balance or collectible IDs.
+- [x] **03d — Card Feel & Link Clarity** (`feature/card-link-effects`).
+  Five school-specific hover/focus effects, engraved category crests and number
+  badges, exact legal-link previews (school, same number, rank +1, Hunger wild),
+  luminous chain connectors, Mob/Horde selection feedback, accessible touch
+  inspection, and reduced-motion support. No change to combat link rules.
 - [ ] **04 — Treasure bait and invasion control.** Choose between visible risk/reward
   lures before raids; enemy types and rewards vary accordingly.
 - [ ] **05 — Counterplay-driven enemy abilities.** Bards, thieves, paladins,

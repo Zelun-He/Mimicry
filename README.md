@@ -231,3 +231,33 @@ stage/tip copy in `dist/siege/tier1.js`, and responsive styling in
 required. Reduced-motion preferences are respected.
 
 See `FOREST-TIER1-ART.md` and `tests/tier1-art.test.js`.
+
+## First Siege 0.12 — Card Feel & Link Clarity
+
+Command cards now expose their **school crest** and **rank badge** prominently,
+with five distinct animated hover/focus identities: Fang (slash), Shell (shield
+reflection), Bloom (pollen), Venom (bubbles) and Hunger (gold sigil). Cards that
+cannot legally link are clearly dimmed, but their effects stay readable.
+
+The UI follows the existing actual card-engine rules rather than inventing new
+ones. A card can link by the **same school**, **same rank**, **rank rising by
+exactly one**, or via a **Hunger wild bridge**. When multiple rules apply, the
+display prioritizes wild, sequence, rank, then school. Consecutive matching
+recruits stack into a single tactical slot (maximum three) and display a
+separate **FORMATION STACK** indicator. A complete five-slot chain can still
+accept additional duplicate recruits into an unfinished stack.
+
+**Live link inspector:** Hover, keyboard focus, or tap a card to preview its
+legal status, exact connection reason, chain bonus and projected slot count.
+The queue updates with school-tinted link badges, connector sparks, and a brief
+selected-card animation. Hover/focus inspection never spends cards or changes
+save state. The card face is an inspection surface; **Play** and **Discard**
+remain separate actions to prevent accidental taps. Keyboard access is
+preserved through focusable card groups and native buttons.
+
+No changes to deck counts, card IDs, link legality, combat resolution, gold,
+Hunger, raid progression, or version-8 saves. Added locally hosted stylesheet
+`dist/siege/link-effects.css`, pure UI rules in
+`dist/siege/link-feedback.js` and tests in
+`tests/card-link-feedback.test.js`. CSS respects reduced-motion and touch
+input. See `DESIGN-CARD-LINKS.md`.
