@@ -201,3 +201,33 @@ battlefield and bestiary.
 Version 8 local saves use `mimicry-siege-v8`, migrating earlier v2–v7 saves.
 Purchase ledgers, Web stacks, moved enemy lanes, and summon behavior persist.
 See `tests/creatures.test.js` and `DESIGN-CREATURES.md`.
+
+## First Siege 0.11 — Forest Edge art and first-run onboarding
+
+The five existing Tier 1 raids now play against five original pixel-art
+backgrounds: **Sunbreak Clearing, Fernway Trail, Briar Hollow, Wispwood Grove,
+and the Old Watchgate**. These are five *locations in the same Forest tier*,
+not five new dungeon difficulty tiers. They follow the real raid index and
+require no additional combat state or save migration.
+
+The First Siege command hand now uses a coherent tall-card treatment influenced
+by dark fantasy collectible card games: ornate school-specific frames, a large
+original SVG illustration for each of the 36 current cards, suit/rank labels,
+plain-English effect text, a flavor line and clearly separated play/discard
+controls. Queued chain slots keep their art and show link/stack status.
+The Quartermaster also previews the exact card that will be purchased.
+
+A non-blocking guide provides context through the player's first choices:
+playing a command, linking two commands, selecting lanes, and discovering
+Hunger/Gnaw. Players can hide hints, which is stored independently of the
+combat save. A five-stop progress trail and environmental story copy give
+each raid a clear sense of place. The eight-card hand, five tactical chain
+slots, shops, summons, card IDs and encounter balance are unchanged.
+
+All assets are local and editable: five background SVGs in
+`dist/siege/scenes/`, illustrated card rendering in `dist/siege/card-art.js`,
+stage/tip copy in `dist/siege/tier1.js`, and responsive styling in
+`dist/siege/tier1.css`. No remote images, fonts, videos, or trackers are
+required. Reduced-motion preferences are respected.
+
+See `FOREST-TIER1-ART.md` and `tests/tier1-art.test.js`.

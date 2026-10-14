@@ -1,10 +1,17 @@
 import {CARDS,FOUNDING_CARDS,STARTER_DECK,canQueueCard,chainSlotCount} from './chain-engine.js';
 import {MAX_MINIONS,MAX_LANE_MINIONS,MAX_BONES,liveMinions} from './swarm-engine.js';
 import {MAX_WEB,CREATURES} from './creature-engine.js';
+import {cardArt,cardRule,CARD_LORE,SUIT_STYLES} from './siege/card-art.js';
+import {FOREST_SCENES,sceneForRaid,nextActionTip,stageProgress} from './siege/tier1.js';
 import {MUTATIONS,handSize,upgradeableCards,trainableUnits,cardPower} from './shop-engine.js';
 import {ESSENCE_CAPACITY,ESSENCE_BY_ENEMY,ESSENCE_TRAITS,hungerCost,redrawLimit} from './assimilation-engine.js';
 import {newSiege,restoreSiege,RAIDS,SPECIES,moveUnit,endTurn,devour,gnaw,reinforce,buyUpgrade,chooseEssence,queueCommand,unqueueCommand,redrawCommand,previewChain,previewRituals,targetChain,setSummonLane} from './siege-engine.js';
 const $=id=>document.getElementById(id),KEY='mimicry-siege-v8';
+const artCache=new Map();
+const artFor=type=>{if(!artCache.has(type))artCache.set(type,cardArt(type));return artCache.get(type);};
+let tipsHidden=false;try{tipsHidden=localStorage.getItem('mimicry-tier1-tips-hidden')==='yes';}catch{}
+function setTipsHidden(value){tipsHidden=value;try{localStorage.setItem('mimicry-tier1-tips-hidden',value?'yes':'no');}catch{}}
+
 let state;try{state=restoreSiege(JSON.parse(localStorage.getItem(KEY)||localStorage.getItem('mimicry-siege-v7')||localStorage.getItem('mimicry-siege-v6')||localStorage.getItem('mimicry-siege-v5')||localStorage.getItem('mimicry-siege-v4')||localStorage.getItem('mimicry-siege-v3')||localStorage.getItem('mimicry-siege-v2')))}catch{}state??=newSiege();
 const manifest=await fetch('./siege/animations.json').then(r=>r.json());
 const names=['king-mimic',...Object.keys(SPECIES)];
@@ -42,7 +49,9 @@ function shopHTML(){
   const typeLabel=isCard?'CARD ENHANCEMENT':isMonster?'ARMY TRAINING':
     isRare?`${rare.rarity.toUpperCase()} · ${rare.suit.toUpperCase()} ${rare.rank||'★'}`:isTribal?'GOBLIN OR SKELETON':isExotic?'SPIDER · SLIME · MIMICLING':'MIMIC MUTATION';
   const extra=isRare?`<div class="shop-card-detail"><span>ONE NEW COMMAND</span><strong>${rare.kind.toUpperCase()} ${rare.power?'· '+rare.power+' POWER':''}</strong><small>In your next draw · ${STARTER_DECK.length+FOUNDING_CARDS.length+state.deck.acquired.length} currently owned</small></div>`:(isTribal||isExotic)?`<div class='shop-card-detail'><span>${isExotic?'NEW MONSTER FAMILY':'CHOOSE YOUR SWARM'}</span>${offer.options.map(type=>`<small>${CARDS[type].name}: ${CARDS[type].description}</small>`).join('')}</div>`:'';
-  return `<article class="shop-offer ${isRare?'shop-rare '+rare.rarity:''} ${isTribal?'shop-tribal':''} ${isExotic?'shop-exotic':''} ${offer.sold?'shop-sold':''}" data-shop-offer="${offer.id}"><div class="shop-icon">${icon}</div><div class="shop-type">${typeLabel}</div><h3>${name}</h3><p>${desc}</p>${extra}${selector}<button data-buy="${offer.id}" ${cannotBuy?'disabled':''}>${offer.sold?'PURCHASED':`BUY · ${offer.cost} GOLD`}</button></article>`;
+  const previewType=isRare?offer.cardType:(isTribal||isExotic)?(offer.sold?offer.purchasedType:offer.options[0]):null;
+  const preview=previewType?`<div class="shop-offer__card-preview" aria-hidden="true">${artFor(previewType)}</div><span class="shop-offer__selected-name">${CARDS[previewType].name}</span>`:'';
+  return `<article class="shop-offer ${isRare?'shop-rare '+rare.rarity:''} ${isTribal?'shop-tribal':''} ${isExotic?'shop-exotic':''} ${offer.sold?'shop-sold':''}" data-shop-offer="${offer.id}"><div class="shop-icon">${icon}</div><div class="shop-type">${typeLabel}</div><h3>${name}</h3><p>${desc}</p>${preview}${extra}${selector}<button data-buy="${offer.id}" ${cannotBuy?'disabled':''}>${offer.sold?'PURCHASED':`BUY · ${offer.cost} GOLD`}</button></article>`;
  }).join('');
  return `<section class="quartermaster"><div class="shop-head"><div><span class="eyebrow">THE GOBLIN QUARTERMASTER</span><h3>Wares from the fallen</h3><p>Build your ecosystem: Goblin/Skeleton swarms plus Spider, Slime, and Mimicling creatures.</p></div><strong>◈ ${state.gold} GOLD</strong></div><div class="shop-grid">${offers}</div><div class="shop-footer"><span class="eyebrow">FREE RAID REINFORCEMENT</span><p>Keep any unspent gold. Choose one free reward below when you are ready for the next raid.</p></div></section>`;
 }
@@ -69,6 +78,20 @@ function essenceHTML(){
  </section>`;
 }
 function render(){
+ const scene=sceneForRaid(state.raid);
+ $('arena-scene').dataset.scene=scene.id;
+ $('scene-title').textContent=scene.name;
+ $('scene-subtitle').textContent=scene.subtitle;
+ $('scene-eyebrow').textContent=scene.eyebrow;
+ $('forest-progress').innerHTML=stageProgress(state.raid).map((step,i)=>
+  `<span class="forest-progress__dot ${step.current?'current':step.completed?'complete':''}" title="${step.name}" aria-label="${step.completed?'Completed':step.current?'Current':'Upcoming'} location ${i+1}: ${step.name}"></span>`).join('');
+ const tip=nextActionTip(state);
+ $('first-run-tip').hidden=tipsHidden||state.raid>0;
+ if(!tipsHidden&&state.raid===0){
+  $('tip-kicker').textContent=tip.tag;$('tip-title').textContent=tip.title;$('tip-copy').textContent=tip.text;
+ }
+ $('tips-toggle').textContent=tipsHidden?'Show hints':'Hide hints';
+ $('tips-toggle').setAttribute('aria-pressed',String(!tipsHidden));
  $('bones').textContent=`${state.bones}/${MAX_BONES}`;$('swarm-count').textContent=`${liveMinions(state).length}/${MAX_MINIONS}`;
  $('raid').textContent=`${state.raid+1} / ${RAIDS.length}`;$('raidname').textContent=RAIDS[state.raid].name;$('turn').textContent=state.turn;$('integrity').textContent=`${state.integrity} / ${state.maxIntegrity}`;$('hunger').textContent=`${state.hunger} / 100`;$('gold').textContent=state.gold;
  $('lanes').innerHTML=[0,1,2].map(lane=>`<div class="lane"><div class="lane-name">LANE ${lane+1}</div><div class="combatants">${[
@@ -76,7 +99,10 @@ function render(){
  ...liveMinions(state,null,lane).map(u=>`<div class="combatant ally swarm-minion ${u.species}">${sprite(u.species,u.id)}<b>${u.name}</b>${hpBar(u.hp,u.maxHp)}<small>SUMMON · ${u.attack} ATK</small></div>`)
  ].join('')||'<div class="empty">No defenders</div>'}<div class="lane-arrow">⚔</div>${state.enemies.filter(e=>e.lane===lane&&e.alive).map(e=>`<div class="combatant invader"><div class="foe">${e.name==='Mage'?'✧':e.name==='Archer'?'➶':'⚔'}</div><b>${e.name}</b>${hpBar(e.hp,e.maxHp)}<small>${e.attack} attack${e.web?' · 🕸 '+e.web+' Web':''}</small></div>`).join('')||'<div class="empty">Lane clear</div>'}</div></div>`).join('');
  const chain=previewChain(state);const rituals=previewRituals(state);
- $('commands').innerHTML=`<div class="chain-stats"><b>HAND ${state.deck.hand.length}/${handSize(state)} · CHAIN ${chainSlotCount(state.deck.chain)}/5 SLOTS</b><span>Redraws: ${state.deck.discardsLeft}/${redrawLimit(state)} · Draw pile: ${state.deck.draw.length} · Deck: ${STARTER_DECK.length+FOUNDING_CARDS.length+state.deck.acquired.length}</span></div><label class="chain-target">Summon lane <select id="summon-lane">${[0,1,2].map(lane=>`<option value="${lane}" ${state.summonLane===lane?'selected':''}>Lane ${lane+1} · ${liveMinions(state,null,lane).length}/${MAX_LANE_MINIONS} minions</option>`).join('')}</select></label><label class="chain-target">Command focus &amp; Devour target <select id="chain-target"><option value="">Auto: weakest invader</option>${state.enemies.filter(e=>e.alive).map(e=>`<option value="${e.id}" ${state.chainTargetId===e.id?'selected':''}>${e.name} · Lane ${e.lane+1} · ${e.hp} HP</option>`).join('')}</select></label><div class="swarm-lane-note">Summon lane ${state.summonLane+1}: ${liveMinions(state,null,state.summonLane).length}/${MAX_LANE_MINIONS} bodies · Total ${liveMinions(state).length}/${MAX_MINIONS} · Bones ${state.bones}/${MAX_BONES}. Full lanes consume summon cards without creating extra minions.</div><div class="chain-rituals">${rituals.map(x=>`<span>✦ ${x.ritual.name} (${x.start+1}–${x.end+1})</span>`).join('')||'Rituals need 3 separate slots; a stacked mob counts as one'}</div><div class="chain-slots">${chain.map((step,i)=>`<button class="chain-card ${step.linked?'linked':''}" data-unqueue="${step.cards.at(-1).id}" title="Remove one card from this slot; recruit stacks share one slot."><small>${i+1}. ${step.def.suit.toUpperCase()} ${step.def.rank||'★'} ${step.count>1?'· ×'+step.count+' STACK':''}</small><b>${step.def.name}${step.card.level?` +${step.card.level}`:''}</b><span>${step.count===3?'HORDE · 3 MINIONS':step.count===2?'MOB · 2 MINIONS':step.linked?'⛓ +'+Math.round((step.boost-1)*100)+'%':'Base effect'}</span></button>`).join('')||'<span class="chain-hint">Click cards below in order. Duplicate recruits stack automatically (up to 3 per slot).</span>'}</div><div class="card-hand">${state.deck.hand.map(c=>{const d=CARDS[c.type];return `<div class="hand-card ${d.suit} ${d.rarity||'common'} ${d.tribe?'tribal '+d.tribe:''}"><small>${d.tribe?d.tribe.toUpperCase()+' · ':''}${d.rarity?d.rarity.toUpperCase()+' · ':''}${d.suit.toUpperCase()} · ${d.rank||'★'}</small><b>${d.name}${c.level?` +${c.level}`:''}</b><span>${d.kind} · ${cardPower(state,c)}${d.cost?` · ${d.cost} Hunger${state.hunger<d.cost?' (insufficient)':''}`:''}</span>${d.description?`<small class="rare-description">${d.description}</small>`:''}<button data-queue="${c.id}" ${state.phase!=='battle'||!!state.pendingEssence||!canQueueCard(state.deck,c.id)?'disabled':''}>${d.kind==='summon'&&state.deck.chain.at(-1)?.type===c.type?'Stack into formation':'Add to chain'}</button><button class="discard" data-redraw="${c.id}" ${state.phase!=='battle'||state.deck.discardsLeft===0?'disabled':''}>Discard ↻</button></div>`}).join('')}</div>`;
+ $('commands').innerHTML=`<div class="chain-stats"><b>HAND ${state.deck.hand.length}/${handSize(state)} · CHAIN ${chainSlotCount(state.deck.chain)}/5 SLOTS</b><span>Redraws: ${state.deck.discardsLeft}/${redrawLimit(state)} · Draw pile: ${state.deck.draw.length} · Deck: ${STARTER_DECK.length+FOUNDING_CARDS.length+state.deck.acquired.length}</span></div><label class="chain-target">Summon lane <select id="summon-lane">${[0,1,2].map(lane=>`<option value="${lane}" ${state.summonLane===lane?'selected':''}>Lane ${lane+1} · ${liveMinions(state,null,lane).length}/${MAX_LANE_MINIONS} minions</option>`).join('')}</select></label><label class="chain-target">Command focus &amp; Devour target <select id="chain-target"><option value="">Auto: weakest invader</option>${state.enemies.filter(e=>e.alive).map(e=>`<option value="${e.id}" ${state.chainTargetId===e.id?'selected':''}>${e.name} · Lane ${e.lane+1} · ${e.hp} HP</option>`).join('')}</select></label><div class="swarm-lane-note">Summon lane ${state.summonLane+1}: ${liveMinions(state,null,state.summonLane).length}/${MAX_LANE_MINIONS} bodies · Total ${liveMinions(state).length}/${MAX_MINIONS} · Bones ${state.bones}/${MAX_BONES}. Full lanes consume summon cards without creating extra minions.</div><div class="chain-rituals">${rituals.map(x=>`<span>✦ ${x.ritual.name} (${x.start+1}–${x.end+1})</span>`).join('')||'Rituals need 3 separate slots; a stacked mob counts as one'}</div><div class="chain-slots">${chain.map((step,i)=>`<button class="chain-card ${step.linked?'linked':''} ${step.def.suit} ${step.count>1?'chain-card--stack':''}" data-unqueue="${step.cards.at(-1).id}" title="Remove last card from chain slot" aria-label="Remove ${step.def.name} from slot ${i+1}"><span class="chain-card__number">0${i+1}</span><span class="chain-card__portrait">${artFor(step.card.type)}</span><strong>${step.def.name}</strong><small>${SUIT_STYLES[step.def.suit].symbol} ${SUIT_STYLES[step.def.suit].name} · ${step.def.rank||'★'} ${step.count>1?'· x'+step.count:''}</small><em>${step.count>1?step.count===3?'HORDE ×3':'MOB ×2':step.linked?'⛓ CHAIN +'+Math.round((step.boost-1)*100)+'%':'START'}</em></button>`).join('')||'<span class="chain-hint">Click cards below in order. Duplicate recruits stack automatically (up to 3 per slot).</span>'}</div><div class="card-hand">${state.deck.hand.map(c=>{const d=CARDS[c.type],pal=SUIT_STYLES[d.suit];
+ const ready=state.phase==='battle'&&!state.pendingEssence&&canQueueCard(state.deck,c.id);
+ const stacked=ready&&d.kind==='summon'&&state.deck.chain.at(-1)?.type===c.type;
+ return `<div class="hand-card ${d.suit} ${d.rarity||'common'} ${d.tribe?'tribal '+d.tribe:''} ${ready?'playable':''}" ${ready?'data-queue="'+c.id+'" tabindex="0" role="button"':''} aria-label="${d.name}: ${cardRule(c.type)}"><div class="hand-card__crown"><span>${pal.symbol} ${pal.name}</span><strong>${d.rank||'★'}</strong></div><div class="hand-card__illustration">${artFor(c.type)}<span class="card-corner card-corner--tl"></span><span class="card-corner card-corner--br"></span></div><div class="hand-card__family">${d.tribe?d.tribe.toUpperCase()+' · ':''}${d.rarity&&d.rarity!=='common'?d.rarity.toUpperCase()+' · ':''}${d.kind.toUpperCase()}</div><h3>${d.name}${c.level?' +'+c.level:''}</h3><p class="hand-card__effect">${cardRule(c.type)}</p><small class="hand-card__lore">“${CARD_LORE[c.type]||'The forest remembers.'}”</small><div class="hand-card__actions"><button class="card-play" data-queue="${c.id}" ${ready?'':'disabled'}>${stacked?'STACK +1':ready?'PLAY CARD':'CANNOT LINK'}</button><button class="discard" data-redraw="${c.id}" title="Discard and redraw ${d.name}" ${state.phase!=='battle'||!!state.pendingEssence||state.deck.discardsLeft===0?'disabled':''}>↻</button></div></div>`;}).join('')}</div>`;
  $('creature-bestiary').innerHTML=Object.entries(CREATURES).map(([species,creature])=>{
   const ids={spider:'spider-summon','slime-bud':'slime-summon',mimicling:'mimicling-summon'};
   const owned=state.deck.acquired.includes(ids[species]);
@@ -105,6 +131,12 @@ function render(){
 }
 let busy=false;
 function replay(events){if(!events.length)return;busy=true;const actions=events.filter(x=>x.state!=='damage'||x.id==='king-mimic').slice(0,14);let i=0;const play=()=>{if(i>=actions.length){busy=false;return;}const e=actions[i++];const u=[...state.units,...state.minions].find(x=>x.id===e.id);const species=u?.species||'king-mimic';document.querySelectorAll(`[data-unit="${e.id}"]`).forEach(el=>animate(el,species,e.state));if(e.id==='king-mimic')animate($('king-sprite'),'king-mimic',e.state);setTimeout(play,e.state==='death'?550:320);};play();}
+$('tips-toggle').addEventListener('click',()=>{setTipsHidden(!tipsHidden);render();});
+$('commands').addEventListener('keydown',e=>{
+ if((e.key==='Enter'||e.key===' ')&&e.target.matches('.hand-card[data-queue]')){
+  e.preventDefault();if(!busy&&state.phase==='battle'&&queueCommand(state,e.target.dataset.queue))render();
+ }
+});
 $('commands').addEventListener('change',e=>{
  if(e.target.id==='chain-target'&&targetChain(state,e.target.value||null))render();
  if(e.target.id==='summon-lane'&&setSummonLane(state,Number(e.target.value)))render();
@@ -114,6 +146,13 @@ $('roster').addEventListener('change',e=>{if(e.target.matches('[data-move]')){mo
 $('turn-button').addEventListener('click',()=>{if(busy)return;endTurn(state);const events=[...state.animations];render();replay(events);});
 $('devour').addEventListener('click',()=>{if(busy)return;if(devour(state)){const events=[...state.animations];render();replay(events);}});
 $('gnaw').addEventListener('click',()=>{if(busy)return;if(gnaw(state)){const events=[...state.animations];render();replay(events);}});
+$('rewards').addEventListener('change',e=>{
+ const select=e.target.closest('[data-shop-target]'),card=select?.closest('[data-shop-offer]');
+ if(!card||!['tribal','exotic'].includes(card.dataset.shopOffer))return;
+ const type=select.value,preview=card.querySelector('.shop-offer__card-preview');
+ const label=card.querySelector('.shop-offer__selected-name');
+ if(CARDS[type]&&preview&&label){preview.innerHTML=artFor(type);label.textContent=CARDS[type].name;}
+});
 $('rewards').addEventListener('click',e=>{if(busy)return;const b=e.target.closest('button');if(!b)return;
  if(b.dataset.chooseEssence){const replaceId=$('essence-replace')?.value||null;if(chooseEssence(state,b.dataset.chooseEssence,replaceId))render();return;}
  if(b.hasAttribute('data-skip-essence')){if(chooseEssence(state,'skip'))render();return;}if(b.dataset.buy){const card=b.closest('[data-shop-offer]');const targetId=card?.querySelector('[data-shop-target]')?.value||null;if(buyUpgrade(state,b.dataset.buy,targetId))render();return;}if(b.hasAttribute('data-reset')){state=newSiege();render();return;}if(b.dataset.reward&&reinforce(state,b.dataset.reward))render();});
