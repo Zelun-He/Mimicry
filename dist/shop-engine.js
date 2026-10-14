@@ -42,7 +42,7 @@ export function createShop(s,rng=Math.random){
 
 function record(s,message){s.log.unshift(message);s.log=s.log.slice(0,16);}
 export function buyUpgrade(s,offerId,targetId=null){
- if(s.phase!=='reward'||!Array.isArray(s.shopOffers))return false;
+ if(s.phase!=='reward'||s.pendingEssence||!Array.isArray(s.shopOffers))return false;
  const offer=s.shopOffers.find(o=>o.id===offerId);
  if(!offer||offer.sold||!Number.isInteger(s.gold)||s.gold<offer.cost)return false;
  let apply,description;

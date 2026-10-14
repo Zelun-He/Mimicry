@@ -7,7 +7,7 @@ combat tests, save migration, and a manual browser playtest before release.
 - [x] **01 — Rare cards & Quartermaster acquisition** (`feature/rare-card-shop`).
   Add rule-changing commands, visible rarity and prices, and durable purchased
   deck entries. Keep the 8-card opening hand / 5-card chain limit.
-- [ ] **02 — Devour & assimilation.** Enemy archetypes offer two distinct traits;
+- [x] **02 — Devour & assimilation** (`feature/devour-assimilation`). Enemy archetypes offer two distinct traits;
   the King Mimic can carry at most three at once and choose replacements.
 - [ ] **03 — Monster evolution paths.** Each species has two meaningful branches;
   evolution changes its card affinities or behavior instead of just increasing stats.

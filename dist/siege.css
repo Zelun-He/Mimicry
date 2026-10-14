@@ -60,3 +60,39 @@
 .hand-card .rare-description{line-height:1.4;min-height:45px;color:#f6e0b9}
 .hand-card.legendary .rare-description{color:#f2defe}
 @media(max-width:720px){.shop-grid{grid-template-columns:1fr}}
+
+/* 0.8 — Assimilation: dark bestiary choices and a readable three-slot stomach. */
+#king-essences{margin:10px 0 0}
+.essence-slots{padding:12px 14px;background:#10241dbd;border:1px solid #826c45;border-radius:10px}
+.essence-equipped{display:flex;flex-wrap:wrap;gap:9px;margin-top:9px}
+.essence-chip{display:inline-flex;align-items:center;gap:7px;border:1px solid #bf9461;border-radius:7px;
+  color:#f9e8bf;background:linear-gradient(125deg,#533e33,#342b35);padding:7px 10px;font-size:12px;font-weight:700}
+.essence-chip small{color:#d6b999;font-size:10px;font-weight:500;opacity:.9}
+.essence-empty{color:#a7b7a5;font-size:12px;font-style:italic}
+.assimilation-choice{display:grid;gap:17px;margin-top:14px}
+.essence-prey{display:flex;gap:13px;align-items:center;padding:15px;background:linear-gradient(125deg,#49302f,#242a26);border:1px solid #a4785d;border-radius:11px}
+.essence-prey h3{margin:3px 0 5px;color:#f0c387;font-size:20px}
+.essence-prey p{font-size:13px;margin:0}
+.essence-skull{height:54px;width:54px;display:grid;place-items:center;flex-shrink:0;border-radius:100%;
+  background:#a66c4244;border:1px solid #d2a467;color:#f9ce91;font-size:29px;text-shadow:0 0 20px #f6ae6d}
+.essence-options{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:12px}
+.essence-choice{display:flex;flex-direction:column;gap:10px;padding:18px;border:1px solid #987a58;
+  border-radius:12px;background:linear-gradient(160deg,#423d38,#292f2b);min-height:180px}
+.essence-choice:nth-child(2){border-color:#9c738f;background:linear-gradient(160deg,#403044,#2c2835)}
+.essence-school{color:#e2c091;font-size:10px;font-weight:800;letter-spacing:.15em}
+.essence-choice h3{color:#f8dea6;margin:0;font-size:21px}
+.essence-choice p{color:#d6d1c6;margin:0;line-height:1.5;flex:1;font-size:13px}
+.essence-choice button{background:#b99252;color:#1c1b19;border:1px solid #e8ca94;font-weight:800}
+.essence-choice:nth-child(2) button{background:#bea2cc;border-color:#dec6e8}
+.essence-owned{opacity:.6}
+.essence-replace-label{display:flex;flex-direction:column;gap:9px;font-size:13px;color:#fae1a9}
+.essence-replace-label select{min-width:0;width:100%;border:1px solid #ae855d;border-radius:7px;
+  padding:10px;background:#16251e;color:#fff3d7}
+.essence-skip{justify-self:center;border:none;background:transparent;color:#c5b59b;text-decoration:underline;padding:8px}
+.essence-skip:hover{color:#f5d9a9;background:transparent!important}
+@media(max-width:680px){
+ .essence-options{grid-template-columns:1fr}
+ .essence-choice{min-height:140px}
+ .essence-chip{font-size:11px}
+ .essence-prey h3{font-size:18px}
+}

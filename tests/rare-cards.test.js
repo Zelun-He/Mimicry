@@ -220,7 +220,7 @@ test('v4 reward saves migrate without losing selected shop stock, gold or upgrad
  delete s.deck.acquired;
  const restored=restoreSiege(structuredClone(s));
  assert.ok(restored);
- assert.equal(restored.version,5);
+ assert.equal(restored.version,6);
  assert.equal(restored.shopOffers.length,4);
  assert.equal(restored.shopOffers[2].id,type);
  assert.equal(restored.shopOffers[3].id,'rare');
@@ -234,7 +234,7 @@ test('v4 battle saves migrate without changing the original deck or hand',()=>{
  s.version=4;delete s.deck.acquired;
  const restored=restoreSiege(structuredClone(s));
  assert.ok(restored);
- assert.equal(restored.version,5);
+ assert.equal(restored.version,6);
  assert.deepEqual(restored.deck.acquired,[]);
  assert.deepEqual(restored.deck.hand.map(c=>c.id),ids);
  assert.equal(restored.shopOffers.length,0);
