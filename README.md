@@ -1,3 +1,10 @@
+# Mimicry — The Mimic's Hand
+
+**Main game:** `npm start` then open **http://localhost:5173/** or **/siege.html**.
+The Forest Edge pixel-art battle from the original prototype is the live main
+interface. The original standalone 1-on-1 prototype remains playable at
+**/classic.html**; First Siege is the version with swarms, Devour, and shops.
+
 # Mimicry — The Mimic's Hand: Forest Edge
 
 A standalone, single-player browser card battler. Stage one follows Splinter, a ragged treasure-chest mimic, through four poorly equipped visitors and the Village Watchman boss. Original generated forest, mimic pose atlas, and visitor sprite strip are bundled locally. Relic Rush is a separate project.
@@ -261,3 +268,78 @@ Hunger, raid progression, or version-8 saves. Added locally hosted stylesheet
 `dist/siege/link-feedback.js` and tests in
 `tests/card-link-feedback.test.js`. CSS respects reduced-motion and touch
 input. See `DESIGN-CARD-LINKS.md`.
+
+## First Siege 0.13 — Hand-First Combat Interface
+
+The previous Siege presentation accidentally inherited an old four-column
+`.commands` parent grid. This squeezed the entire eight-card hand into
+a quarter-width cell, producing unreadable slivers and giant blank queue
+areas. First Siege now uses a compact, readable combat loop inspired by
+the clarity of tactical hands such as Demon's Hand, with original Mimicry
+art, creatures and rules intact:
+
+1. Read the invaders in **three compact horizontal lanes** at the top.
+   Click an enemy to select your focus (or leave Auto: weakest).
+2. **Click any legal card** in the eight-card hand to queue it. The visible
+   five-slot combo strip shows category, rank, link type and Mob/Horde stacks;
+   click a queued card to undo. Invalid cards are dimmed, but readable.
+3. Tap **DISCARD** to enter discard mode, then click the exact card to redraw
+   (up to the current redraw allowance). Cancel the mode any time.
+4. Tap **ATTACK** to resolve the queued commands and battlefield turn.
+   King Mimic's Gnaw, Devour, Hunger and stolen traits remain available.
+5. Deeper information (creature codex, veteran roster, combat journal)
+   sits in expandable sections below combat, rather than crowding the hand.
+
+The same five category crests and numerical links are retained. Hover/focus
+still previews link legality and bonus. Cards are real buttons, so keyboard
+Enter/Space and a single tap activate the same action. The mobile hand
+scrolls sideways instead of becoming a squeezed multi-column grid.
+
+This is a **UI reorganization**, not a new card game or a change to enemy
+AI, card IDs, damage, saves, loot or shop math. There is no new save
+version. Implementation: `dist/siege/combat-ui.js` (renderers),
+`dist/siege/combat-clarity.css` (responsive layout), and
+`tests/combat-clarity.test.js`.
+
+## Forest Edge restored — original gameplay layout (0.14)
+
+The main game now uses the **actual original Forest Edge screen, not a new
+dark card dashboard**. The original `dist/index.html` and `style.css`
+provide the visual foundation: chapter route, pixel-forest canvas,
+full-size animated Mimic and adventurers, a five-slot attack chain,
+predicted base power/armor/heal/poison/incoming, and a full-width
+eight-card hand on a bright parchment table.
+
+All the newer Siege mechanics run **underneath the original design**:
+
+- The `dist/siege-engine.js` v8 save/combat logic remains authoritative.
+  Existing saved games and purchased cards are preserved.
+- A featured foe appears as the large opponent sprite; additional living
+  adventurers appear behind it and in clickable focus chips below the forest.
+- Permanent defenders and summons appear as smaller sprites in the forest,
+  plus compact lane indicators. Choose summon lane above the attack chain;
+  move persistent defenders in the optional army panel.
+- Creature cards, Goblin/Skeleton formations (Mob/Horde x2/x3),
+  linked school/rank/sequence/Hunger combinations, rituals and acquired
+  rare commands all appear in the original five-slot table and illustrated
+  horizontal hand.
+- Every queued card lights up **in order** while the original sprite sheet
+  animates the Mimic, damage flashes and smaller defender attacks. Combat
+  health/results come from the real Siege engine, not fabricated per-card damage.
+- The original Discard and Play Chain buttons remain prominent. Discard
+  toggles a mode in which clicking a single card redraws it; Play Chain
+  resolves the turn. When no chain is queued, the button explicitly says
+  End Turn to prevent a softlock.
+- Hunger (20-point Gnaw / 100-point Devour), stolen traits, Gold, Bones,
+  persistent veterans, Spider/Slime/Mimicling recruits and the six-offer
+  Quartermaster shop are still fully functional.
+- The original prototype and engine remain available at `/classic.html`,
+  isolated from the v8 Siege save. Root URL and `/siege.html` both load
+  the upgraded forest battle.
+
+Key files:
+`dist/siege/forest-renderer.js` (original sprite animations + new Siege cues),
+`dist/siege/forest-hand.js` (cards, chain, honest base previews),
+`dist/siege/forest-game.css` (responsive refinements to original CSS),
+`dist/siege.js` (integrated Siege controller),
+`DESIGN-FOREST-RESTORE.md` (design decisions).
