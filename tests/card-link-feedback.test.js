@@ -63,7 +63,7 @@ test('consecutive duplicate recruits stack into one slot, twice only',()=>{
  assert.equal(previewCardLink(d,third).count,MAX_STACK);
  assert.equal(previewCardLink(d,third).slots,1);
  d=deck([first,second,third],[fourth]);
- assert.equal(previewCardLink(d,fourth).kind,'suit');
+ assert.equal(previewCardLink(d,fourth).kind,'rank'); // After a full stack, same rank takes precedence over same suit.
  assert.equal(previewCardLink(d,fourth).slots,2);
  assert.equal(previewCardLink(d,fourth).count,1);
 });
@@ -117,7 +117,7 @@ test('all supported rank and school links stay in agreement with chain-engine',(
   const info=previewCardLink(d,y);
   assert.equal(info.legal,linkCards(x,y),`disagreed on ${from} -> ${to}`);
   assert.equal(info.kind==='mismatch',!linkCards(x,y));
-  assert.equal(info.slots,2);
+  assert.equal(info.slots,from===to&&CARDS[from].kind==='summon'?1:2);
  }
 });
 
