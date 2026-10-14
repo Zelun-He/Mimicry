@@ -43,7 +43,7 @@ export function previewCardLink(deck,cardOrId){
  if(!permitted){
   kind=chainGroups([...deck.chain,card]).length>MAX_CHAIN?'full':kind==='unavailable'?'unavailable':'mismatch';
  }
- const info=LINK_KIN[kind];
+ const info=LINK_KINDS[kind];
  const potential=permitted?analyzeChain([...deck.chain,card]):[];
  const last=potential.at(-1);
  return {
@@ -61,6 +61,6 @@ export function queuedLinkKinds(cards){
  return groups.map((group,i)=>{
   const previous=groups[i-1]?.card;
   return {kind:linkReason(previous,group.card),count:group.count,
-   ...LINK_KIN[linkReason(previous,group.card)]};
+   ...LINK_KINDS[linkReason(previous,group.card)]};
  });
 }
