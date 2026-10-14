@@ -253,3 +253,13 @@ test('rare shop receipts and prices must be consistent with the acquired card',(
  forged.shopOffers[3].sold=false;
  assert.equal(restoreSiege(forged),null);
 });
+
+test('rare shop avoids cards already purchased while other rare commands are available',()=>{
+ const s=purchase('sacrifice');
+ earnShop(s,()=>0.1);
+ assert.equal(s.raid,1);
+ assert.equal(s.shopOffers[3].id,'rare');
+ assert.equal(s.shopOffers[3].cardType,'tithe');
+ assert.equal(s.deck.acquired.includes(s.shopOffers[3].cardType),false);
+ assert.ok(restoreSiege(structuredClone(s)));
+});

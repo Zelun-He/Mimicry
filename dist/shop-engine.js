@@ -29,7 +29,9 @@ export function createShop(s,rng=Math.random){
  const mutation=available[Math.floor(raw*available.length)];
  const rareRoll=rng();
  if(typeof rareRoll!=='number'||!Number.isFinite(rareRoll)||rareRoll<0||rareRoll>=1)throw Error('Invalid shop RNG');
- const rareType=SHOP_CARD_TYPES[Math.floor(rareRoll*SHOP_CARD_TYPES.length)];
+ const unseen=SHOP_CARD_TYPES.filter(type=>!s.deck?.acquired?.includes(type));
+ const selection=unseen.length?unseen:SHOP_CARD_TYPES;
+ const rareType=selection[Math.floor(rareRoll*selection.length)];
  return [
   {id:'card',cost:CARD_UPGRADE_COST,sold:false},
   {id:'monster',cost:MONSTER_UPGRADE_COST,sold:false},
