@@ -160,9 +160,10 @@ test('tampered inventory, history, duplicate origins, and pending prey are rejec
  }
 });
 test('save migration from v5 preserves the deck, gold, and offers while initializing an empty stomach',()=>{
- const s=newSiege(rng);const ids=s.deck.hand.map(c=>c.id);
+ const s=newSiege(rng);
  for(const pile of ['draw','discard','hand','chain'])s.deck[pile]=s.deck[pile].filter(c=>!c.id.startsWith('f'));
  s.deck.tribal=false;
+ const ids=s.deck.hand.map(c=>c.id);
  s.version=5;delete s.essences;delete s.essenceHistory;delete s.pendingEssence;
  const restored=restoreSiege(structuredClone(s));
  assert.ok(restored);

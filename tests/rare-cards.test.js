@@ -232,8 +232,8 @@ test('v4 reward saves migrate without losing selected shop stock, gold or upgrad
 
 test('v4 battle saves migrate without changing the original deck or hand',()=>{
  const s=newSiege(baseRng);
- const ids=s.deck.hand.map(c=>c.id);
  for(const pile of ['draw','discard','hand','chain'])s.deck[pile]=s.deck[pile].filter(c=>!c.id.startsWith('f'));
+ const ids=s.deck.hand.map(c=>c.id);
  s.deck.tribal=false;
  s.version=4;delete s.deck.acquired;
  const restored=restoreSiege(structuredClone(s));

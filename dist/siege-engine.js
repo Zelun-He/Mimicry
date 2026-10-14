@@ -336,7 +336,7 @@ export function restoreSiege(v){
  let shopOffers=v.version>=5?v.shopOffers:
    v.version===4?(v.phase==='reward'?[...v.shopOffers,createShop({mutations},()=>0.5)[3]]:v.shopOffers):
    (v.phase==='reward'?createShop({mutations},()=>0.5):[]);
- if(v.phase==='reward'&&v.version<7){
+ if(v.phase==='reward'&&v.version<7&&shopOffers.length<5){
   // Existing purchased upgrades, choice and price remain unchanged.
   const newOffer=createShop({...v,deck,mutations},()=>0.5)[4];
   shopOffers=[...shopOffers,newOffer];

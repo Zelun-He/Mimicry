@@ -10,7 +10,7 @@ function arrange(s,types){
  for(const type of types){const index=all.findIndex(c=>c.type===type);assert.notEqual(index,-1);s.deck.hand.push(...all.splice(index,1));}
  s.deck.draw=all;
  for(const c of [...s.deck.hand])assert.equal(queueCommand(s,c.id),true);
- assert.ok(validateDeck(s.deck));
+ assert.ok(validateDeck(s.deck,8,false,2,true));
 }
 test('rituals only match exact contiguous school patterns',()=>{
  assert.deepEqual(findRituals(cards('strike','blood','ambush')).map(x=>x.ritual.id),['bloodbath']);
@@ -36,7 +36,7 @@ test('living wall ritual grants armor to every living ally',()=>{
  endTurn(s,rng);
  assert.ok(s.units.find(u=>u.id==='u4').armor>=4); // Lane 3 is not attacked in raid 1
  assert.ok(s.log.some(x=>x.includes('RITUAL: Living Wall')));
- assert.ok(validateDeck(s.deck));
+ assert.ok(validateDeck(s.deck,8,false,2,true));
 });
 test('plague ritual applies poison to all living enemies',()=>{
  const s=newSiege(rng);arrange(s,['bite','corrode','contagion']);
