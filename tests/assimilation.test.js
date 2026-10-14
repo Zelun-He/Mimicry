@@ -230,7 +230,7 @@ test('Barbed Quiver and Witchfire add separate, bounded venom applications',()=>
  assert.equal(withWitch.inherited-withWitch.ordinary,2);
 });
 test('Cruel Precision adds six execution damage against a half-health target',()=>{
- const result=compareEffect('cruel-precision',['execute'],s=>{s.enemies[0].maxHp=72;s.enemies[0].hp=35;});
+ const result=compareEffect('cruel-precision',['execute'],s=>{s.enemies[0].maxHp=72;s.enemies[0].hp=35;assert.equal(targetChain(s,s.enemies[0].id),true);});
  assert.equal(result.ordinary-result.inherited,6);
 });
 test('Mana Gullet reduces actual Hunger costs by ten, without negative costs',()=>{
