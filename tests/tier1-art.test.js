@@ -97,15 +97,16 @@ test('tier one styles, stage artwork and helper scripts are referenced by the pl
  const html=read('dist/siege.html');
  const css=read('dist/siege/tier1.css');
  const js=read('dist/siege.js');
+ const combat=read('dist/siege/combat-ui.js');
  assert.ok(html.includes('href="siege/tier1.css"'));
  for(const id of ['arena-scene','scene-title','scene-eyebrow','scene-subtitle','forest-progress','tips-toggle','first-run-tip','tip-kicker','tip-title','tip-copy'])assert.ok(html.includes('id="'+id+'"'),id);
  for(const scene of FOREST_SCENES)assert.ok(css.includes('./scenes/'+scene.id+'.svg'),scene.id);
  for(const selector of ['.card-hand','.hand-card__illustration','.chain-card__portrait','.scene-plate','.first-run-tip','.shop-offer__card-preview'])assert.ok(css.includes(selector));
  assert.ok(css.includes('prefers-reduced-motion:reduce'));
- assert.ok(js.includes('artFor(c.type)'));
- assert.ok(js.includes('artFor(step.card.type)'));
+ assert.ok(combat.includes('artFor(card.type)'));
+ assert.ok(combat.includes('renderCompactChain'));
  assert.ok(js.includes("nextActionTip(state)"));
  assert.ok(js.includes("data-queue"));
- assert.ok(js.includes("addEventListener('keydown'"));
+ assert.ok(combat.includes('type="button"')); // Native keyboard activation rather than extra keydown handling.
  assert.ok(js.includes("querySelector('.shop-offer__card-preview')"));
 });

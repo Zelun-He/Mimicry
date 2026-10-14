@@ -25,6 +25,11 @@ combat tests, save migration, and a manual browser playtest before release.
   badges, exact legal-link previews (school, same number, rank +1, Hunger wild),
   luminous chain connectors, Mob/Horde selection feedback, accessible touch
   inspection, and reduced-motion support. No change to combat link rules.
+- [x] **03e — Hand-first combat redesign** (`feature/forest-combat-clarity`).
+  Fix the inherited 4-column layout regression, show all eight cards in one
+  readable row, shrink the five-slot combo bar, and introduce click-to-queue,
+  deliberate discard mode, clickable enemy focus and compact horizontal lanes.
+  Keep the existing Demon's Hand-inspired link rules and Mimicry creature systems.
 - [ ] **04 — Treasure bait and invasion control.** Choose between visible risk/reward
   lures before raids; enemy types and rewards vary accordingly.
 - [ ] **05 — Counterplay-driven enemy abilities.** Bards, thieves, paladins,

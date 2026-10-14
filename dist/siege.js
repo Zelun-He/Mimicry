@@ -4,6 +4,7 @@ import {MAX_WEB,CREATURES} from './creature-engine.js';
 import {cardArt,cardRule,CARD_LORE,SUIT_STYLES} from './siege/card-art.js';
 import {FOREST_SCENES,sceneForRaid,nextActionTip,stageProgress} from './siege/tier1.js';
 import {LINK_KINDS,previewCardLink,queuedLinkKinds} from './siege/link-feedback.js';
+import {renderCompactCommands,renderCompactLanes} from './siege/combat-ui.js';
 import {MUTATIONS,handSize,upgradeableCards,trainableUnits,cardPower} from './shop-engine.js';
 import {ESSENCE_CAPACITY,ESSENCE_BY_ENEMY,ESSENCE_TRAITS,hungerCost,redrawLimit} from './assimilation-engine.js';
 import {newSiege,restoreSiege,RAIDS,SPECIES,moveUnit,endTurn,devour,gnaw,reinforce,buyUpgrade,chooseEssence,queueCommand,unqueueCommand,redrawCommand,previewChain,previewRituals,targetChain,setSummonLane} from './siege-engine.js';
@@ -15,6 +16,7 @@ function setTipsHidden(value){tipsHidden=value;try{localStorage.setItem('mimicry
 
 let lastQueuedId=null;
 let activePreviewId=null;
+let discardMode=false;
 let state;try{state=restoreSiege(JSON.parse(localStorage.getItem(KEY)||localStorage.getItem('mimicry-siege-v7')||localStorage.getItem('mimicry-siege-v6')||localStorage.getItem('mimicry-siege-v5')||localStorage.getItem('mimicry-siege-v4')||localStorage.getItem('mimicry-siege-v3')||localStorage.getItem('mimicry-siege-v2')))}catch{}state??=newSiege();
 const manifest=await fetch('./siege/animations.json').then(r=>r.json());
 const names=['king-mimic',...Object.keys(SPECIES)];
@@ -87,6 +89,7 @@ function essenceHTML(){
 }
 function render(){
  clearSpriteAnimations();
+ if(state.phase!=='battle'||state.pendingEssence||state.deck.discardsLeft===0)discardMode=false;
  activePreviewId=null;
  const scene=sceneForRaid(state.raid);
  $('arena-scene').dataset.scene=scene.id;
@@ -104,25 +107,14 @@ function render(){
  $('tips-toggle').setAttribute('aria-pressed',String(!tipsHidden));
  $('bones').textContent=`${state.bones}/${MAX_BONES}`;$('swarm-count').textContent=`${liveMinions(state).length}/${MAX_MINIONS}`;
  $('raid').textContent=`${state.raid+1} / ${RAIDS.length}`;$('raidname').textContent=RAIDS[state.raid].name;$('turn').textContent=state.turn;$('integrity').textContent=`${state.integrity} / ${state.maxIntegrity}`;$('hunger').textContent=`${state.hunger} / 100`;$('gold').textContent=state.gold;
- $('lanes').innerHTML=[0,1,2].map(lane=>`<div class="lane"><div class="lane-name">LANE ${lane+1}</div><div class="combatants">${[
- ...state.units.filter(u=>u.lane===lane&&u.alive).map(u=>`<div class="combatant ally">${sprite(u.species,u.id)}<b>${u.name} <span>Lv${u.level}</span></b>${hpBar(u.hp,u.maxHp)}${u.armor?`<small>⬟ ${u.armor} armor</small>`:''}</div>`),
- ...liveMinions(state,null,lane).map(u=>`<div class="combatant ally swarm-minion ${u.species}">${sprite(u.species,u.id)}<b>${u.name}</b>${hpBar(u.hp,u.maxHp)}<small>SUMMON · ${u.attack} ATK</small></div>`)
- ].join('')||'<div class="empty">No defenders</div>'}<div class="lane-arrow">⚔</div>${state.enemies.filter(e=>e.lane===lane&&e.alive).map(e=>`<div class="combatant invader"><div class="foe">${e.name==='Mage'?'✧':e.name==='Archer'?'➶':'⚔'}</div><b>${e.name}</b>${hpBar(e.hp,e.maxHp)}<small>${e.attack} attack${e.web?' · 🕸 '+e.web+' Web':''}</small></div>`).join('')||'<div class="empty">Lane clear</div>'}</div></div>`).join('');
+ $('lanes').innerHTML=renderCompactLanes(state,{sprite,hpBar});
  const chain=previewChain(state);const rituals=previewRituals(state);const kinds=queuedLinkKinds(state.deck.chain);
- $('commands').innerHTML=`<div class="chain-stats"><b>HAND ${state.deck.hand.length}/${handSize(state)} · CHAIN ${chainSlotCount(state.deck.chain)}/5 SLOTS</b><span>Redraws: ${state.deck.discardsLeft}/${redrawLimit(state)} · Draw pile: ${state.deck.draw.length} · Deck: ${STARTER_DECK.length+FOUNDING_CARDS.length+state.deck.acquired.length}</span></div><label class="chain-target">Summon lane <select id="summon-lane">${[0,1,2].map(lane=>`<option value="${lane}" ${state.summonLane===lane?'selected':''}>Lane ${lane+1} · ${liveMinions(state,null,lane).length}/${MAX_LANE_MINIONS} minions</option>`).join('')}</select></label><label class="chain-target">Command focus &amp; Devour target <select id="chain-target"><option value="">Auto: weakest invader</option>${state.enemies.filter(e=>e.alive).map(e=>`<option value="${e.id}" ${state.chainTargetId===e.id?'selected':''}>${e.name} · Lane ${e.lane+1} · ${e.hp} HP</option>`).join('')}</select></label><div class="swarm-lane-note">Summon lane ${state.summonLane+1}: ${liveMinions(state,null,state.summonLane).length}/${MAX_LANE_MINIONS} bodies · Total ${liveMinions(state).length}/${MAX_MINIONS} · Bones ${state.bones}/${MAX_BONES}. Full lanes consume summon cards without creating extra minions.</div><div class="chain-rituals">${rituals.map(x=>`<span>✦ ${x.ritual.name} (${x.start+1}–${x.end+1})</span>`).join('')||'Rituals need 3 separate slots; a stacked mob counts as one'}</div><div class="link-readout" id="link-readout" data-link-state="opening" aria-live="polite" aria-atomic="true"><span class="link-readout__sigil" id="link-preview-symbol">◇</span><div class="link-readout__copy"><strong id="link-preview-title">CHOOSE YOUR NEXT CARD</strong><span id="link-preview-description">Hover, focus, or tap a card to see its link before playing.</span></div><span class="link-readout__hint">SUIT · RANK · +1 · WILD</span></div><div class="chain-slots" id="chain-slots">${chain.map((step,i)=>`<button class="chain-card ${step.linked?'linked':''} ${step.def.suit} link-${kinds[i].kind} ${step.count>1?'chain-card--stack':''} ${step.cards.some(card=>card.id===lastQueuedId)?'just-queued':''}" data-unqueue="${step.cards.at(-1).id}" data-link-kind="${kinds[i].kind}" title="${kinds[i].explanation} Remove the last card from this slot." aria-label="Remove ${step.def.name} from slot ${i+1}"><span class="chain-card__number">0${i+1}</span><span class="chain-card__portrait">${artFor(step.card.type)}</span><strong>${step.def.name}</strong><small>${SUIT_STYLES[step.def.suit].symbol} ${SUIT_STYLES[step.def.suit].name} · ${step.def.rank||'★'} ${step.count>1?'· ×'+step.count:''}</small><span class="chain-card__link-tag">${step.count>1?'▣ '+(step.count===3?'HORDE ×3':'MOB ×2'):kinds[i].symbol+' '+kinds[i].short}</span><em>${step.count>1?'ONE CHAIN SLOT':step.linked?'⛓ +'+Math.round((step.boost-1)*100)+'%':'OPENING CARD'}</em></button>`).join('')||''}${chain.length<5?`<div class="chain-next-slot" id="chain-next-slot" aria-hidden="true"><span class="chain-next-slot__crest">＋</span><strong>NEXT LINK</strong><small>Slot ${chain.length+1} of 5</small></div>`:''}</div><div class="card-hand">${state.deck.hand.map(c=>{const d=CARDS[c.type],pal=SUIT_STYLES[d.suit];
- const hint=previewCardLink(state.deck,c);
- const ready=state.phase==='battle'&&!state.pendingEssence&&hint.legal;
- const locked=state.phase!=='battle'||Boolean(state.pendingEssence);
- const stacked=hint.kind==='stack'&&ready;
- const linkKind=locked?'unavailable':hint.kind;
- return `<div class="hand-card ${d.suit} ${d.rarity||'common'} ${d.tribe?'tribal '+d.tribe:''} ${ready?'playable':'unplayable'} ${stacked?'stackable':''} link-${linkKind}" data-card-id="${c.id}" data-school="${d.suit}" data-link-kind="${linkKind}" tabindex="0" role="group" aria-label="${d.name}: ${cardRule(c.type)}. ${ready?hint.label:locked?'Unavailable outside combat':hint.label}.">
-  <div class="hand-card__crown"><span class="hand-card__crest" aria-label="${pal.name} school"><i aria-hidden="true">${pal.symbol}</i><span>${pal.name}</span></span><strong class="hand-card__rank" aria-label="Rank ${d.rank||'wild'}">${d.rank||'★'}</strong></div>
-  <div class="hand-card__illustration">${artFor(c.type)}<span class="card-corner card-corner--tl"></span><span class="card-corner card-corner--br"></span><span class="card-school-fx" aria-hidden="true"></span></div>
-  <div class="hand-card__family">${d.tribe?d.tribe.toUpperCase()+' · ':''}${d.rarity&&d.rarity!=='common'?d.rarity.toUpperCase()+' · ':''}${d.kind.toUpperCase()}</div>
-  <h3>${d.name}${c.level?' +'+c.level:''}</h3>
-  <p class="hand-card__effect">${cardRule(c.type)}</p><small class="hand-card__lore">“${CARD_LORE[c.type]||'The forest remembers.'}”</small>
-  <div class="hand-card__link-hint ${ready?'is-valid':'is-invalid'}" aria-hidden="true"><span>${locked?'—':hint.symbol}</span><strong>${locked?'NOT YOUR TURN':hint.short}</strong></div>
-  <div class="hand-card__actions"><button class="card-play" type="button" data-queue="${c.id}" ${ready?'':'disabled'}>${stacked?'STACK +1':ready?'PLAY CARD':'CANNOT LINK'}</button><button class="discard" type="button" data-redraw="${c.id}" title="Discard and redraw ${d.name}" aria-label="Discard ${d.name} and redraw" ${state.phase!=='battle'||!!state.pendingEssence||state.deck.discardsLeft===0?'disabled':''}>↻</button></div></div>`;}).join('')}</div>`;
+ $('commands').innerHTML=renderCompactCommands(state,{artFor,cardRule,handSize:handSize(state),chain,kinds,rituals,lastQueuedId,discardMode});
+ $('discard-mode').disabled=state.phase!=='battle'||!!state.pendingEssence||state.deck.discardsLeft===0;
+ $('discard-mode').setAttribute('aria-pressed',String(discardMode));
+ $('discard-mode').textContent=discardMode?'CANCEL DISCARD':`DISCARD · ${state.deck.discardsLeft} LEFT`;
+ $('turn-button').textContent='ATTACK →';
+ $('combat-feedback').textContent=state.log[0]||'Choose your cards, then press Attack to defend the chest.';
  $('creature-bestiary').innerHTML=Object.entries(CREATURES).map(([species,creature])=>{
   const ids={spider:'spider-summon','slime-bud':'slime-summon',mimicling:'mimicling-summon'};
   const owned=state.deck.acquired.includes(ids[species]);
@@ -135,11 +127,11 @@ function render(){
  const king=state.enemies.find(e=>e.alive&&e.id===state.chainTargetId)||state.enemies.filter(e=>e.alive).sort((a,b)=>a.hp-b.hp)[0];
  const finishingBite=king&&king.hp+(king.armor||0)<=25;
  const gnawCapture=king&&king.hp+(king.armor||0)<=8;
- $('gnaw').textContent=king?`GNAW ${king.name.toUpperCase()} · ${gnawCapture?'ESSENCE READY':'8 DAMAGE'}`:'GNAW · 20 HUNGER';
+ $('gnaw').textContent=king&&gnawCapture?'GNAW · STEAL TRAIT':'GNAW · 20';
  $('gnaw').title=king?`Costs 20 Hunger. Deals up to 8 damage to ${king.name}. ${gnawCapture?'A killing Gnaw captures its essence.':'Soften the enemy before trying to capture it.'}`:'Requires a living enemy.';
- $('devour').textContent=king?`DEVOUR ${king.name.toUpperCase()} · ${finishingBite?'ESSENCE READY':'WEAKEN PREY'}`:'DEVOUR · 100 HUNGER';
+ $('devour').textContent=king&&finishingBite?'DEVOUR · STEAL TRAIT':'DEVOUR · 100';
  $('devour').title=king?`Costs 100 Hunger. Deals up to 25 damage to ${king.name}. ${finishingBite?'A killing bite would capture its essence.':'Lower its HP and armor before attempting a capture.'}`:'Requires a living enemy.';
- $('king-essences').innerHTML=essenceSlotsHTML();
+ $('king-essences').innerHTML=state.essences.length?essenceSlotsHTML():'';
  $('log').innerHTML=state.log.map(x=>`<p>${x.replaceAll('&','&amp;').replaceAll('<','&lt;')}</p>`).join('');$('turn-button').disabled=state.phase!=='battle'||!!state.pendingEssence;$('gnaw').disabled=state.phase!=='battle'||!!state.pendingEssence||state.hunger<20;$('devour').disabled=state.phase!=='battle'||!!state.pendingEssence||state.hunger<100;
  const pending=Boolean(state.pendingEssence);
  $('overlay').hidden=state.phase==='battle'&&!pending;
@@ -190,8 +182,8 @@ function clearLinkPreview(){
  activePreviewId=null;
  const readout=$('link-readout'),ghost=$('chain-next-slot'),rail=$('chain-slots');
  if(readout){readout.dataset.linkState='opening';$('link-preview-symbol').textContent='◇';
-  $('link-preview-title').textContent='CHOOSE YOUR NEXT CARD';
-  $('link-preview-description').textContent='Hover, focus, or tap a card to see its link before playing.';
+  $('link-preview-title').textContent='MAKE YOUR MOVE';
+  $('link-preview-description').textContent='Match a symbol, match a number, or play the next higher number.';
  }
  if(ghost){ghost.dataset.linkState='opening';
   ghost.innerHTML='<span class="chain-next-slot__crest">＋</span><strong>NEXT LINK</strong><small>Choose a card</small>';
@@ -225,11 +217,7 @@ $('commands').addEventListener('focusout',e=>{
  const card=cardFromEvent(e);
  if(card&&!card.contains?.(e.relatedTarget))clearLinkPreview();
 });
-$('commands').addEventListener('keydown',e=>{
- if(e.target.matches?.('.hand-card[data-card-id]')&&(e.key==='Enter'||e.key===' ')){
-  e.preventDefault();showLinkPreview(e.target.dataset.cardId);
- }
-});
+// Cards are native buttons: Enter/Space selects just like a pointer.
 $('commands').addEventListener('change',e=>{
  if(e.target.id==='chain-target'&&targetChain(state,e.target.value||null))render();
  if(e.target.id==='summon-lane'&&setSummonLane(state,Number(e.target.value)))render();
@@ -243,8 +231,17 @@ $('commands').addEventListener('click',e=>{
   changed=queueCommand(state,button.dataset.queue);
   if(changed)lastQueuedId=button.dataset.queue;
  }else if(button.dataset.unqueue)changed=unqueueCommand(state,button.dataset.unqueue);
- else if(button.dataset.redraw)changed=redrawCommand(state,button.dataset.redraw);
+ else if(button.dataset.redraw){changed=redrawCommand(state,button.dataset.redraw);if(changed)discardMode=false;}
  if(changed){render();lastQueuedId=null;}
+});
+$('discard-mode').addEventListener('click',()=>{
+ if(busy||state.phase!=='battle'||state.pendingEssence||state.deck.discardsLeft<=0)return;
+ discardMode=!discardMode;render();
+});
+$('lanes').addEventListener('click',e=>{
+ if(busy||state.phase!=='battle'||state.pendingEssence)return;
+ const target=e.target.closest?.('[data-focus-enemy]');
+ if(target&&targetChain(state,target.dataset.focusEnemy))render();
 });
 $('roster').addEventListener('change',e=>{if(e.target.matches('[data-move]')){moveUnit(state,e.target.dataset.move,Number(e.target.value));render();}});
 $('turn-button').addEventListener('click',()=>{if(busy)return;endTurn(state);const events=[...state.animations];render();replay(events);});
