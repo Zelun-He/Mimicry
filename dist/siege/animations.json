@@ -1,0 +1,233 @@
+{
+  "frameWidth": 64,
+  "frameHeight": 64,
+  "framesPerAnimation": 4,
+  "animations": {
+    "king-mimic.idle": {
+      "file": "sprites/king-mimic.png",
+      "row": 0,
+      "frames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "loop": true
+    },
+    "king-mimic.attack": {
+      "file": "sprites/king-mimic.png",
+      "row": 1,
+      "frames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "loop": false
+    },
+    "king-mimic.damage": {
+      "file": "sprites/king-mimic.png",
+      "row": 2,
+      "frames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "loop": false
+    },
+    "king-mimic.death": {
+      "file": "sprites/king-mimic.png",
+      "row": 3,
+      "frames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "loop": false
+    },
+    "goblin.idle": {
+      "file": "sprites/goblin.png",
+      "row": 0,
+      "frames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "loop": true
+    },
+    "goblin.attack": {
+      "file": "sprites/goblin.png",
+      "row": 1,
+      "frames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "loop": false
+    },
+    "goblin.damage": {
+      "file": "sprites/goblin.png",
+      "row": 2,
+      "frames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "loop": false
+    },
+    "goblin.death": {
+      "file": "sprites/goblin.png",
+      "row": 3,
+      "frames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "loop": false
+    },
+    "slime.idle": {
+      "file": "sprites/slime.png",
+      "row": 0,
+      "frames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "loop": true
+    },
+    "slime.attack": {
+      "file": "sprites/slime.png",
+      "row": 1,
+      "frames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "loop": false
+    },
+    "slime.damage": {
+      "file": "sprites/slime.png",
+      "row": 2,
+      "frames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "loop": false
+    },
+    "slime.death": {
+      "file": "sprites/slime.png",
+      "row": 3,
+      "frames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "loop": false
+    },
+    "skeleton.idle": {
+      "file": "sprites/skeleton.png",
+      "row": 0,
+      "frames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "loop": true
+    },
+    "skeleton.attack": {
+      "file": "sprites/skeleton.png",
+      "row": 1,
+      "frames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "loop": false
+    },
+    "skeleton.damage": {
+      "file": "sprites/skeleton.png",
+      "row": 2,
+      "frames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "loop": false
+    },
+    "skeleton.death": {
+      "file": "sprites/skeleton.png",
+      "row": 3,
+      "frames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "loop": false
+    },
+    "sporeling.idle": {
+      "file": "sprites/sporeling.png",
+      "row": 0,
+      "frames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "loop": true
+    },
+    "sporeling.attack": {
+      "file": "sprites/sporeling.png",
+      "row": 1,
+      "frames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "loop": false
+    },
+    "sporeling.damage": {
+      "file": "sprites/sporeling.png",
+      "row": 2,
+      "frames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "loop": false
+    },
+    "sporeling.death": {
+      "file": "sprites/sporeling.png",
+      "row": 3,
+      "frames": [
+        0,
+        1,
+        2,
+        3
+      ],
+      "loop": false
+    }
+  },
+  "fps": {
+    "idle": 4,
+    "attack": 10,
+    "damage": 7,
+    "death": 6
+  }
+}
