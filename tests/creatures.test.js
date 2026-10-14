@@ -233,7 +233,10 @@ test('Mimiclings move the strongest outside adventurer into their lane, once per
  endTurn(s,rng);
  assert.equal(s.lastLureTurn,1);
  assert.equal(s.enemies.some(e=>e.lane===1),true);
- assert.equal(lurePrey(s,1),null);
+ assert.equal(s.turn,2); // The first lure occurred on turn 1; a new turn refreshes it.
+ assert.ok(lurePrey(s,1));
+ assert.equal(s.lastLureTurn,2);
+ assert.equal(lurePrey(s,1),null); // Cannot lure twice in the same turn.
  assert.ok(restoreSiege(structuredClone(s)));
 });
 
