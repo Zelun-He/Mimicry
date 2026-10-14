@@ -105,13 +105,13 @@ test('royal satchel increases hand to nine while chain cap remains five',()=>{
  assert.ok(validateDeck(s.deck,9));
 });
 
-test('saving version 3 games migrates safely to shop-capable version 5',()=>{
+test('saving version 3 games migrates safely to shop-capable version 6',()=>{
  const v3=newSiege(rng);
  v3.version=3;
  delete v3.mutations;delete v3.shopOffers;
  const result=restoreSiege(structuredClone(v3));
  assert.ok(result);
- assert.equal(result.version,5);
+ assert.equal(result.version,6);
  assert.deepEqual(result.mutations,[]);
  assert.deepEqual(result.shopOffers,[]);
  assert.equal(result.deck.hand.length,8);

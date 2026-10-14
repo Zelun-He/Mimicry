@@ -87,3 +87,39 @@ Purchased cards retain stable IDs and purchase-raid records across saves and shu
 Saves now use browser key `mimicry-siege-v5`; v2, v3, and v4 saves migrate.
 See `ROADMAP.md` for the sequenced plan and `tests/rare-cards.test.js`
 for effect/purchase/migration regression tests.
+
+## First Siege 0.8 — Devour & Assimilation
+
+The King Mimic can **aim both feeding attacks using Command focus & Devour target**, shared with normal command chains. **Gnaw** costs 20 Hunger and deals **8 damage**; **Devour** costs 100 Hunger and deals **25 damage**. Either attack resolves immediately before the turn ends. Gnaw permits high-skill first-stage captures, while Devour is a more reliable but costly finisher.
+
+- A **nonlethal feeding attack** deals its damage and spends Hunger but grants no trait.
+- **Only a killing Gnaw or Devour** captures the enemy's essence. Other monster, poison,
+  and command kills still grant gold/Hunger but cannot capture essence.
+- Each named adventurer archetype offers **two fixed traits**. Choose one,
+  or let the essence fade. The captured decision briefly blocks combat/shop
+  actions; it also persists if you save and close the browser mid-choice.
+- **Three equipped traits maximum.** To acquire a fourth, the player must
+  deliberately replace exactly one existing trait. No duplicates, free extra
+  slots, or implicit replacement. Shop-bought Mimic mutations use a separate
+  system and are not overwritten.
+- Both options are shown up front, with visible existing trait slots and
+  descriptions. A trait owned already cannot be selected again.
+- No gold cost for capture; the cost is the **20- or 100-Hunger commitment**, choosing
+  a viable finishing blow, and an increasingly difficult opportunity cost.
+- The final enemy of a raid can be devoured. The capture choice resolves before
+  the Quartermaster or victory panel becomes interactive.
+
+**Sources of traits:** Farmhand (breach defense / gold), Forager (Bloom healing
+/ redraw), Scout (opening chain power / between-raid integrity), Guard (Shell
+armor / first-hit mitigation), Archer (first Fang attack / Venom application),
+Rogue (kill gold / weakened-target execution), Mage (Venom potency / discounted
+Hunger commands), Watchman (long-chain autoattack / start-of-raid armor).
+
+Unlike flat stat upgrades, these abilities change resource management and
+encourage choosing different prey. The Watchman's traits are late-run trophies
+in the five-raid prototype, intended for reuse once we add more dungeon floors.
+
+**Save format:** Version 6 under `mimicry-siege-v6`, migrating existing
+v2–v5 saves. The assimilation history records prey, raid, trait, and any
+replaced ability so the three-slot limit can be validated after reload.
+See `tests/assimilation.test.js` for deterministic scenarios.

@@ -9,4 +9,5 @@ jobs:
         with:
           node-version: "22"
       - run: npm test
-      - run: node --check dist/main.js
+      - run: |
+          for file in dist/*.js; do node --check "$file"; done

@@ -50,9 +50,9 @@ export function discardCard(deck,id,rng=Math.random,handSize=HAND_SIZE){if(deck.
 export function linkCards(a,b){const x=CARDS[a.type],y=CARDS[b.type];return !!(x&&y&&(x.suit==='hunger'||y.suit==='hunger'||x.suit===y.suit||y.rank===x.rank||y.rank===x.rank+1));}
 export function analyzeChain(cards){if(cards.length>MAX_CHAIN)throw Error('Chain exceeds maximum');let streak=0;return cards.map((card,i)=>{const def=CARDS[card.type];if(!def)throw Error('Unknown card');const linked=i>0&&linkCards(cards[i-1],card);streak=linked?streak+1:0;const sameSuit=i>0&&CARDS[cards[i-1].type].suit===def.suit&&def.suit!=='hunger';return {card,def,linked,streak,boost:1+Math.min(3,streak)*0.25,resonance:sameSuit};});}
 // Card IDs are stable across shuffles and save/restore: starter c0..c23, purchased p0..p3.
-export function validateDeck(d,handSize=HAND_SIZE,allowLegacy=false){
+export function validateDeck(d,handSize=HAND_SIZE,allowLegacy=false,discardMax=MAX_DISCARDS){
  if(!d||!['draw','discard','hand','chain'].every(k=>Array.isArray(d[k]))||
-    !Number.isInteger(d.discardsLeft)||d.discardsLeft<0||d.discardsLeft>MAX_DISCARDS||
+    !Number.isInteger(d.discardsLeft)||d.discardsLeft<0||d.discardsLeft>discardMax||
     d.hand.length>handSize||d.chain.length>MAX_CHAIN)return false;
  const acquired=d.acquired===undefined&&allowLegacy?[]:d.acquired;
  const acquiredAt=d.acquiredAt===undefined&&allowLegacy?[]:d.acquiredAt;
