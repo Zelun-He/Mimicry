@@ -3,6 +3,7 @@ import {MAX_MINIONS,MAX_LANE_MINIONS,MAX_BONES,liveMinions} from './swarm-engine
 import {MAX_WEB,CREATURES} from './creature-engine.js';
 import {cardArt,cardRule,CARD_LORE,SUIT_STYLES} from './siege/card-art.js';
 import {FOREST_SCENES,sceneForRaid,nextActionTip,stageProgress} from './siege/tier1.js';
+import {LINK_KINDS,previewCardLink,queuedLinkKinds} from './siege/link-feedback.js';
 import {MUTATIONS,handSize,upgradeableCards,trainableUnits,cardPower} from './shop-engine.js';
 import {ESSENCE_CAPACITY,ESSENCE_BY_ENEMY,ESSENCE_TRAITS,hungerCost,redrawLimit} from './assimilation-engine.js';
 import {newSiege,restoreSiege,RAIDS,SPECIES,moveUnit,endTurn,devour,gnaw,reinforce,buyUpgrade,chooseEssence,queueCommand,unqueueCommand,redrawCommand,previewChain,previewRituals,targetChain,setSummonLane} from './siege-engine.js';
@@ -12,6 +13,8 @@ const artFor=type=>{if(!artCache.has(type))artCache.set(type,cardArt(type));retu
 let tipsHidden=false;try{tipsHidden=localStorage.getItem('mimicry-tier1-tips-hidden')==='yes';}catch{}
 function setTipsHidden(value){tipsHidden=value;try{localStorage.setItem('mimicry-tier1-tips-hidden',value?'yes':'no');}catch{}}
 
+let lastQueuedId=null;
+let activePreviewId=null;
 let state;try{state=restoreSiege(JSON.parse(localStorage.getItem(KEY)||localStorage.getItem('mimicry-siege-v7')||localStorage.getItem('mimicry-siege-v6')||localStorage.getItem('mimicry-siege-v5')||localStorage.getItem('mimicry-siege-v4')||localStorage.getItem('mimicry-siege-v3')||localStorage.getItem('mimicry-siege-v2')))}catch{}state??=newSiege();
 const manifest=await fetch('./siege/animations.json').then(r=>r.json());
 const names=['king-mimic',...Object.keys(SPECIES)];
@@ -84,6 +87,7 @@ function essenceHTML(){
 }
 function render(){
  clearSpriteAnimations();
+ activePreviewId=null;
  const scene=sceneForRaid(state.raid);
  $('arena-scene').dataset.scene=scene.id;
  $('scene-title').textContent=scene.name;
@@ -104,11 +108,21 @@ function render(){
  ...state.units.filter(u=>u.lane===lane&&u.alive).map(u=>`<div class="combatant ally">${sprite(u.species,u.id)}<b>${u.name} <span>Lv${u.level}</span></b>${hpBar(u.hp,u.maxHp)}${u.armor?`<small>⬟ ${u.armor} armor</small>`:''}</div>`),
  ...liveMinions(state,null,lane).map(u=>`<div class="combatant ally swarm-minion ${u.species}">${sprite(u.species,u.id)}<b>${u.name}</b>${hpBar(u.hp,u.maxHp)}<small>SUMMON · ${u.attack} ATK</small></div>`)
  ].join('')||'<div class="empty">No defenders</div>'}<div class="lane-arrow">⚔</div>${state.enemies.filter(e=>e.lane===lane&&e.alive).map(e=>`<div class="combatant invader"><div class="foe">${e.name==='Mage'?'✧':e.name==='Archer'?'➶':'⚔'}</div><b>${e.name}</b>${hpBar(e.hp,e.maxHp)}<small>${e.attack} attack${e.web?' · 🕸 '+e.web+' Web':''}</small></div>`).join('')||'<div class="empty">Lane clear</div>'}</div></div>`).join('');
- const chain=previewChain(state);const rituals=previewRituals(state);
- $('commands').innerHTML=`<div class="chain-stats"><b>HAND ${state.deck.hand.length}/${handSize(state)} · CHAIN ${chainSlotCount(state.deck.chain)}/5 SLOTS</b><span>Redraws: ${state.deck.discardsLeft}/${redrawLimit(state)} · Draw pile: ${state.deck.draw.length} · Deck: ${STARTER_DECK.length+FOUNDING_CARDS.length+state.deck.acquired.length}</span></div><label class="chain-target">Summon lane <select id="summon-lane">${[0,1,2].map(lane=>`<option value="${lane}" ${state.summonLane===lane?'selected':''}>Lane ${lane+1} · ${liveMinions(state,null,lane).length}/${MAX_LANE_MINIONS} minions</option>`).join('')}</select></label><label class="chain-target">Command focus &amp; Devour target <select id="chain-target"><option value="">Auto: weakest invader</option>${state.enemies.filter(e=>e.alive).map(e=>`<option value="${e.id}" ${state.chainTargetId===e.id?'selected':''}>${e.name} · Lane ${e.lane+1} · ${e.hp} HP</option>`).join('')}</select></label><div class="swarm-lane-note">Summon lane ${state.summonLane+1}: ${liveMinions(state,null,state.summonLane).length}/${MAX_LANE_MINIONS} bodies · Total ${liveMinions(state).length}/${MAX_MINIONS} · Bones ${state.bones}/${MAX_BONES}. Full lanes consume summon cards without creating extra minions.</div><div class="chain-rituals">${rituals.map(x=>`<span>✦ ${x.ritual.name} (${x.start+1}–${x.end+1})</span>`).join('')||'Rituals need 3 separate slots; a stacked mob counts as one'}</div><div class="chain-slots">${chain.map((step,i)=>`<button class="chain-card ${step.linked?'linked':''} ${step.def.suit} ${step.count>1?'chain-card--stack':''}" data-unqueue="${step.cards.at(-1).id}" title="Remove last card from chain slot" aria-label="Remove ${step.def.name} from slot ${i+1}"><span class="chain-card__number">0${i+1}</span><span class="chain-card__portrait">${artFor(step.card.type)}</span><strong>${step.def.name}</strong><small>${SUIT_STYLES[step.def.suit].symbol} ${SUIT_STYLES[step.def.suit].name} · ${step.def.rank||'★'} ${step.count>1?'· x'+step.count:''}</small><em>${step.count>1?step.count===3?'HORDE ×3':'MOB ×2':step.linked?'⛓ CHAIN +'+Math.round((step.boost-1)*100)+'%':'START'}</em></button>`).join('')||'<span class="chain-hint">Click cards below in order. Duplicate recruits stack automatically (up to 3 per slot).</span>'}</div><div class="card-hand">${state.deck.hand.map(c=>{const d=CARDS[c.type],pal=SUIT_STYLES[d.suit];
- const ready=state.phase==='battle'&&!state.pendingEssence&&canQueueCard(state.deck,c.id);
- const stacked=ready&&d.kind==='summon'&&state.deck.chain.at(-1)?.type===c.type;
- return `<div class="hand-card ${d.suit} ${d.rarity||'common'} ${d.tribe?'tribal '+d.tribe:''} ${ready?'playable':''}" ${ready?'data-queue="'+c.id+'" tabindex="0" role="group"':''} aria-label="${d.name}: ${cardRule(c.type)}"><div class="hand-card__crown"><span>${pal.symbol} ${pal.name}</span><strong>${d.rank||'★'}</strong></div><div class="hand-card__illustration">${artFor(c.type)}<span class="card-corner card-corner--tl"></span><span class="card-corner card-corner--br"></span></div><div class="hand-card__family">${d.tribe?d.tribe.toUpperCase()+' · ':''}${d.rarity&&d.rarity!=='common'?d.rarity.toUpperCase()+' · ':''}${d.kind.toUpperCase()}</div><h3>${d.name}${c.level?' +'+c.level:''}</h3><p class="hand-card__effect">${cardRule(c.type)}</p><small class="hand-card__lore">“${CARD_LORE[c.type]||'The forest remembers.'}”</small><div class="hand-card__actions"><button class="card-play" data-queue="${c.id}" ${ready?'':'disabled'}>${stacked?'STACK +1':ready?'PLAY CARD':'CANNOT LINK'}</button><button class="discard" data-redraw="${c.id}" title="Discard and redraw ${d.name}" ${state.phase!=='battle'||!!state.pendingEssence||state.deck.discardsLeft===0?'disabled':''}>↻</button></div></div>`;}).join('')}</div>`;
+ const chain=previewChain(state);const rituals=previewRituals(state);const kinds=queuedLinkKinds(state.deck.chain);
+ $('commands').innerHTML=`<div class="chain-stats"><b>HAND ${state.deck.hand.length}/${handSize(state)} · CHAIN ${chainSlotCount(state.deck.chain)}/5 SLOTS</b><span>Redraws: ${state.deck.discardsLeft}/${redrawLimit(state)} · Draw pile: ${state.deck.draw.length} · Deck: ${STARTER_DECK.length+FOUNDING_CARDS.length+state.deck.acquired.length}</span></div><label class="chain-target">Summon lane <select id="summon-lane">${[0,1,2].map(lane=>`<option value="${lane}" ${state.summonLane===lane?'selected':''}>Lane ${lane+1} · ${liveMinions(state,null,lane).length}/${MAX_LANE_MINIONS} minions</option>`).join('')}</select></label><label class="chain-target">Command focus &amp; Devour target <select id="chain-target"><option value="">Auto: weakest invader</option>${state.enemies.filter(e=>e.alive).map(e=>`<option value="${e.id}" ${state.chainTargetId===e.id?'selected':''}>${e.name} · Lane ${e.lane+1} · ${e.hp} HP</option>`).join('')}</select></label><div class="swarm-lane-note">Summon lane ${state.summonLane+1}: ${liveMinions(state,null,state.summonLane).length}/${MAX_LANE_MINIONS} bodies · Total ${liveMinions(state).length}/${MAX_MINIONS} · Bones ${state.bones}/${MAX_BONES}. Full lanes consume summon cards without creating extra minions.</div><div class="chain-rituals">${rituals.map(x=>`<span>✦ ${x.ritual.name} (${x.start+1}–${x.end+1})</span>`).join('')||'Rituals need 3 separate slots; a stacked mob counts as one'}</div><div class="link-readout" id="link-readout" data-link-state="opening" aria-live="polite" aria-atomic="true"><span class="link-readout__sigil" id="link-preview-symbol">◇</span><div class="link-readout__copy"><strong id="link-preview-title">CHOOSE YOUR NEXT CARD</strong><span id="link-preview-description">Hover, focus, or tap a card to see its link before playing.</span></div><span class="link-readout__hint">SUIT · RANK · +1 · WILD</span></div><div class="chain-slots" id="chain-slots">${chain.map((step,i)=>`<button class="chain-card ${step.linked?'linked':''} ${step.def.suit} link-${kinds[i].kind} ${step.count>1?'chain-card--stack':''} ${step.cards.some(card=>card.id===lastQueuedId)?'just-queued':''}" data-unqueue="${step.cards.at(-1).id}" data-link-kind="${kinds[i].kind}" title="${kinds[i].explanation} Remove the last card from this slot." aria-label="Remove ${step.def.name} from slot ${i+1}"><span class="chain-card__number">0${i+1}</span><span class="chain-card__portrait">${artFor(step.card.type)}</span><strong>${step.def.name}</strong><small>${SUIT_STYLES[step.def.suit].symbol} ${SUIT_STYLES[step.def.suit].name} · ${step.def.rank||'★'} ${step.count>1?'· ×'+step.count:''}</small><span class="chain-card__link-tag">${step.count>1?'▣ '+(step.count===3?'HORDE ×3':'MOB ×2'):kinds[i].symbol+' '+kinds[i].short}</span><em>${step.count>1?'ONE CHAIN SLOT':step.linked?'⛓ +'+Math.round((step.boost-1)*100)+'%':'OPENING CARD'}</em></button>`).join('')||''}${chain.length<5?`<div class="chain-next-slot" id="chain-next-slot" aria-hidden="true"><span class="chain-next-slot__crest">＋</span><strong>NEXT LINK</strong><small>Slot ${chain.length+1} of 5</small></div>`:''}</div><div class="card-hand">${state.deck.hand.map(c=>{const d=CARDS[c.type],pal=SUIT_STYLES[d.suit];
+ const hint=previewCardLink(state.deck,c);
+ const ready=state.phase==='battle'&&!state.pendingEssence&&hint.legal;
+ const locked=state.phase!=='battle'||Boolean(state.pendingEssence);
+ const stacked=hint.kind==='stack'&&ready;
+ const linkKind=locked?'unavailable':hint.kind;
+ return `<div class="hand-card ${d.suit} ${d.rarity||'common'} ${d.tribe?'tribal '+d.tribe:''} ${ready?'playable':'unplayable'} ${stacked?'stackable':''} link-${linkKind}" data-card-id="${c.id}" data-school="${d.suit}" data-link-kind="${linkKind}" tabindex="0" role="group" aria-label="${d.name}: ${cardRule(c.type)}. ${ready?hint.label:locked?'Unavailable outside combat':hint.label}.">
+  <div class="hand-card__crown"><span class="hand-card__crest" aria-label="${pal.name} school"><i aria-hidden="true">${pal.symbol}</i><span>${pal.name}</span></span><strong class="hand-card__rank" aria-label="Rank ${d.rank||'wild'}">${d.rank||'★'}</strong></div>
+  <div class="hand-card__illustration">${artFor(c.type)}<span class="card-corner card-corner--tl"></span><span class="card-corner card-corner--br"></span><span class="card-school-fx" aria-hidden="true"></span></div>
+  <div class="hand-card__family">${d.tribe?d.tribe.toUpperCase()+' · ':''}${d.rarity&&d.rarity!=='common'?d.rarity.toUpperCase()+' · ':''}${d.kind.toUpperCase()}</div>
+  <h3>${d.name}${c.level?' +'+c.level:''}</h3>
+  <p class="hand-card__effect">${cardRule(c.type)}</p><small class="hand-card__lore">“${CARD_LORE[c.type]||'The forest remembers.'}”</small>
+  <div class="hand-card__link-hint ${ready?'is-valid':'is-invalid'}" aria-hidden="true"><span>${locked?'—':hint.symbol}</span><strong>${locked?'NOT YOUR TURN':hint.short}</strong></div>
+  <div class="hand-card__actions"><button class="card-play" type="button" data-queue="${c.id}" ${ready?'':'disabled'}>${stacked?'STACK +1':ready?'PLAY CARD':'CANNOT LINK'}</button><button class="discard" type="button" data-redraw="${c.id}" title="Discard and redraw ${d.name}" aria-label="Discard ${d.name} and redraw" ${state.phase!=='battle'||!!state.pendingEssence||state.deck.discardsLeft===0?'disabled':''}>↻</button></div></div>`;}).join('')}</div>`;
  $('creature-bestiary').innerHTML=Object.entries(CREATURES).map(([species,creature])=>{
   const ids={spider:'spider-summon','slime-bud':'slime-summon',mimicling:'mimicling-summon'};
   const owned=state.deck.acquired.includes(ids[species]);
@@ -138,16 +152,100 @@ function render(){
 let busy=false;
 function replay(events){if(!events.length)return;busy=true;const actions=events.filter(x=>x.state!=='damage'||x.id==='king-mimic').slice(0,14);let i=0;const play=()=>{if(i>=actions.length){busy=false;return;}const e=actions[i++];const u=[...state.units,...state.minions].find(x=>x.id===e.id);const species=u?.species||'king-mimic';document.querySelectorAll(`[data-unit="${e.id}"]`).forEach(el=>animate(el,species,e.state));if(e.id==='king-mimic')animate($('king-sprite'),'king-mimic',e.state);setTimeout(play,e.state==='death'?550:320);};play();}
 $('tips-toggle').addEventListener('click',()=>{setTipsHidden(!tipsHidden);render();});
+// Preview without mutating or rebuilding the hand (important for pointer focus).
+function showLinkPreview(id){
+ const card=state.deck.hand.find(c=>c.id===id);
+ if(!card)return;
+ const feedback=previewCardLink(state.deck,card);
+ const locked=state.phase!=='battle'||Boolean(state.pendingEssence);
+ const kind=locked?'unavailable':feedback.kind;
+ const info=locked?LINK_KINDS.unavailable:feedback;
+ activePreviewId=id;
+ const readout=$('link-readout'),ghost=$('chain-next-slot');
+ if(readout){
+  readout.dataset.linkState=kind;
+  $('link-preview-symbol').textContent=info.symbol;
+  $('link-preview-title').textContent=info.label;
+  $('link-preview-description').textContent=locked?'Finish the current choice to continue building your chain.':
+   feedback.legal?(kind==='stack'?`${card.type==='goblin-recruit'?'Goblin':'Creature'} formation grows to ×${feedback.count}, using just one chain slot.`:
+    `${info.explanation} ${Math.round((feedback.boost-1)*100)}% chain power bonus · ${feedback.slots}/5 slots.`):info.explanation;
+ }
+ if(ghost){
+  ghost.dataset.linkState=kind;
+  ghost.innerHTML=feedback.legal?`<span class="chain-next-slot__crest">${info.symbol}</span><strong>${info.short}</strong><small>${kind==='stack'?'Formation ×'+feedback.count:'Slot '+feedback.slots+' of 5'}</small>`:
+   '<span class="chain-next-slot__crest">×</span><strong>NO LINK</strong><small>Choose another card</small>';
+ }
+ const chainRail=$('chain-slots');
+ if(chainRail){
+  chainRail.dataset.previewKind=kind;
+  chainRail.querySelectorAll?.('.chain-card')?.forEach(el=>el.classList.toggle('preview-anchor',el===chainRail.querySelector('.chain-card:last-of-type')&&feedback.legal));
+ }
+ const container=$('commands');
+ container.querySelectorAll?.('.hand-card[data-card-id]')?.forEach(el=>{
+  el.classList.toggle('is-previewed',el.dataset.cardId===id);
+ });
+}
+function clearLinkPreview(){
+ if(!activePreviewId)return;
+ activePreviewId=null;
+ const readout=$('link-readout'),ghost=$('chain-next-slot'),rail=$('chain-slots');
+ if(readout){readout.dataset.linkState='opening';$('link-preview-symbol').textContent='◇';
+  $('link-preview-title').textContent='CHOOSE YOUR NEXT CARD';
+  $('link-preview-description').textContent='Hover, focus, or tap a card to see its link before playing.';
+ }
+ if(ghost){ghost.dataset.linkState='opening';
+  ghost.innerHTML='<span class="chain-next-slot__crest">＋</span><strong>NEXT LINK</strong><small>Choose a card</small>';
+ }
+ if(rail){rail.dataset.previewKind='opening';
+  rail.querySelectorAll?.('.chain-card')?.forEach(el=>el.classList.remove('preview-anchor'));
+ }
+ $('commands').querySelectorAll?.('.hand-card.is-previewed')?.forEach(el=>el.classList.remove('is-previewed'));
+}
+const cardFromEvent=e=>e.target?.closest?.('.hand-card[data-card-id]');
+$('commands').addEventListener('pointerover',e=>{
+ if(e.pointerType==='touch')return;
+ const card=cardFromEvent(e);
+ if(card&&!card.contains?.(e.relatedTarget))showLinkPreview(card.dataset.cardId);
+});
+$('commands').addEventListener('pointerout',e=>{
+ if(e.pointerType==='touch')return;
+ const card=cardFromEvent(e);
+ if(card&&!card.contains?.(e.relatedTarget))clearLinkPreview();
+});
+$('commands').addEventListener('pointerdown',e=>{
+ if(e.pointerType!=='touch')return;
+ const card=cardFromEvent(e);
+ if(card&&!e.target.closest?.('button'))showLinkPreview(card.dataset.cardId);
+});
+$('commands').addEventListener('focusin',e=>{
+ const card=cardFromEvent(e);
+ if(card)showLinkPreview(card.dataset.cardId);
+});
+$('commands').addEventListener('focusout',e=>{
+ const card=cardFromEvent(e);
+ if(card&&!card.contains?.(e.relatedTarget))clearLinkPreview();
+});
 $('commands').addEventListener('keydown',e=>{
- if((e.key==='Enter'||e.key===' ')&&e.target.matches('.hand-card[data-queue]')){
-  e.preventDefault();if(!busy&&state.phase==='battle'&&queueCommand(state,e.target.dataset.queue))render();
+ if(e.target.matches?.('.hand-card[data-card-id]')&&(e.key==='Enter'||e.key===' ')){
+  e.preventDefault();showLinkPreview(e.target.dataset.cardId);
  }
 });
 $('commands').addEventListener('change',e=>{
  if(e.target.id==='chain-target'&&targetChain(state,e.target.value||null))render();
  if(e.target.id==='summon-lane'&&setSummonLane(state,Number(e.target.value)))render();
 });
-$('commands').addEventListener('click',e=>{if(busy||state.phase!=='battle')return;const b=e.target.closest('[data-queue],[data-unqueue],[data-redraw]');if(!b)return;if(b.dataset.queue)queueCommand(state,b.dataset.queue);else if(b.dataset.unqueue)unqueueCommand(state,b.dataset.unqueue);else if(b.dataset.redraw)redrawCommand(state,b.dataset.redraw);render();});
+$('commands').addEventListener('click',e=>{
+ if(busy||state.phase!=='battle')return;
+ const button=e.target.closest?.('[data-queue],[data-unqueue],[data-redraw]');
+ if(!button){const card=cardFromEvent(e);if(card)showLinkPreview(card.dataset.cardId);return;}
+ let changed=false;
+ if(button.dataset.queue){
+  changed=queueCommand(state,button.dataset.queue);
+  if(changed)lastQueuedId=button.dataset.queue;
+ }else if(button.dataset.unqueue)changed=unqueueCommand(state,button.dataset.unqueue);
+ else if(button.dataset.redraw)changed=redrawCommand(state,button.dataset.redraw);
+ if(changed){render();lastQueuedId=null;}
+});
 $('roster').addEventListener('change',e=>{if(e.target.matches('[data-move]')){moveUnit(state,e.target.dataset.move,Number(e.target.value));render();}});
 $('turn-button').addEventListener('click',()=>{if(busy)return;endTurn(state);const events=[...state.animations];render();replay(events);});
 $('devour').addEventListener('click',()=>{if(busy)return;if(devour(state)){const events=[...state.animations];render();replay(events);}});

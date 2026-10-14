@@ -32,6 +32,28 @@ test('Tier 1 UI boots, illustrates its first hand, toggles tips and queues a car
   assert.ok(get('tip-title').textContent.length>0);
   assert.equal(saved.has('mimicry-siege-v8'),true);
   assert.equal(typeof get('commands').listeners.keydown,'function');
+  assert.ok(hand.includes('hand-card__crest'));
+  assert.ok(hand.includes('hand-card__rank'));
+  assert.ok(hand.includes('hand-card__link-hint'));
+  assert.ok(hand.includes('chain-next-slot'));
+  assert.ok(hand.includes('link-readout'));
+  assert.ok(hand.includes('data-card-id'));
+  assert.ok(hand.includes('RANK')||hand.includes('FANG'));
+  const inspectedId=hand.match(/data-card-id="([^"]+)"/)?.[1];
+  assert.ok(inspectedId);
+  const cardSurface={dataset:{cardId:inspectedId},contains:()=>false};
+  const inspectEvent={target:{closest:selector=>selector.startsWith('.hand-card')?cardSurface:null},pointerType:'mouse',relatedTarget:null};
+  get('commands').listeners.pointerover(inspectEvent);
+  assert.notEqual(get('link-preview-title').textContent,'CHOOSE YOUR NEXT CARD');
+  assert.ok(get('link-preview-description').textContent.length>15);
+  get('commands').listeners.pointerout(inspectEvent);
+  assert.equal(get('link-preview-title').textContent,'CHOOSE YOUR NEXT CARD');
+  let prevented=false;
+  get('commands').listeners.keydown({key:'Enter',target:{matches:()=>true,dataset:{cardId:inspectedId}},preventDefault:()=>{prevented=true;}});
+  assert.equal(prevented,true);
+  assert.ok(get('link-preview-title').textContent.length>0);
+  assert.equal(get('commands').innerHTML,hand); // Inspecting does not queue or redraw.
+
 
   get('tips-toggle').listeners.click();
   assert.equal(get('first-run-tip').hidden,true);
