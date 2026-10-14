@@ -36,7 +36,12 @@ test('restored Forest Edge boots as actual Siege with sprites, card chaining and
   assert.equal(get('turn').textContent,'TURN 1');
   assert.ok(get('route').innerHTML.includes('Farmhand'));
   assert.ok(get('targets').innerHTML.includes('data-target'));
-  assert.ok(get('defenders').innerHTML.includes('goblin'));
+  assert.ok(get('defenders').innerHTML.includes('Goblin'));
+  assert.ok(get('defenders').innerHTML.includes('HP · L'));
+  assert.ok(!get('defenders').innerHTML.includes('sprite'));
+  assert.ok(!get('defenders').innerHTML.includes('unit-portrait'));
+  assert.ok(!get('roster').innerHTML.includes('unit-portrait'));
+  assert.ok(get('roster').innerHTML.includes('roster-role'));
   assert.equal((get('hand').innerHTML.match(/class="card /g)||[]).length,8);
   assert.equal((get('chain').innerHTML.match(/class="chain-slot"/g)||[]).length,5);
   assert.equal(get('your-hp').textContent,'30 / 30 INTEGRITY');

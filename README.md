@@ -316,16 +316,18 @@ All the newer Siege mechanics run **underneath the original design**:
   Existing saved games and purchased cards are preserved.
 - A featured foe appears as the large opponent sprite; additional living
   adventurers appear behind it and in clickable focus chips below the forest.
-- Permanent defenders and summons appear as smaller sprites in the forest,
-  plus compact lane indicators. Choose summon lane above the attack chain;
-  move persistent defenders in the optional army panel.
+- Permanent defenders and summons do **not** render as tiny battlefield
+  sprites. Their HP, troop counts and lane assignments are visible in compact
+  text badges below the forest; reposition veterans in the optional army panel.
+  Choose summon lane above the attack chain.
 - Creature cards, Goblin/Skeleton formations (Mob/Horde x2/x3),
   linked school/rank/sequence/Hunger combinations, rituals and acquired
   rare commands all appear in the original five-slot table and illustrated
   horizontal hand.
 - Every queued card lights up **in order** while the original sprite sheet
-  animates the Mimic, damage flashes and smaller defender attacks. Combat
-  health/results come from the real Siege engine, not fabricated per-card damage.
+  animates the King Mimic and the enemy reacts to actual damage events.
+  Allied attacks resolve mechanically without adding extra board actors.
+  Combat health/results come from the real Siege engine, not fabricated damage.
 - The original Discard and Play Chain buttons remain prominent. Discard
   toggles a mode in which clicking a single card redraws it; Play Chain
   resolves the turn. When no chain is queued, the button explicitly says
@@ -343,3 +345,26 @@ Key files:
 `dist/siege/forest-game.css` (responsive refinements to original CSS),
 `dist/siege.js` (integrated Siege controller),
 `DESIGN-FOREST-RESTORE.md` (design decisions).
+
+## Battlefield Focus — Creature-card direction (Phase 1)
+
+The original **Mimic versus featured adventurer** composition now stays clear.
+Removed miniature allied veteran sprites, temporary summon sprites, extra
+fallback blobs, their image requests, and large floating `HIT`/card-name text
+from the forest renderer. The enemy and the King Mimic remain on-screen,
+using their existing original sprite sheets and subtle impact feedback.
+
+Monster HP, lane and grouped summon counts remain readable below the canvas:
+`Goblin 18/18 HP · L2`, `Skeleton ×2 · L1`, etc. The expandable veteran
+roster keeps its controls but no longer loads miniature character artwork.
+**All summons, attacks, buffs, swarms, card links, shops and v8 saved games
+work exactly as before.**
+
+This is intentionally **Phase 1 only**. Next: build the new card portraits
+using the prepared creature sprite board, then make Mob/Horde formations and
+card-slot animations communicate troop strength. These are not part of
+this change.
+
+Files: `dist/siege/forest-renderer.js`,
+`dist/siege.js`, `dist/siege/forest-game.css`,
+`tests/battlefield-focus.test.js`.

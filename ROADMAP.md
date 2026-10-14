@@ -36,6 +36,13 @@ combat tests, save migration, and a manual browser playtest before release.
   / and /siege.html gameplay. Preserve new Siege swarms, multi-enemy targeting,
   card links, Gnaw/Devour, traits, shops and save version 8. Archive the
   standalone original one-on-one mode at /classic.html.
+- [x] **03g — Card-centered battlefield, Phase 1** (`feature/battlefield-focus-no-allied-sprites`).
+  Remove mini allied/veteran/summon sprites and noisy combat popups from the
+  forest canvas. Keep the original King Mimic and opponents, with compact,
+  readable HP/formation/lane badges below. Combat rules and saves are unchanged.
+- [ ] **03h — Sprite-board creature card portraits, Phase 2.**
+  Use the prepared creature art on cards with tribe-specific frames. Keep
+  monster personalities on the cards instead of in small battlefield actors.
 - [ ] **04 — Treasure bait and invasion control.** Choose between visible risk/reward
   lures before raids; enemy types and rewards vary accordingly.
 - [ ] **05 — Counterplay-driven enemy abilities.** Bards, thieves, paladins,
