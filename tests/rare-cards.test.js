@@ -101,6 +101,8 @@ test('sacrificial strike spends defender health but never kills its donor',()=>{
  const s=purchase('sacrifice');
  const hand=prepare(s,['sacrifice']);
  const donor=s.units.find(u=>u.species==='slime');
+ const sporeling=s.units.find(u=>u.species==='sporeling');
+ sporeling.lane=0;sporeling.attack=0; // Prevent passive same-lane healing from masking the health payment.
  const hp=donor.hp;
  assert.equal(queueCommand(s,hand[0].id),true);
  endTurn(s,baseRng);
@@ -160,7 +162,7 @@ test('mirror fang repeats a compatible previous command once, for twenty hunger'
  s.hunger=100;
  for(const c of hand)assert.equal(queueCommand(s,c.id),true);
  endTurn(s,baseRng);
- assert.equal(s.enemies[0].hp,16); // strike 4+2 affinity; copied base 4/2
+ assert.equal(s.enemies[0].hp,16,JSON.stringify({log:s.log,hunger:s.hunger,enemies:s.enemies})); // strike 4+2 affinity; copied base 4/2
  assert.equal(s.hunger,80);
  assert.ok(s.log.some(line=>line.includes('repeats a strike')));
  assert.equal(s.deck.chain.length,0);
@@ -173,7 +175,7 @@ test('mirror fang cannot copy itself or a Hunger Feast, and costs no hunger when
  for(const c of hand)assert.equal(queueCommand(s,c.id),true);
  endTurn(s,baseRng);
  assert.equal(s.hunger,60); // Feast costs 40, mirror refuses Hunger recursion
- assert.ok(s.log.some(line=>line.includes('Mirror Fang fizzles')));
+ assert.ok(s.log.some(line=>line.includes('Mirror Fang fizzles')),JSON.stringify(s.log));
 });
 
 test('mirror fang cannot cast for free if hunger is insufficient',()=>{
@@ -184,7 +186,7 @@ test('mirror fang cannot cast for free if hunger is insufficient',()=>{
  endTurn(s,baseRng);
  assert.equal(s.hunger,0);
  assert.equal(s.enemies[0].hp,18); // only the first strike
- assert.ok(s.log.some(line=>line.includes('requires 20 Hunger')));
+ assert.ok(s.log.some(line=>line.includes('requires 20 Hunger')),JSON.stringify(s.log));
 });
 
 test('save validation rejects counterfeit purchased card type, duplicate id or bogus acquisition',()=>{
@@ -199,7 +201,7 @@ test('save validation rejects counterfeit purchased card type, duplicate id or b
  bad.deck.acquired.push('harvest');
  assert.equal(restoreSiege(bad),null);
  bad=structuredClone(s);
- bad.deck.hand[0].id='p0';
+ bad.deck.hand.find(c=>c.id!=='p0').id='p0';
  assert.equal(restoreSiege(bad),null);
 });
 
