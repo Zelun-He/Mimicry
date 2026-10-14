@@ -16,6 +16,10 @@ combat tests, save migration, and a manual browser playtest before release.
 - [x] **03b — New Creature Families** (`feature/spiders-slimes-mimiclings`).
   Add purchasable Spiders (Webweaver), Slimes (Mitosis/Fusion), and Mimiclings
   (False Treasure/Hunger), with local pixel-art portraits and shared summon caps.
+- [x] **03c — Tier 1 Forest Edge presentation** (`feature/tier1-forest-polish`).
+  Five distinct pixel-painted forest scenes, 36 original illustrated card faces,
+  a clearer chain queue, premium shop card previews, and a non-blocking first-turn
+  guide. This pass changes presentation, not combat balance or collectible IDs.
 - [ ] **04 — Treasure bait and invasion control.** Choose between visible risk/reward
   lures before raids; enemy types and rewards vary accordingly.
 - [ ] **05 — Counterplay-driven enemy abilities.** Bards, thieves, paladins,

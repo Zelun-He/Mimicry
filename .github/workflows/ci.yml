@@ -10,4 +10,4 @@ jobs:
           node-version: "22"
       - run: npm test
       - run: |
-          for file in dist/*.js; do node --check "$file"; done
+          for file in dist/*.js dist/siege/*.js; do node --check "$file"; done
