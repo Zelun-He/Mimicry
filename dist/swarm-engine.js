@@ -3,23 +3,28 @@
 export const MAX_MINIONS=6,MAX_LANE_MINIONS=3,MAX_BONES=6;
 export const MINION_STATS=Object.freeze({
  goblin:Object.freeze({name:'Goblin Recruit',hp:4,attack:2}),
- skeleton:Object.freeze({name:'Raised Skeleton',hp:3,attack:2})
+ skeleton:Object.freeze({name:'Raised Skeleton',hp:3,attack:2}),
+ spider:Object.freeze({name:'Venom Spider',hp:4,attack:2}),
+ 'slime-bud':Object.freeze({name:'Slime Droplet',hp:6,attack:2}),
+ slimelet:Object.freeze({name:'Tiny Slime',hp:3,attack:1}),
+ 'slime-giant':Object.freeze({name:'Giant Ooze',hp:10,attack:5}),
+ mimicling:Object.freeze({name:'Mimicling',hp:5,attack:2})
 });
 export function liveMinions(s,species=null,lane=null){
  return (s.minions||[]).filter(m=>m.alive&&m.hp>0&&
    (species===null||m.species===species)&&(lane===null||m.lane===lane));
 }
 export function lanePopulation(s,lane){return liveMinions(s,null,lane).length;}
-export function summonMinions(s,species,count=1,fromBones=false){
- if(!Object.hasOwn(MINION_STATS,species)||!Number.isInteger(count)||count<0)return 0;
+export function summonMinions(s,species,count=1,fromBones=false,lane=s.summonLane){
+ if(!Object.hasOwn(MINION_STATS,species)||!Number.isInteger(count)||count<0||!Number.isInteger(lane)||lane<0||lane>2)return 0;
  let created=0;
  for(let i=0;i<count;i++){
   if(liveMinions(s).length>=MAX_MINIONS||
-     lanePopulation(s,s.summonLane)>=MAX_LANE_MINIONS)break;
+     lanePopulation(s,lane)>=MAX_LANE_MINIONS)break;
   const def=MINION_STATS[species];
   s.minions.push({id:`m${s.nextMinionId++}`,species,name:def.name,
-   lane:s.summonLane,maxHp:def.hp,hp:def.hp,attack:def.attack,
-   armor:0,alive:true,summoned:true,
+   lane,maxHp:def.hp,hp:def.hp,attack:def.attack,
+   armor:0,alive:true,summoned:true,splitTurn:-1,fedTurn:-1,
    boneReadyTurn:s.turn+(fromBones?1:0)});
   created++;
  }
@@ -56,7 +61,10 @@ export function validSwarmState(s){
      !Number.isInteger(m.lane)||m.lane<0||m.lane>2||
      !Number.isInteger(m.hp)||m.hp>MINION_STATS[m.species].hp||
      m.maxHp!==MINION_STATS[m.species].hp||m.attack!==MINION_STATS[m.species].attack||
-     m.armor!==0||!Number.isInteger(m.boneReadyTurn)||
+     m.armor!==0||
+     (m.splitTurn!==undefined&&(!Number.isInteger(m.splitTurn)||m.splitTurn< -1||m.splitTurn>s.turn))||
+     (m.fedTurn!==undefined&&(!Number.isInteger(m.fedTurn)||m.fedTurn< -1||m.fedTurn>s.turn))||
+     !Number.isInteger(m.boneReadyTurn)||
      m.boneReadyTurn<1||m.boneReadyTurn>s.turn+1)return false;
   ids.add(m.id);
  }

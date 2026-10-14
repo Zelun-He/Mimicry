@@ -35,14 +35,14 @@ function injectCard(s,type){
 
 test('starting Siege has two copies each of Goblin and Skeleton recruit and eight cards in hand',()=>{
  const s=newSiege(rng);
- assert.equal(s.version,7);
+ assert.equal(s.version,8);
  assert.equal(s.deck.tribal,true);
  assert.equal(FOUNDING_CARDS.length,4);
  assert.equal(inventory(s).length,STARTER_DECK.length+FOUNDING_CARDS.length);
  assert.equal(inventory(s).filter(c=>c.type==='goblin-recruit').length,2);
  assert.equal(inventory(s).filter(c=>c.type==='skeleton-recruit').length,2);
  assert.equal(s.deck.hand.length,8);
- assert.ok(validateDeck(s.deck,8,false,2,true));
+ assert.ok(validateDeck(s.deck,8,false,2,true,true));
  assert.ok(restoreSiege(structuredClone(s)));
 });
 
@@ -77,7 +77,7 @@ test('six physical cards may legally occupy five chain slots',()=>{
  hand.forEach(c=>assert.equal(queueCommand(s,c.id),true));
  assert.equal(s.deck.chain.length,6);
  assert.equal(chainSlotCount(s.deck.chain),5);
- assert.ok(validateDeck(s.deck,8,false,2,true));
+ assert.ok(validateDeck(s.deck,8,false,2,true,true));
  assert.ok(restoreSiege(structuredClone(s)));
 });
 
@@ -200,7 +200,7 @@ test('Ossuary Wall spends Bones for armor only in the selected lane',()=>{
 
 test('the Quartermaster offers one Goblin and one Skeleton choice for 12 gold',()=>{
  const s=buyShop(newSiege(rng)),offer=s.shopOffers[4];
- assert.equal(s.shopOffers.length,5);
+ assert.equal(s.shopOffers.length,6);
  assert.equal(offer.id,'tribal');assert.equal(offer.cost,12);
  assert.equal(CARDS[offer.options[0]].tribe,'goblin');
  assert.equal(CARDS[offer.options[1]].tribe,'skeleton');
@@ -220,7 +220,7 @@ test('rare and tribal cards can both be bought once in the same shop and kept on
  assert.equal(buyUpgrade(s,'tribal',s.shopOffers[4].options[1]),true);
  assert.deepEqual(s.deck.acquiredAt,[0,0]);
  assert.deepEqual(s.deck.acquired.map((type,i)=>'p'+i),['p0','p1']);
- assert.ok(validateDeck(s.deck,8,false,2,true));
+ assert.ok(validateDeck(s.deck,8,false,2,true,true));
  assert.ok(restoreSiege(structuredClone(s)));
  assert.equal(reinforce(s,'rest'),true);
  assert.equal(s.deck.acquired.length,2);
@@ -244,12 +244,12 @@ test('versions 2 through 6 migrate to a 28-card founding deck without losing pur
  const legacy=structuredClone(orig);
  legacy.version=6;
  for(const key of ['draw','discard','hand','chain'])legacy.deck[key]=legacy.deck[key].filter(c=>!c.id.startsWith('f'));
- legacy.deck.tribal=false;
+ legacy.deck.tribal=false;delete legacy.deck.exotic;
  const restored=restoreSiege(legacy);
  assert.ok(restored);
- assert.equal(restored.version,7);
+ assert.equal(restored.version,8);
  assert.equal(deckCards(restored).length,28);
- assert.ok(validateDeck(restored.deck,8,false,2,true));
+ assert.ok(validateDeck(restored.deck,8,false,2,true,true));
  assert.equal(restored.minions.length,0);
  assert.equal(restored.bones,0);
 });
@@ -276,16 +276,16 @@ test('save validation rejects fabricated minions, extra Bones, bogus population 
 test('v6 reward saves gain exactly one tribal offer without losing rare stock',()=>{
  const s=buyShop(newSiege(rng));
  const rare=structuredClone(s.shopOffers[3]);
- s.version=6;s.shopOffers.pop();
+ s.version=6;s.shopOffers.pop();s.shopOffers.pop();delete s.deck.exotic;
  for(const pile of ['draw','discard','hand','chain'])s.deck[pile]=s.deck[pile].filter(c=>!c.id.startsWith('f'));
  s.deck.tribal=false;
  const result=restoreSiege(structuredClone(s));
  assert.ok(result);
- assert.equal(result.shopOffers.length,5);
+ assert.equal(result.shopOffers.length,6);
  assert.deepEqual(result.shopOffers[3],rare);
  assert.equal(result.shopOffers[4].id,'tribal');
  assert.equal(result.gold,s.gold);
- assert.ok(validateDeck(result.deck,8,false,2,true));
+ assert.ok(validateDeck(result.deck,8,false,2,true,true));
 });
 test('Bone March scales attacks with stored Bones, not unlimited resources',()=>{
  const s=newSiege(rng);injectCard(s,'bone-march');

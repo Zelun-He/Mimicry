@@ -35,7 +35,7 @@ function prepare(s,types){
  });
  s.deck.draw=all;s.deck.discard=[];s.deck.hand=hand;s.deck.chain=[];
  s.units.forEach(u=>u.lane=1);
- assert.ok(validateDeck(s.deck,8,false,2,true));
+ assert.ok(validateDeck(s.deck,8,false,2,true,true));
  return [...hand]; // Independent copy: queueCard mutates the deck's hand array.
 }
 
@@ -66,7 +66,7 @@ test('buying a rare card spends gold once and it appears in the first next-raid 
  assert.equal(buyUpgrade(s,'rare'),false);
  assert.equal(s.deck.acquired[0],'sacrifice');
  assert.equal(deckCards(s).find(c=>c.id==='p0').type,'sacrifice');
- assert.ok(validateDeck(s.deck,8,false,2,true));
+ assert.ok(validateDeck(s.deck,8,false,2,true,true));
  assert.equal(reinforce(s,'rest'),true);
  assert.ok(s.deck.hand.some(c=>c.id==='p0'));
  assert.equal(s.deck.hand.length,8);
@@ -87,9 +87,9 @@ test('purchased cards remain conserved through redraws, turn resolution and a sa
  const s=purchase('harvest');
  assert.equal(deckCards(s).length,29);
  assert.equal(redrawCommand(s,s.deck.hand[0].id,baseRng),true);
- assert.ok(validateDeck(s.deck,8,false,2,true));
+ assert.ok(validateDeck(s.deck,8,false,2,true,true));
  endTurn(s,baseRng);
- assert.ok(validateDeck(s.deck,8,false,2,true));
+ assert.ok(validateDeck(s.deck,8,false,2,true,true));
  assert.equal(deckCards(s).length,29);
  const restored=restoreSiege(structuredClone(s));
  assert.ok(restored);
@@ -216,29 +216,29 @@ test('v4 reward saves migrate without losing selected shop stock, gold or upgrad
  const s=newSiege(baseRng);earnShop(s);
  const type=s.shopOffers[2].id;
  for(const pile of ['draw','discard','hand','chain'])s.deck[pile]=s.deck[pile].filter(c=>!c.id.startsWith('f'));
- s.deck.tribal=false;
+ s.deck.tribal=false;delete s.deck.exotic;
  s.version=4;
- s.shopOffers.pop();s.shopOffers.pop();
+ s.shopOffers.pop();s.shopOffers.pop();s.shopOffers.pop();
  delete s.deck.acquired;
  const restored=restoreSiege(structuredClone(s));
  assert.ok(restored);
- assert.equal(restored.version,7);
- assert.equal(restored.shopOffers.length,5);
+ assert.equal(restored.version,8);
+ assert.equal(restored.shopOffers.length,6);
  assert.equal(restored.shopOffers[2].id,type);
  assert.equal(restored.shopOffers[3].id,'rare');
  assert.deepEqual(restored.deck.acquired,[]);
- assert.ok(validateDeck(restored.deck,8,false,2,true));
+ assert.ok(validateDeck(restored.deck,8,false,2,true,true));
 });
 
 test('v4 battle saves migrate without changing the original deck or hand',()=>{
  const s=newSiege(baseRng);
  for(const pile of ['draw','discard','hand','chain'])s.deck[pile]=s.deck[pile].filter(c=>!c.id.startsWith('f'));
  const ids=s.deck.hand.map(c=>c.id);
- s.deck.tribal=false;
+ s.deck.tribal=false;delete s.deck.exotic;
  s.version=4;delete s.deck.acquired;
  const restored=restoreSiege(structuredClone(s));
  assert.ok(restored);
- assert.equal(restored.version,7);
+ assert.equal(restored.version,8);
  assert.deepEqual(restored.deck.acquired,[]);
  assert.deepEqual(restored.deck.hand.map(c=>c.id),ids);
  assert.equal(restored.shopOffers.length,0);

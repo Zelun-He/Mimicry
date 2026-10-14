@@ -126,3 +126,32 @@
 @media(max-width:560px){.status{grid-template-columns:repeat(2,minmax(0,1fr))}.swarm-minion{width:94px}}
 
 .swarm-lane-note{font-size:12px;color:#f0c788;padding:9px 12px;border:1px solid #8e7447;border-radius:8px;background:#453923;margin:8px 0;line-height:1.5}
+
+/* 0.10: three distinctive creature families. SVGs are local, editable pixel art. */
+.sprite.exotic-sprite{background-repeat:no-repeat!important;background-position:center!important;background-size:64px 64px!important;image-rendering:pixelated}
+.sprite.exotic-sprite.spider{background-image:url('./siege/exotic-spider.svg')!important}
+.sprite.exotic-sprite.slime-bud,.sprite.exotic-sprite.slimelet,.sprite.exotic-sprite.slime-giant{background-image:url('./siege/exotic-slime.svg')!important}
+.sprite.exotic-sprite.slimelet{transform:scale(.72);filter:hue-rotate(14deg)}
+.sprite.exotic-sprite.slime-giant{transform:scale(1.16);filter:saturate(1.3) drop-shadow(0 0 5px #5ad4c6)}
+.sprite.exotic-sprite.mimicling{background-image:url('./siege/exotic-mimicling.svg')!important}
+.swarm-minion.spider{background:#35283f;border-color:#b294d3}
+.swarm-minion.slime-bud,.swarm-minion.slimelet,.swarm-minion.slime-giant{background:#203d42;border-color:#75d4ce}
+.swarm-minion.mimicling{background:#51402e;border-color:#e4b46c}
+.hand-card.tribal.spider{border-color:#c29adf;background:linear-gradient(145deg,#6b4a7b,#3e344b 70%)}
+.hand-card.tribal.slime-bud{border-color:#92e6df;background:linear-gradient(145deg,#4e9b98,#2b5d65 70%)}
+.hand-card.tribal.mimicling{border-color:#ffcf88;background:linear-gradient(145deg,#a5753c,#593b31 70%)}
+.shop-offer.shop-exotic{border:2px solid #bb9bcd;background:radial-gradient(ellipse at 100% 0,#563c69,#292e37 65%)}
+.shop-offer.shop-exotic .shop-icon{color:#e4bffc}
+.bestiary{margin-top:20px;padding:16px 0}
+.bestiary h2{margin:4px 0;color:#f2deb5}
+.bestiary p{font-size:13px;max-width:700px;color:#c5cec4}
+.creature-bestiary{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin-top:14px}
+.creature-profile{display:flex;align-items:center;gap:12px;min-width:0;padding:14px;border:1px solid #677c71;border-radius:12px;background:#26392f}
+.creature-profile img{flex:none;width:64px;height:64px;image-rendering:pixelated;filter:saturate(.6)}
+.creature-profile.discovered{background:linear-gradient(120deg,#314336,#2a3436);border-color:#bd9a72}
+.creature-profile.discovered img{filter:none}
+.creature-profile h3{margin:4px 0;color:#f6dfad;font-size:17px}
+.creature-profile p{font-size:12px;line-height:1.5;margin:3px 0 6px}
+.creature-profile small{font-size:11px;color:#d9c69e}
+@media(max-width:950px){.creature-bestiary{grid-template-columns:1fr}}
+@media(max-width:540px){.creature-profile{padding:10px}.creature-profile img{width:56px;height:56px}}

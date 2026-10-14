@@ -32,12 +32,25 @@ export const CARDS=Object.freeze({
  'loot-fallen':{name:'Loot the Fallen',suit:'fang',rank:3,kind:'loot',tribe:'goblin',power:0,price:12,rarity:'uncommon',description:'If you command at least one Goblin minion, earn 3 gold once per turn.'},
  'bone-march':{name:'Bone March',suit:'shell',rank:2,kind:'march',tribe:'skeleton',power:0,price:12,rarity:'uncommon',description:'All summoned Skeletons attack again; each stored Bone adds 1 bonus damage, up to 3.'},
  'bone-wall':{name:'Ossuary Wall',suit:'shell',rank:3,kind:'bonewall',tribe:'skeleton',power:0,price:12,rarity:'uncommon',description:'Spend up to 3 Bones; grant 3 armor per Bone to permanent allies in the selected lane.'},
- 'rattle-dead':{name:'Rattle the Dead',suit:'shell',rank:4,kind:'rattle',tribe:'skeleton',power:0,price:12,rarity:'uncommon',description:'Spend 2 Bones to raise 1 Skeleton; revived Skeletons cannot make a Bone until next turn.'}
+ 'rattle-dead':{name:'Rattle the Dead',suit:'shell',rank:4,kind:'rattle',tribe:'skeleton',power:0,price:12,rarity:'uncommon',description:'Spend 2 Bones to raise 1 Skeleton; revived Skeletons cannot make a Bone until next turn.'},
+ // Biome-neutral creature families: their mechanics function in the existing forest.
+ 'spider-summon':{name:'Spider Hatchling',suit:'venom',rank:1,kind:'summon',tribe:'spider',power:0,price:15,rarity:'common',description:'Summon a Spider into the chosen lane. It webs prey and poisons webbed enemies on hit. Stack up to 3.'},
+ 'silken-prison':{name:'Silken Prison',suit:'venom',rank:2,kind:'web-trap',tribe:'spider',power:0,price:15,rarity:'uncommon',description:'Add 2 Web to an enemy in the chosen lane; all your Spiders strike their lanes again.'},
+ 'slime-summon':{name:'Slime Droplet',suit:'bloom',rank:1,kind:'summon',tribe:'slime-bud',power:0,price:15,rarity:'common',description:'Summon a Slime. If it survives an enemy hit, it splits into a tiny Slime once per turn (subject to cap).'},
+ 'gel-fusion':{name:'Gel Fusion',suit:'bloom',rank:2,kind:'fuse',tribe:'slime-bud',power:0,price:15,rarity:'uncommon',description:'Fuse two tiny or ordinary summoned Slimes in the chosen lane into a powerful Giant Ooze.'},
+ 'mimicling-summon':{name:'False Treasure',suit:'hunger',rank:0,kind:'summon',tribe:'mimicling',power:0,price:15,rarity:'common',description:'Summon a baby Mimic. Once per turn it lures the strongest outside invader to its lane; its first hit earns +5 Hunger.'},
+ 'family-dinner':{name:'Family Dinner',suit:'hunger',rank:0,kind:'family',tribe:'mimicling',power:0,price:15,rarity:'uncommon',description:'Order every Mimicling to bite a second time. Their first hit per turn generates +5 Hunger.'}
 });
 export const SHOP_CARD_TYPES=Object.freeze(['sacrifice','tithe','harvest','mirror']);
 export const GOBLIN_SHOP_TYPES=Object.freeze(['goblin-recruit','pack-attack','loot-fallen']);
 export const SKELETON_SHOP_TYPES=Object.freeze(['skeleton-recruit','bone-march','bone-wall','rattle-dead']);
 export const TRIBAL_SHOP_TYPES=Object.freeze([...GOBLIN_SHOP_TYPES,...SKELETON_SHOP_TYPES]);
+export const EXOTIC_SHOP_GROUPS=Object.freeze([
+ Object.freeze(['spider-summon','silken-prison']),
+ Object.freeze(['slime-summon','gel-fusion']),
+ Object.freeze(['mimicling-summon','family-dinner'])
+]);
+export const EXOTIC_SHOP_TYPES=Object.freeze(EXOTIC_SHOP_GROUPS.flat());
 export const FOUNDING_CARDS=Object.freeze(['goblin-recruit','goblin-recruit','skeleton-recruit','skeleton-recruit']);
 export const STARTER_DECK=['strike','strike','blood','ambush','execute','frenzy','fortify','fortify','guard','thorns','counter','mend','mend','roots','regrow','symbiosis','bite','bite','corrode','contagion','detonate','decree','feast','strike'];
 export function shuffle(items,rng=Math.random){const a=[...items];for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));if(!Number.isInteger(j)||j<0||j>i)throw Error('Invalid RNG');[a[i],a[j]]=[a[j],a[i]];}return a;}
@@ -101,22 +114,23 @@ export function analyzeChain(cards){
 // Card IDs are stable across shuffles and save/restore: starter c0..c23, purchased p0..p3.
 // Version 7 owns four fixed founding cards plus up to eight paid acquisitions.
 // Earlier saves remain their original 24-card deck until migrated in siege-engine.
-export function validateDeck(d,handSize=HAND_SIZE,allowLegacy=false,discardMax=MAX_DISCARDS,withTribes=false){
+export function validateDeck(d,handSize=HAND_SIZE,allowLegacy=false,discardMax=MAX_DISCARDS,withTribes=false,withExotics=false){
  if(!d||!['draw','discard','hand','chain'].every(k=>Array.isArray(d[k]))||
     !Number.isInteger(d.discardsLeft)||d.discardsLeft<0||d.discardsLeft>discardMax||
     d.hand.length>handSize||chainSlotCount(d.chain)>MAX_CHAIN||
     d.chain.length>MAX_CHAIN*MAX_STACK)return false;
  if(withTribes?d.tribal!==true:d.tribal===true)return false;
+ if(withExotics?d.exotic!==true:d.exotic===true)return false;
  const acquired=d.acquired===undefined&&allowLegacy?[]:d.acquired;
  const acquiredAt=d.acquiredAt===undefined&&allowLegacy?[]:d.acquiredAt;
  if(!Array.isArray(acquiredAt)||!Array.isArray(acquired)||acquiredAt.length!==acquired.length||
-    acquired.length>(withTribes?8:4))return false;
+    acquired.length>(withExotics?12:withTribes?8:4))return false;
  const byRaid=new Map();
  for(let i=0;i<acquired.length;i++){
   const raid=acquiredAt[i],type=acquired[i];
   if(!Number.isInteger(raid)||raid<0||raid>3|| (i>0&&raid<(acquiredAt[i-1]))||
-     !(SHOP_CARD_TYPES.includes(type)||(withTribes&&TRIBAL_SHOP_TYPES.includes(type))))return false;
-  const family=SHOP_CARD_TYPES.includes(type)?'rare':'tribal';
+     !(SHOP_CARD_TYPES.includes(type)||(withTribes&&TRIBAL_SHOP_TYPES.includes(type))||(withExotics&&EXOTIC_SHOP_TYPES.includes(type))))return false;
+  const family=SHOP_CARD_TYPES.includes(type)?'rare':TRIBAL_SHOP_TYPES.includes(type)?'tribal':'exotic';
   const used=byRaid.get(raid)||new Set();
   if(used.has(family)||(!withTribes&&used.size>0))return false;
   used.add(family);byRaid.set(raid,used);
