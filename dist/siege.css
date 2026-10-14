@@ -15,3 +15,25 @@
 .hand-card button:disabled{opacity:.45;cursor:not-allowed}
 
 .chain-target{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin:12px 0;color:#e6d4b0;font-size:14px}.chain-target select{background:#1c1d26;color:#fff;border:1px solid #7b7060;padding:9px;border-radius:8px;max-width:100%}.chain-rituals{display:flex;gap:8px;flex-wrap:wrap;color:#e6c875;font-size:13px;margin-bottom:12px}.chain-rituals span{border:1px solid #ac8750;border-radius:8px;padding:5px 9px;background:#443722}
+
+/* 0.6: between-raid quartermaster. Gold purchases are separate from the free raid choice. */
+.overlay{overflow-y:auto}
+.overlay .panel{max-width:920px;max-height:calc(100vh - 36px);overflow:auto}
+.quartermaster{padding:4px 0 18px}
+.shop-head{display:flex;justify-content:space-between;align-items:center;gap:16px;padding:14px 0 16px;border-bottom:1px solid #6b6550}
+.shop-head h3{font-size:24px;margin:5px 0;color:#f5d17f}
+.shop-head p{margin:4px 0;font-size:13px}
+.shop-head strong{white-space:nowrap;color:#f6d183;background:#131e17;border:1px solid #9b7c46;padding:12px 16px;border-radius:8px}
+.shop-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:12px;margin:16px 0}
+.shop-offer{min-width:0;display:flex;flex-direction:column;gap:9px;padding:16px;border:1px solid #937549;background:linear-gradient(150deg,#343f30,#1d2e26 70%);border-radius:12px;box-shadow:0 8px 20px #0004}
+.shop-icon{font-size:32px;color:#f0bf6a}
+.shop-type{font-size:10px;letter-spacing:.12em;color:#d5b884;font-weight:800}
+.shop-offer h3{font-size:18px;color:#f4ddab;margin:0}
+.shop-offer p{font-size:12px;color:#cfdbce;line-height:1.5;flex:1;margin:0}
+.shop-select{display:flex;flex-direction:column;gap:6px;font-size:11px;color:#e8d8b5}
+.shop-select select{width:100%;min-width:0;padding:8px;background:#14251d;color:#fff1d6;border:1px solid #907b59;border-radius:6px}
+.shop-offer button{font-size:12px;font-weight:800;background:#b9914d;color:#1c1e18;border-color:#ead099}
+.shop-sold{filter:saturate(.6)}
+.shop-footer{border-top:1px solid #6b6550;padding:14px 0 4px}
+.shop-footer p{font-size:13px;margin:5px 0;color:#cad5c4}
+@media(max-width:720px){.shop-grid{grid-template-columns:1fr}.shop-head{align-items:flex-start;flex-direction:column}.overlay .panel{padding:18px}.shop-offer{min-height:0}}
