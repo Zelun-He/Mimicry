@@ -22,3 +22,17 @@ Progress saves to browser local storage, including the current deck, selection, 
 The engine is independent from presentation in `dist/engine.js`. `dist/main.js` handles input, save state, previews, attack feedback, and canvas animation. `dist/style.css` is responsive, with a horizontally scrollable card hand on narrow screens. Reduced-motion preference limits animation. Optional synthesized sound is off by default.
 
 Artwork was generated specifically for this prototype. Sprite poses and effects are lightweight rather than complete frame-by-frame animation. This game is original and is not affiliated with League of Legends, Pokémon, Riot Games, Nintendo, or Game Freak.
+
+## Mimicry 0.2 — The First Siege (persistent-army prototype)
+
+Open `/siege.html` from the same `npm start` server (or click **PLAY FIRST SIEGE** in the original game). This is an additional prototype mode, not a replacement for Forest Edge.
+
+- Deploy a persistent army of Goblin, Slime, Skeleton, and Sporeling across three lanes.
+- Choose a tactical order each turn. Living defenders automatically attack invaders in their lanes; surviving enemies retaliate, and undefended lanes lose dungeon integrity.
+- Monster HP, XP, levels, kills, and deaths persist across five raids. Fallen monsters cannot be healed by resting.
+- Win raids to rest, train a surviving monster, or recruit a new one (up to five living defenders).
+- King Mimic gains Hunger from defeated adventurers and can use Devour at 100 Hunger.
+- Sprite sheets from the First Siege animation pack drive idle, attack, damage, and death states. `dist/siege/animations.json` describes the 64×64 frames.
+- First Siege saves separately to browser localStorage under `mimicry-siege-v2`.
+
+This is a playable mechanics prototype. Tactical command chaining, equipment, deeper dungeon construction, and elaborate sprite artwork are not implemented yet.
