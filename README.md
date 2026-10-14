@@ -62,3 +62,28 @@ or recruit) when ready to leave the shop and start the next raid. Purchases,
 card levels, monster training, gold, mutations, and shop stock persist in
 `mimicry-siege-v4` local browser saves. Existing v2/v3 saves migrate to v4.
 The original Forest Edge game remains unchanged. See `tests/shop.test.js`.
+
+## First Siege 0.7 — Rare commands
+
+A new **rare command** offer now appears in each post-raid Quartermaster shop, alongside
+card enhancement, defender training and a King Mimic mutation. Unlike a power upgrade,
+this purchase **adds a new card to the draw pile** and guarantees its first appearance
+in the following raid's opening hand. The starter deck remains 24 cards, opening hand
+remains 8 cards, and maximum chain is still 5.
+
+Four possible shop-only designs:
+
+- **Sacrificial Strike** (Fang 4, rare, 18 gold): sacrifices up to 25% HP from the
+  healthiest eligible defender (never lethal), then deals damage boosted by HP spent.
+- **Bone Tithe** (Shell 3, rare, 19 gold): converts up to 6 allied armor into damage
+  at 2 damage per point. Without armor, the card does nothing.
+- **Spore Harvest** (Bloom 4, rare, 21 gold): consumes poison from the focused enemy
+  to heal every surviving defender for 3 per stack.
+- **Mirror Fang** (Hunger wild, legendary, 26 gold): spends 20 Hunger to repeat the
+  previous simple command at half power, **without recursive copies or duplicate
+  rituals**. Only strike, armor, heal, teamheal, poison, and weaken are repeatable.
+
+Purchased cards retain stable IDs and purchase-raid records across saves and shuffles.
+Saves now use browser key `mimicry-siege-v5`; v2, v3, and v4 saves migrate.
+See `ROADMAP.md` for the sequenced plan and `tests/rare-cards.test.js`
+for effect/purchase/migration regression tests.

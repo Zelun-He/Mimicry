@@ -37,3 +37,26 @@
 .shop-footer{border-top:1px solid #6b6550;padding:14px 0 4px}
 .shop-footer p{font-size:13px;margin:5px 0;color:#cad5c4}
 @media(max-width:720px){.shop-grid{grid-template-columns:1fr}.shop-head{align-items:flex-start;flex-direction:column}.overlay .panel{padding:18px}.shop-offer{min-height:0}}
+
+/* 0.7: four-offer Quartermaster and readable premium rare command frames. */
+.shop-grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+.shop-offer.shop-rare{position:relative;overflow:hidden;border:2px solid #e1ae58;
+ background:radial-gradient(ellipse at 85% 0%,#786148,#392e27 42%,#242721 100%);
+ box-shadow:0 3px 18px #b4814830,inset 0 0 15px #0005}
+.shop-offer.shop-rare.legendary{border-color:#ceacee;
+ background:radial-gradient(ellipse at 85% 0%,#795e9b,#3d3153 42%,#262231 100%);
+ box-shadow:0 3px 20px #b685e540,inset 0 0 20px #0007}
+.shop-offer.shop-rare .shop-icon{color:#f9d68f;text-shadow:0 0 12px #f4b34a80}
+.shop-offer.shop-rare.legendary .shop-icon{color:#e6c7ff;text-shadow:0 0 15px #c891ff}
+.shop-offer.shop-rare .shop-type{color:#f3c886}
+.shop-offer.shop-rare.legendary .shop-type{color:#dfc4ff}
+.shop-card-detail{display:flex;flex-direction:column;gap:6px;padding:10px;border:1px solid #c9a7706a;border-radius:8px;background:#130f1688}
+.shop-card-detail span{color:#f6d895;font-size:10px;font-weight:800;letter-spacing:.1em}
+.shop-card-detail strong{font-size:12px;color:#f6efdf}
+.shop-card-detail small{font-size:11px;color:#d9c6af}
+.hand-card.rare{border:2px solid #f3c878;box-shadow:0 0 0 1px #503422,inset 0 1px 18px #0002}
+.hand-card.legendary{border:2px solid #dfb3ff;background:linear-gradient(155deg,#77538e,#352f4d)!important;
+ box-shadow:0 0 0 1px #302242,0 3px 16px #ab7be04a}
+.hand-card .rare-description{line-height:1.4;min-height:45px;color:#f6e0b9}
+.hand-card.legendary .rare-description{color:#f2defe}
+@media(max-width:720px){.shop-grid{grid-template-columns:1fr}}

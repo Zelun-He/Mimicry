@@ -19,11 +19,17 @@ export const CARDS=Object.freeze({
  contagion:{name:'Contagion',suit:'venom',rank:3,kind:'spread',power:0},
  detonate:{name:'Detonate',suit:'venom',rank:4,kind:'detonate',power:2},
  decree:{name:'Royal Decree',suit:'hunger',rank:0,kind:'decree',power:0,cost:30},
- feast:{name:'Feast',suit:'hunger',rank:0,kind:'feast',power:12,cost:40}
+ feast:{name:'Feast',suit:'hunger',rank:0,kind:'feast',power:12,cost:40},
+ // Only obtainable through the Quartermaster; none appear in the starter deck.
+ sacrifice:{name:'Sacrificial Strike',suit:'fang',rank:4,kind:'sacrifice',power:14,rarity:'rare',price:18,description:'Spend up to 25% of your healthiest defender’s HP (never lethal) to strike harder.'},
+ tithe:{name:'Bone Tithe',suit:'shell',rank:3,kind:'tithe',power:6,rarity:'rare',price:19,description:'Consume up to 6 allied armor and deal 2 damage for each armor spent.'},
+ harvest:{name:'Spore Harvest',suit:'bloom',rank:4,kind:'harvest',power:3,rarity:'rare',price:21,description:'Consume poison stacks from the focus target to heal all defenders.'},
+ mirror:{name:'Mirror Fang',suit:'hunger',rank:0,kind:'mirror',power:0,cost:20,rarity:'legendary',price:26,description:'Pay 20 Hunger to repeat the previous simple command at half strength.'}
 });
+export const SHOP_CARD_TYPES=Object.freeze(['sacrifice','tithe','harvest','mirror']);
 export const STARTER_DECK=['strike','strike','blood','ambush','execute','frenzy','fortify','fortify','guard','thorns','counter','mend','mend','roots','regrow','symbiosis','bite','bite','corrode','contagion','detonate','decree','feast','strike'];
 export function shuffle(items,rng=Math.random){const a=[...items];for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));if(!Number.isInteger(j)||j<0||j>i)throw Error('Invalid RNG');[a[i],a[j]]=[a[j],a[i]];}return a;}
-export function makeDeck(rng=Math.random){return {draw:shuffle(STARTER_DECK.map((id,i)=>({id:`c${i}`,type:id})),rng),discard:[],hand:[],chain:[],discardsLeft:MAX_DISCARDS};}
+export function makeDeck(rng=Math.random){return {draw:shuffle(STARTER_DECK.map((id,i)=>({id:`c${i}`,type:id})),rng),discard:[],hand:[],chain:[],discardsLeft:MAX_DISCARDS,acquired:[],acquiredAt:[]};}
 export function drawCards(deck,count=HAND_SIZE,rng=Math.random){while(deck.hand.length<count){if(!deck.draw.length){if(!deck.discard.length)break;deck.draw=shuffle(deck.discard,rng);deck.discard=[];}deck.hand.push(deck.draw.pop());}return deck.hand;}
 export function queueCard(deck,id){if(deck.chain.length>=MAX_CHAIN)return false;const i=deck.hand.findIndex(c=>c.id===id);if(i<0)return false;if(deck.chain.length&&!linkCards(deck.chain.at(-1),deck.hand[i]))return false;deck.chain.push(deck.hand.splice(i,1)[0]);return true;}
 // Removing a middle card may break the bridge between its neighbours.
@@ -43,7 +49,26 @@ export function unqueueCard(deck,id){
 export function discardCard(deck,id,rng=Math.random,handSize=HAND_SIZE){if(deck.discardsLeft<=0)return false;const i=deck.hand.findIndex(c=>c.id===id);if(i<0)return false;deck.discard.push(deck.hand.splice(i,1)[0]);deck.discardsLeft--;drawCards(deck,handSize-deck.chain.length,rng);return true;}
 export function linkCards(a,b){const x=CARDS[a.type],y=CARDS[b.type];return !!(x&&y&&(x.suit==='hunger'||y.suit==='hunger'||x.suit===y.suit||y.rank===x.rank||y.rank===x.rank+1));}
 export function analyzeChain(cards){if(cards.length>MAX_CHAIN)throw Error('Chain exceeds maximum');let streak=0;return cards.map((card,i)=>{const def=CARDS[card.type];if(!def)throw Error('Unknown card');const linked=i>0&&linkCards(cards[i-1],card);streak=linked?streak+1:0;const sameSuit=i>0&&CARDS[cards[i-1].type].suit===def.suit&&def.suit!=='hunger';return {card,def,linked,streak,boost:1+Math.min(3,streak)*0.25,resonance:sameSuit};});}
-export function validateDeck(d,handSize=HAND_SIZE){if(!d||!['draw','discard','hand','chain'].every(k=>Array.isArray(d[k]))||!Number.isInteger(d.discardsLeft)||d.discardsLeft<0||d.discardsLeft>MAX_DISCARDS||d.hand.length>handSize||d.chain.length>MAX_CHAIN)return false;const cards=[...d.draw,...d.discard,...d.hand,...d.chain];return cards.length===STARTER_DECK.length&&new Set(cards.map(c=>c.id)).size===cards.length&&cards.every(c=>c&&typeof c.id==='string'&&/^c(?:[0-9]|1[0-9]|2[0-3])$/.test(c.id)&&c.type===STARTER_DECK[Number(c.id.slice(1))]&&(c.level===undefined||(Number.isInteger(c.level)&&c.level>=0&&c.level<=2)))&&d.chain.every((c,i)=>i===0||linkCards(d.chain[i-1],c));}
+// Card IDs are stable across shuffles and save/restore: starter c0..c23, purchased p0..p3.
+export function validateDeck(d,handSize=HAND_SIZE,allowLegacy=false){
+ if(!d||!['draw','discard','hand','chain'].every(k=>Array.isArray(d[k]))||
+    !Number.isInteger(d.discardsLeft)||d.discardsLeft<0||d.discardsLeft>MAX_DISCARDS||
+    d.hand.length>handSize||d.chain.length>MAX_CHAIN)return false;
+ const acquired=d.acquired===undefined&&allowLegacy?[]:d.acquired;
+ const acquiredAt=d.acquiredAt===undefined&&allowLegacy?[]:d.acquiredAt;
+ if(!Array.isArray(acquiredAt)||!Array.isArray(acquired)||acquiredAt.length!==acquired.length||
+    acquiredAt.some((raid,i)=>!Number.isInteger(raid)||raid<0||raid>3||(i>0&&raid<=acquiredAt[i-1]))||
+    acquired.length>4||
+    !acquired.every(type=>SHOP_CARD_TYPES.includes(type)))return false;
+ const expected=new Map(STARTER_DECK.map((type,i)=>[`c${i}`,type]));
+ for(let i=0;i<acquired.length;i++)expected.set(`p${i}`,acquired[i]);
+ const cards=[...d.draw,...d.discard,...d.hand,...d.chain];
+ if(cards.length!==expected.size||new Set(cards.map(c=>c?.id)).size!==expected.size)return false;
+ return cards.every(c=>c&&typeof c.id==='string'&&expected.has(c.id)&&expected.get(c.id)===c.type&&
+   (c.level===undefined||(Number.isInteger(c.level)&&c.level>=0&&c.level<=2)))&&
+   d.chain.every((c,i)=>i===0||linkCards(d.chain[i-1],c));
+}
+
 
 // Rituals are contiguous three-card patterns, evaluated once per chain window.
 // The wildcard Hunger school never substitutes for a ritual school.

@@ -1,5 +1,5 @@
 // Between-raid upgrades. The shop is data-only so save files and tests stay deterministic.
-import {CARDS,HAND_SIZE} from './chain-engine.js';
+import {CARDS,HAND_SIZE,SHOP_CARD_TYPES} from './chain-engine.js';
 
 export const MUTATIONS=Object.freeze({
  'iron-fangs':{name:'Iron Fangs',cost:18,description:'Fang strikes and executions deal +2 damage.'},
@@ -27,10 +27,16 @@ export function createShop(s,rng=Math.random){
  const raw=rng();
  if(typeof raw!=='number'||!Number.isFinite(raw)||raw<0||raw>=1)throw Error('Invalid shop RNG');
  const mutation=available[Math.floor(raw*available.length)];
+ const rareRoll=rng();
+ if(typeof rareRoll!=='number'||!Number.isFinite(rareRoll)||rareRoll<0||rareRoll>=1)throw Error('Invalid shop RNG');
+ const unseen=SHOP_CARD_TYPES.filter(type=>!s.deck?.acquired?.includes(type));
+ const selection=unseen.length?unseen:SHOP_CARD_TYPES;
+ const rareType=selection[Math.floor(rareRoll*selection.length)];
  return [
   {id:'card',cost:CARD_UPGRADE_COST,sold:false},
   {id:'monster',cost:MONSTER_UPGRADE_COST,sold:false},
-  ...(mutation?[{id:mutation,cost:MUTATIONS[mutation].cost,sold:false}]:[])
+  ...(mutation?[{id:mutation,cost:MUTATIONS[mutation].cost,sold:false}]:[]),
+  {id:'rare',cardType:rareType,cost:CARDS[rareType].price,sold:false}
  ];
 }
 
@@ -50,6 +56,17 @@ export function buyUpgrade(s,offerId,targetId=null){
   if(!target)return false;
   apply=()=>{target.training=trainingLevel(target)+1;target.attack+=2;target.maxHp+=4;target.hp+=4;};
   description=`${target.name} trained: +2 attack, +4 HP.`;
+ }else if(offerId==='rare'){
+  if(!SHOP_CARD_TYPES.includes(offer.cardType)||!Array.isArray(s.deck.acquired)||s.deck.acquired.length>=4)return false;
+  const type=offer.cardType;
+  apply=()=>{
+   const next=s.deck.acquired.length;
+   s.deck.acquired.push(type);
+   s.deck.acquiredAt.push(s.raid);
+   // Insert at the top of draw so the purchased card appears in the very next hand.
+   s.deck.draw.push({id:`p${next}`,type});
+  };
+  description=`${CARDS[type].name} added to your deck.`;
  }else if(Object.hasOwn(MUTATIONS,offerId)&&!s.mutations.includes(offerId)){
   apply=()=>{s.mutations.push(offerId);if(offerId==='stolen-plating'){s.maxIntegrity+=5;s.integrity=Math.min(s.maxIntegrity,s.integrity+5);}};
   description=`King Mimic absorbed ${MUTATIONS[offerId].name}.`;
@@ -61,19 +78,36 @@ export function buyUpgrade(s,offerId,targetId=null){
  return true;
 }
 
-export function validShopState(s){
- if(!Array.isArray(s.mutations)||new Set(s.mutations).size!==s.mutations.length||s.mutations.some(id=>!Object.hasOwn(MUTATIONS,id)))return false;
+// legacy=true validates v4 (three-offer) saves before adding the new card offer.
+export function validShopState(s,legacy=false){
+ if(!Array.isArray(s.mutations)||new Set(s.mutations).size!==s.mutations.length||
+    s.mutations.some(id=>!Object.hasOwn(MUTATIONS,id)))return false;
  if(!Array.isArray(s.shopOffers))return false;
  if(s.phase==='reward'){
-  if(s.shopOffers.length!==3||s.shopOffers[0]?.id!=='card'||s.shopOffers[1]?.id!=='monster')return false;
-  const mutationOffer=s.shopOffers[2]?.id;
-  if(!Object.hasOwn(MUTATIONS,mutationOffer))return false;
+  if(s.shopOffers.length!==(legacy?3:4)||
+     s.shopOffers[0]?.id!=='card'||s.shopOffers[1]?.id!=='monster')return false;
+  if(!Object.hasOwn(MUTATIONS,s.shopOffers[2]?.id))return false;
+  if(!legacy){
+   const offer=s.shopOffers[3];
+   if(offer?.id!=='rare'||!SHOP_CARD_TYPES.includes(offer.cardType))return false;
+   if(offer.sold&&s.deck?.acquired?.at(-1)!==offer.cardType)return false;
+   if(offer.sold!==s.deck?.acquiredAt?.includes(s.raid))return false;
+  }
  }else if(s.shopOffers.length!==0)return false;
- if(s.shopOffers.some(o=>!o||typeof o.id!=='string'||typeof o.sold!=='boolean'||!Number.isInteger(o.cost)||o.cost!==(o.id==='card'?CARD_UPGRADE_COST:o.id==='monster'?MONSTER_UPGRADE_COST:MUTATIONS[o.id]?.cost)))return false;
- if(s.shopOffers.some(o=>Object.hasOwn(MUTATIONS,o.id)&&o.sold!==s.mutations.includes(o.id)))return false;
+ for(const offer of s.shopOffers){
+  if(!offer||typeof offer.id!=='string'||typeof offer.sold!=='boolean'||
+     !Number.isInteger(offer.cost))return false;
+  const expected=offer.id==='card'?CARD_UPGRADE_COST:
+    offer.id==='monster'?MONSTER_UPGRADE_COST:
+    offer.id==='rare'&&SHOP_CARD_TYPES.includes(offer.cardType)?CARDS[offer.cardType].price:
+    MUTATIONS[offer.id]?.cost;
+  if(offer.cost!==expected)return false;
+  if(Object.hasOwn(MUTATIONS,offer.id)&&offer.sold!==s.mutations.includes(offer.id))return false;
+ }
  if(s.maxIntegrity!==(30+(s.mutations.includes('stolen-plating')?5:0)))return false;
  if(!Number.isInteger(s.integrity)||s.integrity<0||s.integrity>s.maxIntegrity)return false;
- if(s.units.some(u=>!Number.isInteger(trainingLevel(u))||trainingLevel(u)<0||trainingLevel(u)>MAX_MONSTER_TRAINING))return false;
+ if(!Array.isArray(s.units)||s.units.some(u=>!Number.isInteger(trainingLevel(u))||
+    trainingLevel(u)<0||trainingLevel(u)>MAX_MONSTER_TRAINING))return false;
  if(s.shopOffers.some(o=>o.id==='card'&&o.sold&&deckCards(s).every(c=>cardLevel(c)===0)))return false;
  return true;
 }
