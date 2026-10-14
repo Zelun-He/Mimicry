@@ -168,3 +168,36 @@ player buys both a rare and a tribal card in the same shop visit.
 The engine validates founding cards, purchased cards, stack-slot counts,
 minion stats/limits, resource caps and lane selection. See
 `tests/swarm.test.js` and `DESIGN-SWARM.md`.
+
+## First Siege 0.10 — New Creature Families
+
+Three additional summon families join Goblins and Skeletons **without adding
+another dungeon biome, another currency, or new permanent defender classes**.
+
+| Family | Summon | Tactic | Inherent behavior |
+|---|---|---|---|
+| **Spider** | Spider Hatchling (Venom 1) | Silken Prison (Venom 2) | Web reduces one enemy's next attack by 2 per stack (max 3); Spider hits inflict 1 poison while prey is webbed |
+| **Slime** | Slime Droplet (Bloom 1) | Gel Fusion (Bloom 2) | A Slime surviving a hit can split into a Tiny Slime once per turn, respecting the 3-per-lane / 6-total cap |
+| **Mimicling** | False Treasure (Hunger wild) | Family Dinner (Hunger wild) | Summoning can lure the strongest outsider into its lane once per turn; each Mimicling's first hit each turn generates up to 5 Hunger |
+
+**Gel Fusion** consumes two summoned Slimes in the selected lane to create one
+Giant Ooze (10 HP, 5 attack); the Giant Ooze cannot divide. **Family Dinner**
+orders all active Mimiclings to attack, but does not re-trigger their once-per-
+turn Hunger payout. Mimicling kills are ordinary kills; they cannot capture
+enemy essences without Gnaw or Devour.
+
+**New Quartermaster offer:** Creature Menagerie, **15 gold** for one card,
+chosen from three visible options (one Spider, one Slime, one Mimicling).
+Initially these are recruit cards; after obtaining a family recruit, subsequent
+shops can offer its tactic card. This complements, rather than replaces, the
+existing rare-card and Goblin/Skeleton tribal shops.
+
+The game still begins with **8 cards in hand**, plays **5 chain slots**, and
+permits **6 active minions (3 per lane)**. The new creature types share these
+limits with Goblins and Skeletons. Spiders, Slimes, and Mimiclings have unique
+local 16-bit-style SVG pixel-art portraits under `dist/siege/`, reused by the
+battlefield and bestiary.
+
+Version 8 local saves use `mimicry-siege-v8`, migrating earlier v2–v7 saves.
+Purchase ledgers, Web stacks, moved enemy lanes, and summon behavior persist.
+See `tests/creatures.test.js` and `DESIGN-CREATURES.md`.

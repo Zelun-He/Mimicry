@@ -13,6 +13,9 @@ combat tests, save migration, and a manual browser playtest before release.
   Stack duplicate Goblin or Skeleton recruits into one chain slot, command up to
   six disposable lane minions, spend Bones on undead tactics, and recruit tribe
   cards using gold. Permanent defenders still level and die independently.
+- [x] **03b — New Creature Families** (`feature/spiders-slimes-mimiclings`).
+  Add purchasable Spiders (Webweaver), Slimes (Mitosis/Fusion), and Mimiclings
+  (False Treasure/Hunger), with local pixel-art portraits and shared summon caps.
 - [ ] **04 — Treasure bait and invasion control.** Choose between visible risk/reward
   lures before raids; enemy types and rewards vary accordingly.
 - [ ] **05 — Counterplay-driven enemy abilities.** Bards, thieves, paladins,

@@ -1,10 +1,11 @@
 import {CARDS,FOUNDING_CARDS,STARTER_DECK,canQueueCard,chainSlotCount} from './chain-engine.js';
 import {MAX_MINIONS,MAX_LANE_MINIONS,MAX_BONES,liveMinions} from './swarm-engine.js';
+import {MAX_WEB,CREATURES} from './creature-engine.js';
 import {MUTATIONS,handSize,upgradeableCards,trainableUnits,cardPower} from './shop-engine.js';
 import {ESSENCE_CAPACITY,ESSENCE_BY_ENEMY,ESSENCE_TRAITS,hungerCost,redrawLimit} from './assimilation-engine.js';
 import {newSiege,restoreSiege,RAIDS,SPECIES,moveUnit,endTurn,devour,gnaw,reinforce,buyUpgrade,chooseEssence,queueCommand,unqueueCommand,redrawCommand,previewChain,previewRituals,targetChain,setSummonLane} from './siege-engine.js';
-const $=id=>document.getElementById(id),KEY='mimicry-siege-v7';
-let state;try{state=restoreSiege(JSON.parse(localStorage.getItem(KEY)||localStorage.getItem('mimicry-siege-v6')||localStorage.getItem('mimicry-siege-v5')||localStorage.getItem('mimicry-siege-v4')||localStorage.getItem('mimicry-siege-v3')||localStorage.getItem('mimicry-siege-v2')))}catch{}state??=newSiege();
+const $=id=>document.getElementById(id),KEY='mimicry-siege-v8';
+let state;try{state=restoreSiege(JSON.parse(localStorage.getItem(KEY)||localStorage.getItem('mimicry-siege-v7')||localStorage.getItem('mimicry-siege-v6')||localStorage.getItem('mimicry-siege-v5')||localStorage.getItem('mimicry-siege-v4')||localStorage.getItem('mimicry-siege-v3')||localStorage.getItem('mimicry-siege-v2')))}catch{}state??=newSiege();
 const manifest=await fetch('./siege/animations.json').then(r=>r.json());
 const names=['king-mimic',...Object.keys(SPECIES)];
 const animations=new Map();
@@ -17,30 +18,33 @@ function animate(el,species,action='idle'){
  animations.set(el,{timer});
 }
 function save(){localStorage.setItem(KEY,JSON.stringify({...state,animations:[]}));}
-function sprite(species,id){return `<div class="sprite" data-sprite="${species}" data-unit="${id}"></div>`;}
+function sprite(species,id){
+ const exotic=['spider','slime-bud','slimelet','slime-giant','mimicling'].includes(species);
+ return `<div class="sprite ${exotic?'exotic-sprite '+species:''}" data-sprite="${species}" data-unit="${id}"></div>`;
+}
 function hpBar(hp,max){return `<div class="hp"><div style="width:${Math.round(hp/max*100)}%"></div></div><small>${hp}/${max} HP</small>`;}
 function shopHTML(){
  const cards=upgradeableCards(state).sort((a,b)=>CARDS[a.type].name.localeCompare(CARDS[b.type].name));
  const units=trainableUnits(state);
  const offers=state.shopOffers.map(offer=>{
   const mutation=MUTATIONS[offer.id];
-  const isCard=offer.id==='card',isMonster=offer.id==='monster',isRare=offer.id==='rare',isTribal=offer.id==='tribal';
+  const isCard=offer.id==='card',isMonster=offer.id==='monster',isRare=offer.id==='rare',isTribal=offer.id==='tribal',isExotic=offer.id==='exotic';
   const rare=isRare?CARDS[offer.cardType]:null;
-  const name=isCard?'Enhance a command':isMonster?'Train a defender':isRare?rare.name:isTribal?'Tribal Recruitment':mutation.name;
-  const icon=isCard?'⚔':isMonster?'⬟':isRare?'✦':isTribal?'☠':'◈';
+  const name=isCard?'Enhance a command':isMonster?'Train a defender':isRare?rare.name:isTribal?'Tribal Recruitment':isExotic?'Creature Menagerie':mutation.name;
+  const icon=isCard?'⚔':isMonster?'⬟':isRare?'✦':isTribal?'☠':isExotic?'✳':'◈';
   const desc=isCard?'Choose an eligible command: +2 base power per level, maximum twice.':
     isMonster?'Choose a surviving defender: +2 attack and +4 maximum HP.':
-    isRare?rare.description:isTribal?'Choose a Goblin or Skeleton card; duplicate recruits can form mobs.':mutation.description;
+    isRare?rare.description:isTribal?'Choose a Goblin or Skeleton card; duplicate recruits can form mobs.':isExotic?'Choose one Spider, Slime, or Mimicling card. New creatures join your summon deck.':mutation.description;
   const choices=isCard?cards:units;
-  const selector=(isCard||isMonster)&&!offer.sold?`<label class="shop-select">${isCard?'Command to improve':'Defender to train'}<select data-shop-target>${choices.map(x=>`<option value="${x.id}">${isCard?`${CARDS[x.type].name} ${x.level?`+${x.level}`:''} · power ${cardPower(state,x)}`:`${x.name} · Lv${x.level} · ${x.attack} ATK`}</option>`).join('')}</select></label>`:isTribal&&!offer.sold?`<label class='shop-select'>Choose a tribal card<select data-shop-target>${offer.options.map(type=>`<option value='${type}'>${CARDS[type].tribe.toUpperCase()} · ${CARDS[type].name}</option>`).join('')}</select></label>`:'';
+  const selector=(isCard||isMonster)&&!offer.sold?`<label class="shop-select">${isCard?'Command to improve':'Defender to train'}<select data-shop-target>${choices.map(x=>`<option value="${x.id}">${isCard?`${CARDS[x.type].name} ${x.level?`+${x.level}`:''} · power ${cardPower(state,x)}`:`${x.name} · Lv${x.level} · ${x.attack} ATK`}</option>`).join('')}</select></label>`:(isTribal||isExotic)&&!offer.sold?`<label class='shop-select'>Choose a creature card<select data-shop-target>${offer.options.map(type=>`<option value='${type}'>${CARDS[type].tribe.toUpperCase()} · ${CARDS[type].name}</option>`).join('')}</select></label>`:'';
   const cannotBuy=offer.sold||state.gold<offer.cost||((isCard||isMonster)&&!choices.length)||
-    ((isRare||isTribal)&&state.deck.acquired.length>=8);
+    ((isRare||isTribal||isExotic)&&state.deck.acquired.length>=12);
   const typeLabel=isCard?'CARD ENHANCEMENT':isMonster?'ARMY TRAINING':
-    isRare?`${rare.rarity.toUpperCase()} · ${rare.suit.toUpperCase()} ${rare.rank||'★'}`:isTribal?'GOBLIN OR SKELETON':'MIMIC MUTATION';
-  const extra=isRare?`<div class="shop-card-detail"><span>ONE NEW COMMAND</span><strong>${rare.kind.toUpperCase()} ${rare.power?'· '+rare.power+' POWER':''}</strong><small>In your next draw · ${STARTER_DECK.length+FOUNDING_CARDS.length+state.deck.acquired.length} currently owned</small></div>`:isTribal?`<div class='shop-card-detail'><span>CHOOSE YOUR SWARM</span>${offer.options.map(type=>`<small>${CARDS[type].name}: ${CARDS[type].description}</small>`).join('')}</div>`:'';
-  return `<article class="shop-offer ${isRare?'shop-rare '+rare.rarity:''} ${isTribal?'shop-tribal':''} ${offer.sold?'shop-sold':''}" data-shop-offer="${offer.id}"><div class="shop-icon">${icon}</div><div class="shop-type">${typeLabel}</div><h3>${name}</h3><p>${desc}</p>${extra}${selector}<button data-buy="${offer.id}" ${cannotBuy?'disabled':''}>${offer.sold?'PURCHASED':`BUY · ${offer.cost} GOLD`}</button></article>`;
+    isRare?`${rare.rarity.toUpperCase()} · ${rare.suit.toUpperCase()} ${rare.rank||'★'}`:isTribal?'GOBLIN OR SKELETON':isExotic?'SPIDER · SLIME · MIMICLING':'MIMIC MUTATION';
+  const extra=isRare?`<div class="shop-card-detail"><span>ONE NEW COMMAND</span><strong>${rare.kind.toUpperCase()} ${rare.power?'· '+rare.power+' POWER':''}</strong><small>In your next draw · ${STARTER_DECK.length+FOUNDING_CARDS.length+state.deck.acquired.length} currently owned</small></div>`:(isTribal||isExotic)?`<div class='shop-card-detail'><span>${isExotic?'NEW MONSTER FAMILY':'CHOOSE YOUR SWARM'}</span>${offer.options.map(type=>`<small>${CARDS[type].name}: ${CARDS[type].description}</small>`).join('')}</div>`:'';
+  return `<article class="shop-offer ${isRare?'shop-rare '+rare.rarity:''} ${isTribal?'shop-tribal':''} ${isExotic?'shop-exotic':''} ${offer.sold?'shop-sold':''}" data-shop-offer="${offer.id}"><div class="shop-icon">${icon}</div><div class="shop-type">${typeLabel}</div><h3>${name}</h3><p>${desc}</p>${extra}${selector}<button data-buy="${offer.id}" ${cannotBuy?'disabled':''}>${offer.sold?'PURCHASED':`BUY · ${offer.cost} GOLD`}</button></article>`;
  }).join('');
- return `<section class="quartermaster"><div class="shop-head"><div><span class="eyebrow">THE GOBLIN QUARTERMASTER</span><h3>Wares from the fallen</h3><p>Buy tribal recruits, new tactics, and rare commands—or save for a later raid.</p></div><strong>◈ ${state.gold} GOLD</strong></div><div class="shop-grid">${offers}</div><div class="shop-footer"><span class="eyebrow">FREE RAID REINFORCEMENT</span><p>Keep any unspent gold. Choose one free reward below when you are ready for the next raid.</p></div></section>`;
+ return `<section class="quartermaster"><div class="shop-head"><div><span class="eyebrow">THE GOBLIN QUARTERMASTER</span><h3>Wares from the fallen</h3><p>Build your ecosystem: Goblin/Skeleton swarms plus Spider, Slime, and Mimicling creatures.</p></div><strong>◈ ${state.gold} GOLD</strong></div><div class="shop-grid">${offers}</div><div class="shop-footer"><span class="eyebrow">FREE RAID REINFORCEMENT</span><p>Keep any unspent gold. Choose one free reward below when you are ready for the next raid.</p></div></section>`;
 }
 
 function essenceSlotsHTML(){
@@ -70,9 +74,16 @@ function render(){
  $('lanes').innerHTML=[0,1,2].map(lane=>`<div class="lane"><div class="lane-name">LANE ${lane+1}</div><div class="combatants">${[
  ...state.units.filter(u=>u.lane===lane&&u.alive).map(u=>`<div class="combatant ally">${sprite(u.species,u.id)}<b>${u.name} <span>Lv${u.level}</span></b>${hpBar(u.hp,u.maxHp)}${u.armor?`<small>⬟ ${u.armor} armor</small>`:''}</div>`),
  ...liveMinions(state,null,lane).map(u=>`<div class="combatant ally swarm-minion ${u.species}">${sprite(u.species,u.id)}<b>${u.name}</b>${hpBar(u.hp,u.maxHp)}<small>SUMMON · ${u.attack} ATK</small></div>`)
- ].join('')||'<div class="empty">No defenders</div>'}<div class="lane-arrow">⚔</div>${state.enemies.filter(e=>e.lane===lane&&e.alive).map(e=>`<div class="combatant invader"><div class="foe">${e.name==='Mage'?'✧':e.name==='Archer'?'➶':'⚔'}</div><b>${e.name}</b>${hpBar(e.hp,e.maxHp)}<small>${e.attack} attack</small></div>`).join('')||'<div class="empty">Lane clear</div>'}</div></div>`).join('');
+ ].join('')||'<div class="empty">No defenders</div>'}<div class="lane-arrow">⚔</div>${state.enemies.filter(e=>e.lane===lane&&e.alive).map(e=>`<div class="combatant invader"><div class="foe">${e.name==='Mage'?'✧':e.name==='Archer'?'➶':'⚔'}</div><b>${e.name}</b>${hpBar(e.hp,e.maxHp)}<small>${e.attack} attack${e.web?' · 🕸 '+e.web+' Web':''}</small></div>`).join('')||'<div class="empty">Lane clear</div>'}</div></div>`).join('');
  const chain=previewChain(state);const rituals=previewRituals(state);
  $('commands').innerHTML=`<div class="chain-stats"><b>HAND ${state.deck.hand.length}/${handSize(state)} · CHAIN ${chainSlotCount(state.deck.chain)}/5 SLOTS</b><span>Redraws: ${state.deck.discardsLeft}/${redrawLimit(state)} · Draw pile: ${state.deck.draw.length} · Deck: ${STARTER_DECK.length+FOUNDING_CARDS.length+state.deck.acquired.length}</span></div><label class="chain-target">Summon lane <select id="summon-lane">${[0,1,2].map(lane=>`<option value="${lane}" ${state.summonLane===lane?'selected':''}>Lane ${lane+1} · ${liveMinions(state,null,lane).length}/${MAX_LANE_MINIONS} minions</option>`).join('')}</select></label><label class="chain-target">Command focus &amp; Devour target <select id="chain-target"><option value="">Auto: weakest invader</option>${state.enemies.filter(e=>e.alive).map(e=>`<option value="${e.id}" ${state.chainTargetId===e.id?'selected':''}>${e.name} · Lane ${e.lane+1} · ${e.hp} HP</option>`).join('')}</select></label><div class="swarm-lane-note">Summon lane ${state.summonLane+1}: ${liveMinions(state,null,state.summonLane).length}/${MAX_LANE_MINIONS} bodies · Total ${liveMinions(state).length}/${MAX_MINIONS} · Bones ${state.bones}/${MAX_BONES}. Full lanes consume summon cards without creating extra minions.</div><div class="chain-rituals">${rituals.map(x=>`<span>✦ ${x.ritual.name} (${x.start+1}–${x.end+1})</span>`).join('')||'Rituals need 3 separate slots; a stacked mob counts as one'}</div><div class="chain-slots">${chain.map((step,i)=>`<button class="chain-card ${step.linked?'linked':''}" data-unqueue="${step.cards.at(-1).id}" title="Remove one card from this slot; recruit stacks share one slot."><small>${i+1}. ${step.def.suit.toUpperCase()} ${step.def.rank||'★'} ${step.count>1?'· ×'+step.count+' STACK':''}</small><b>${step.def.name}${step.card.level?` +${step.card.level}`:''}</b><span>${step.count===3?'HORDE · 3 MINIONS':step.count===2?'MOB · 2 MINIONS':step.linked?'⛓ +'+Math.round((step.boost-1)*100)+'%':'Base effect'}</span></button>`).join('')||'<span class="chain-hint">Click cards below in order. Duplicate recruits stack automatically (up to 3 per slot).</span>'}</div><div class="card-hand">${state.deck.hand.map(c=>{const d=CARDS[c.type];return `<div class="hand-card ${d.suit} ${d.rarity||'common'} ${d.tribe?'tribal '+d.tribe:''}"><small>${d.tribe?d.tribe.toUpperCase()+' · ':''}${d.rarity?d.rarity.toUpperCase()+' · ':''}${d.suit.toUpperCase()} · ${d.rank||'★'}</small><b>${d.name}${c.level?` +${c.level}`:''}</b><span>${d.kind} · ${cardPower(state,c)}${d.cost?` · ${d.cost} Hunger${state.hunger<d.cost?' (insufficient)':''}`:''}</span>${d.description?`<small class="rare-description">${d.description}</small>`:''}<button data-queue="${c.id}" ${state.phase!=='battle'||!!state.pendingEssence||!canQueueCard(state.deck,c.id)?'disabled':''}>${d.kind==='summon'&&state.deck.chain.at(-1)?.type===c.type?'Stack into formation':'Add to chain'}</button><button class="discard" data-redraw="${c.id}" ${state.phase!=='battle'||state.deck.discardsLeft===0?'disabled':''}>Discard ↻</button></div>`}).join('')}</div>`;
+ $('creature-bestiary').innerHTML=Object.entries(CREATURES).map(([species,creature])=>{
+  const ids={spider:'spider-summon','slime-bud':'slime-summon',mimicling:'mimicling-summon'};
+  const owned=state.deck.acquired.includes(ids[species]);
+  const active=liveMinions(state,species).length;
+  const art={spider:'exotic-spider.svg','slime-bud':'exotic-slime.svg',mimicling:'exotic-mimicling.svg'}[species];
+  return `<article class="creature-profile ${owned?'discovered':''}"><img src="./siege/${art}" width="64" height="64" alt="${creature.name} pixel art"/><div><span class="eyebrow">${creature.trait.toUpperCase()} · ${owned?'DISCOVERED':'SHOP UNLOCK'}</span><h3>${creature.name}</h3><p>${creature.mechanic}</p><small>${active} active in this battle</small></div></article>`;
+ }).join('');
  const living=state.units.filter(u=>u.alive);
  $('roster').innerHTML=state.units.map(u=>`<article class="roster-card ${u.alive?'':'dead'}">${sprite(u.species,`roster-${u.id}`)}<div><b>${u.name}</b><small>${SPECIES[u.species].role} · Lv ${u.level} · ${u.alive?`${u.xp}/${u.level*2} XP`:'FALLEN'}</small>${hpBar(u.hp,u.maxHp)}<small>${u.attack} attack · ${u.kills} kills</small></div><label>Lane <select data-move="${u.id}" ${state.phase!=='battle'||!u.alive?'disabled':''}>${[0,1,2].map(l=>`<option value="${l}" ${l===u.lane?'selected':''}>${l+1}</option>`).join('')}</select></label></article>`).join('');
  const king=state.enemies.find(e=>e.alive&&e.id===state.chainTargetId)||state.enemies.filter(e=>e.alive).sort((a,b)=>a.hp-b.hp)[0];
