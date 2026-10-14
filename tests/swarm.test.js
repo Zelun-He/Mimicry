@@ -272,3 +272,41 @@ test('save validation rejects fabricated minions, extra Bones, bogus population 
   assert.equal(restoreSiege(bad),null);
  }
 });
+
+test('v6 reward saves gain exactly one tribal offer without losing rare stock',()=>{
+ const s=buyShop(newSiege(rng));
+ const rare=structuredClone(s.shopOffers[3]);
+ s.version=6;s.shopOffers.pop();
+ for(const pile of ['draw','discard','hand','chain'])s.deck[pile]=s.deck[pile].filter(c=>!c.id.startsWith('f'));
+ s.deck.tribal=false;
+ const result=restoreSiege(structuredClone(s));
+ assert.ok(result);
+ assert.equal(result.shopOffers.length,5);
+ assert.deepEqual(result.shopOffers[3],rare);
+ assert.equal(result.shopOffers[4].id,'tribal');
+ assert.equal(result.gold,s.gold);
+ assert.ok(validateDeck(result.deck,8,false,2,true));
+});
+test('Bone March scales attacks with stored Bones, not unlimited resources',()=>{
+ const s=newSiege(rng);injectCard(s,'bone-march');
+ const hand=prepare(s,['skeleton-recruit','bone-march']);
+ s.units.forEach(u=>u.lane=2);
+ s.summonLane=0;s.bones=2;
+ hand.forEach(card=>assert.equal(queueCommand(s,card.id),true));
+ endTurn(s,rng);
+ assert.equal(s.enemies[0].hp,12); // Bone March 4, normal Skeleton attack 2
+ assert.equal(s.bones,3); // Skeleton dies and leaves one Bone
+ assert.equal(liveMinions(s,'skeleton').length,0);
+});
+test('capped formations never produce ghost minions even after queuing three recruits',()=>{
+ const s=newSiege(rng);
+ s.summonLane=0;
+ assert.equal(summonMinions(s,'skeleton',2),2);
+ const hand=prepare(s,['goblin-recruit','goblin-recruit']);
+ hand.forEach(c=>assert.equal(queueCommand(s,c.id),true));
+ endTurn(s,rng);
+ assert.ok(liveMinions(s,null,0).length<=3);
+ assert.ok(liveMinions(s).length<=6);
+ assert.ok(validSwarmState(s));
+ assert.ok(restoreSiege(structuredClone(s)));
+});
