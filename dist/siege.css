@@ -102,3 +102,25 @@
 .king #devour{margin-left:0}
 .king #gnaw:hover:not(:disabled){background:#496747}
 @media(max-width:720px){.king #gnaw,.king #devour{margin:0;width:100%}}
+
+/* 0.9 — Tribal formations and summoned lane combat. */
+.status{grid-template-columns:repeat(7,minmax(0,1fr))}
+.status>div:nth-last-child(-n+2){border-color:#8b7551;background:#2e3027}
+.status>div:nth-last-child(-n+2) strong{color:#f3c98e}
+.swarm-minion{width:105px;min-height:112px;border-style:dashed;background:#3c5034;box-shadow:inset 0 0 12px #0003}
+.swarm-minion.skeleton{background:#39414b;border-color:#92a7c0}
+.swarm-minion.goblin{background:#33482f;border-color:#a9bf77}
+.swarm-minion b{font-size:11px;color:#f3e4af}
+.swarm-minion small:last-child{color:#f4c77f;letter-spacing:.05em}
+.chain-card.formation{background:linear-gradient(145deg,#4c5735,#352f26);border:2px solid #a9c67a}
+.chain-card.formation.skeleton{background:linear-gradient(145deg,#4d5267,#292b37);border-color:#acbcda}
+.chain-card.formation small{font-weight:800}
+.hand-card.tribal{position:relative;border:2px solid #aeac79;box-shadow:inset 0 0 14px #0005}
+.hand-card.tribal.goblin{background:linear-gradient(145deg,#63723a,#45412c 70%)}
+.hand-card.tribal.skeleton{background:linear-gradient(145deg,#68758c,#44475a 70%)}
+.hand-card.tribal button[data-queue]{background:#ba985d;color:#141a13;font-weight:800;border-color:#e4c788}
+.shop-offer.shop-tribal{border:2px solid #9eaa74;background:linear-gradient(145deg,#3c4e36,#25392e)}
+.shop-offer.shop-tribal .shop-icon{color:#dde5ae;text-shadow:0 0 10px #92b87488}
+.shop-offer.shop-tribal select{font-size:12px}
+@media(max-width:950px){.status{grid-template-columns:repeat(4,minmax(0,1fr))}}
+@media(max-width:560px){.status{grid-template-columns:repeat(2,minmax(0,1fr))}.swarm-minion{width:94px}}

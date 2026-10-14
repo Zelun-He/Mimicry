@@ -9,8 +9,10 @@ combat tests, save migration, and a manual browser playtest before release.
   deck entries. Keep the 8-card opening hand / 5-card chain limit.
 - [x] **02 — Devour & assimilation** (`feature/devour-assimilation`). Enemy archetypes offer two distinct traits;
   the King Mimic can carry at most three at once and choose replacements.
-- [ ] **03 — Monster evolution paths.** Each species has two meaningful branches;
-  evolution changes its card affinities or behavior instead of just increasing stats.
+- [x] **03 — Tribal Cards & Swarm Formations** (`feature/tribal-swarm-formations`).
+  Stack duplicate Goblin or Skeleton recruits into one chain slot, command up to
+  six disposable lane minions, spend Bones on undead tactics, and recruit tribe
+  cards using gold. Permanent defenders still level and die independently.
 - [ ] **04 — Treasure bait and invasion control.** Choose between visible risk/reward
   lures before raids; enemy types and rewards vary accordingly.
 - [ ] **05 — Counterplay-driven enemy abilities.** Bards, thieves, paladins,

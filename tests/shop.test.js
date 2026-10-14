@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newSiege,endTurn,reinforce,buyUpgrade,restoreSiege,queueCommand,redrawCommand,devour} from '../dist/siege-engine.js';
 import {MUTATIONS,handSize,deckCards,cardPower,upgradeableCards} from '../dist/shop-engine.js';
-import {STARTER_DECK,validateDeck} from '../dist/chain-engine.js';
+import {STARTER_DECK,FOUNDING_CARDS,validateDeck} from '../dist/chain-engine.js';
 const rng=()=>0.5;
 function winRaid(s){
  s.units.forEach(u=>{u.attack=80;u.hp=u.maxHp;});
@@ -18,7 +18,7 @@ test('victory grants raid-clear gold once and opens four shop offers',()=>{
  winRaid(s);
  assert.equal(s.gold,18);
  assert.deepEqual(s.shopOffers.map(o=>o.id).slice(0,2),['card','monster']);
- assert.equal(s.shopOffers.length,4);
+ assert.equal(s.shopOffers.length,5);
  const before=s.gold;
  assert.equal(endTurn(s,rng),false);
  assert.equal(devour(s,rng),false);
@@ -39,7 +39,7 @@ test('shopping never spends money before validating target, cost, or purchase li
  assert.equal(buyUpgrade(s,'card',card.id),false);
  assert.equal(buyUpgrade(s,'monster',s.units[0].id),false);
  assert.equal(s.gold,6);
- assert.ok(validateDeck(s.deck));
+ assert.ok(validateDeck(s.deck,8,false,2,true));
  assert.ok(restoreSiege(structuredClone(s)));
 });
 
@@ -51,8 +51,8 @@ test('upgrading a command increases power without changing its rank, identity, o
  assert.equal(buyUpgrade(s,'card',c.id),true);
  assert.equal(cardPower(s,c),oldPower+2);
  assert.equal(c.id,oldId);
- assert.equal(deckCards(s).length,STARTER_DECK.length);
- assert.equal(new Set(deckCards(s).map(x=>x.id)).size,STARTER_DECK.length);
+ assert.equal(deckCards(s).length,STARTER_DECK.length+FOUNDING_CARDS.length);
+ assert.equal(new Set(deckCards(s).map(x=>x.id)).size,STARTER_DECK.length+FOUNDING_CARDS.length);
  const t=restoreSiege(structuredClone(s));
  assert.ok(t);
  assert.equal(deckCards(t).find(x=>x.id===oldId).level,1);
@@ -96,22 +96,25 @@ test('royal satchel increases hand to nine while chain cap remains five',()=>{
  assert.equal(handSize(s),9);
  assert.equal(reinforce(s,'rest'),true);
  assert.equal(s.deck.hand.length,9);
- assert.ok(validateDeck(s.deck,9));
+ assert.ok(validateDeck(s.deck,9,false,2,true));
  assert.equal(restoreSiege(structuredClone(s)).deck.hand.length,9);
  const first=s.deck.hand[0];
  assert.equal(redrawCommand(s,first.id,rng),true);
  assert.equal(s.deck.hand.length,9);
  assert.equal(s.deck.chain.length,0);
- assert.ok(validateDeck(s.deck,9));
+ assert.ok(validateDeck(s.deck,9,false,2,true));
 });
 
 test('saving version 3 games migrates safely to shop-capable version 6',()=>{
  const v3=newSiege(rng);
+ for(const pile of ['draw','discard','hand','chain'])v3.deck[pile]=v3.deck[pile].filter(c=>!c.id.startsWith('f'));
+ while(v3.deck.hand.length<8)v3.deck.hand.push(v3.deck.draw.pop());
+ v3.deck.tribal=false;
  v3.version=3;
  delete v3.mutations;delete v3.shopOffers;
  const result=restoreSiege(structuredClone(v3));
  assert.ok(result);
- assert.equal(result.version,6);
+ assert.equal(result.version,7);
  assert.deepEqual(result.mutations,[]);
  assert.deepEqual(result.shopOffers,[]);
  assert.equal(result.deck.hand.length,8);
@@ -119,11 +122,13 @@ test('saving version 3 games migrates safely to shop-capable version 6',()=>{
 
 test('saving version 3 at a reward creates shop offers on migration',()=>{
  const s=newSiege(rng);winRaid(s);
+ for(const pile of ['draw','discard','hand','chain'])s.deck[pile]=s.deck[pile].filter(c=>!c.id.startsWith('f'));
+ s.deck.tribal=false;
  s.version=3;
  delete s.shopOffers;delete s.mutations;
  const result=restoreSiege(structuredClone(s));
  assert.ok(result);
- assert.equal(result.shopOffers.length,4);
+ assert.equal(result.shopOffers.length,5);
  assert.equal(result.phase,'reward');
 });
 

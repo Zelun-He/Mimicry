@@ -23,6 +23,6 @@ test('removing a bridging card restores chain validity and returns orphaned suff
  assert.equal(unqueueCommand(s,bridge),true);
  assert.deepEqual(s.deck.chain.map(c=>c.id),[execute.id]);
  assert.deepEqual(new Set(s.deck.hand.map(c=>c.id)),new Set([feast.id,mend.id]));
- assert.equal(validateDeck(s.deck),true);
+ assert.equal(validateDeck(s.deck,8,false,2,true),true);
  assert.ok(restoreSiege(structuredClone(s)));
 });
