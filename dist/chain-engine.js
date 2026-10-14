@@ -25,12 +25,25 @@ export const STARTER_DECK=['strike','strike','blood','ambush','execute','frenzy'
 export function shuffle(items,rng=Math.random){const a=[...items];for(let i=a.length-1;i>0;i--){const j=Math.floor(rng()*(i+1));if(!Number.isInteger(j)||j<0||j>i)throw Error('Invalid RNG');[a[i],a[j]]=[a[j],a[i]];}return a;}
 export function makeDeck(rng=Math.random){return {draw:shuffle(STARTER_DECK.map((id,i)=>({id:`c${i}`,type:id})),rng),discard:[],hand:[],chain:[],discardsLeft:MAX_DISCARDS};}
 export function drawCards(deck,count=HAND_SIZE,rng=Math.random){while(deck.hand.length<count){if(!deck.draw.length){if(!deck.discard.length)break;deck.draw=shuffle(deck.discard,rng);deck.discard=[];}deck.hand.push(deck.draw.pop());}return deck.hand;}
-export function queueCard(deck,id){if(deck.chain.length>=MAX_CHAIN)return false;const i=deck.hand.findIndex(c=>c.id===id);if(i<0)return false;deck.chain.push(deck.hand.splice(i,1)[0]);return true;}
-export function unqueueCard(deck,id){const i=deck.chain.findIndex(c=>c.id===id);if(i<0)return false;deck.hand.push(deck.chain.splice(i,1)[0]);return true;}
+export function queueCard(deck,id){if(deck.chain.length>=MAX_CHAIN)return false;const i=deck.hand.findIndex(c=>c.id===id);if(i<0)return false;if(deck.chain.length&&!linkCards(deck.chain.at(-1),deck.hand[i]))return false;deck.chain.push(deck.hand.splice(i,1)[0]);return true;}
+// Removing a middle card may break the bridge between its neighbours.
+// Return the invalid suffix to hand rather than silently leaving an unusable chain.
+export function unqueueCard(deck,id){
+ const i=deck.chain.findIndex(c=>c.id===id);
+ if(i<0)return false;
+ deck.hand.push(deck.chain.splice(i,1)[0]);
+ for(let j=Math.max(1,i);j<deck.chain.length;j++){
+  if(!linkCards(deck.chain[j-1],deck.chain[j])){
+   deck.hand.push(...deck.chain.splice(j));
+   break;
+  }
+ }
+ return true;
+}
 export function discardCard(deck,id,rng=Math.random){if(deck.discardsLeft<=0)return false;const i=deck.hand.findIndex(c=>c.id===id);if(i<0)return false;deck.discard.push(deck.hand.splice(i,1)[0]);deck.discardsLeft--;drawCards(deck,HAND_SIZE-deck.chain.length,rng);return true;}
 export function linkCards(a,b){const x=CARDS[a.type],y=CARDS[b.type];return !!(x&&y&&(x.suit==='hunger'||y.suit==='hunger'||x.suit===y.suit||y.rank===x.rank||y.rank===x.rank+1));}
 export function analyzeChain(cards){if(cards.length>MAX_CHAIN)throw Error('Chain exceeds maximum');let streak=0;return cards.map((card,i)=>{const def=CARDS[card.type];if(!def)throw Error('Unknown card');const linked=i>0&&linkCards(cards[i-1],card);streak=linked?streak+1:0;const sameSuit=i>0&&CARDS[cards[i-1].type].suit===def.suit&&def.suit!=='hunger';return {card,def,linked,streak,boost:1+Math.min(3,streak)*0.25,resonance:sameSuit};});}
-export function validateDeck(d){if(!d||!['draw','discard','hand','chain'].every(k=>Array.isArray(d[k]))||!Number.isInteger(d.discardsLeft)||d.discardsLeft<0||d.discardsLeft>MAX_DISCARDS||d.hand.length>HAND_SIZE||d.chain.length>MAX_CHAIN)return false;const cards=[...d.draw,...d.discard,...d.hand,...d.chain];return cards.length===STARTER_DECK.length&&new Set(cards.map(c=>c.id)).size===cards.length&&cards.every(c=>typeof c.id==='string'&&Object.hasOwn(CARDS,c.type));}
+export function validateDeck(d){if(!d||!['draw','discard','hand','chain'].every(k=>Array.isArray(d[k]))||!Number.isInteger(d.discardsLeft)||d.discardsLeft<0||d.discardsLeft>MAX_DISCARDS||d.hand.length>HAND_SIZE||d.chain.length>MAX_CHAIN)return false;const cards=[...d.draw,...d.discard,...d.hand,...d.chain];return cards.length===STARTER_DECK.length&&new Set(cards.map(c=>c.id)).size===cards.length&&cards.every(c=>c&&typeof c.id==='string'&&/^c(?:[0-9]|1[0-9]|2[0-3])$/.test(c.id)&&c.type===STARTER_DECK[Number(c.id.slice(1))])&&d.chain.every((c,i)=>i===0||linkCards(d.chain[i-1],c));}
 
 // Rituals are contiguous three-card patterns, evaluated once per chain window.
 // The wildcard Hunger school never substitutes for a ritual school.

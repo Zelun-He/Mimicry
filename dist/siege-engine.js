@@ -13,8 +13,6 @@ export const RAIDS=[
  {name:'Treasure Hunters',enemies:[{name:'Rogue',hp:34,attack:7,lane:0},{name:'Mage',hp:28,attack:8,lane:2}]},
  {name:'The Watchman',enemies:[{name:'Watchman',hp:72,attack:9,lane:1},{name:'Guard',hp:30,attack:5,lane:0},{name:'Guard',hp:30,attack:5,lane:2}]}
 ];
-const COMMANDS={strike:{name:'Strike',symbol:'⚔',detail:'A defender attacks again'},fortify:{name:'Fortify',symbol:'⬟',detail:'Grant 7 armor to a defender'},mend:{name:'Mend',symbol:'✿',detail:'Heal a defender for 8'},frenzy:{name:'Frenzy',symbol:'✦',detail:'All defenders deal +3 this turn'}};
-export {COMMANDS};
 const clamp=(x,min,max)=>Math.max(min,Math.min(max,x));
 function unit(species,id,lane){const def=SPECIES[species];return {id,species,name:def.name,level:1,xp:0,maxHp:def.hp,hp:def.hp,attack:def.attack,lane,armor:0,alive:true,kills:0};}
 function enemiesFor(index){return RAIDS[index].enemies.map((e,i)=>({...e,id:`e${index}-${i}`,maxHp:e.hp,hp:e.hp,alive:true,poison:0,weaken:0}));}
@@ -34,7 +32,7 @@ export function previewRituals(s){return findRituals(s.deck.chain);}
 export function targetChain(s,id){if(s.phase!=='battle')return false;if(id!==null&&!living(s.enemies).some(e=>e.id===id))return false;s.chainTargetId=id;return true;}
 
 export function previewSiege(s){return {active:living(s.units).length,enemies:living(s.enemies).length,integrity:s.integrity,raid:RAIDS[s.raid]?.name,command:s.selected};}
-export function selectCommand(s,command,targetId=null){if(s.phase!=='battle'||!COMMANDS[command])return false;if(targetId!==null&&!living(s.units).some(u=>u.id===targetId))return false;s.selected={command,targetId};return true;}
+// Legacy one-order commands are retired. Version 2 saves migrate to the card deck.
 export function moveUnit(s,id,lane){if(s.phase!=='battle'||!Number.isInteger(lane)||lane<0||lane>2)return false;const u=living(s.units).find(x=>x.id===id);if(!u)return false;u.lane=lane;note(s,`${u.name} moved to lane ${lane+1}.`);return true;}
 // Ordered commands resolve before defenders act. Every command has a bounded effect.
 function resolveChain(s){
@@ -63,6 +61,7 @@ function resolveChain(s){
   const power=Math.floor(def.power*multiplier)+(resonance?1:0);
   const ally=firstAlly(),foe=firstFoe();
   if(!foe){break;}
+  if(def.cost&&s.hunger<def.cost){note(s,`${def.name} fizzles: requires ${def.cost} Hunger.`);previous=null;index++;continue;}
   const affinity={fang:'goblin',shell:'skeleton',bloom:'sporeling',venom:'slime'}[def.suit];
   const specialist=livingAllies().find(u=>u.species===affinity);
   switch(def.kind){
@@ -92,8 +91,7 @@ function resolveChain(s){
 export function endTurn(s,rng=Math.random){if(s.phase!=='battle')return false;s.animations=[];let frenzy=0;
  if(s.deck){if(s.deck.chain.length)frenzy=resolveChain(s);s.deck.discard.push(...s.deck.chain,...s.deck.hand);s.deck.chain=[];s.deck.hand=[];s.deck.discardsLeft=2;}
  s.chainTargetId=null;
-const cmd=s.selected;if(cmd){const u=living(s.units).find(x=>x.id===cmd.targetId)||living(s.units)[0];if(cmd.command==='strike'&&u)attackUnit(s,u,0);if(cmd.command==='fortify'&&u){u.armor+=7;note(s,`${u.name} gains 7 armor.`);}if(cmd.command==='mend'&&u){const healed=Math.min(8,u.maxHp-u.hp);u.hp+=healed;note(s,`${u.name} healed ${healed}.`);}if(cmd.command==='frenzy'){frenzy=3;note(s,'Frenzy empowers the defenders.');}}
- s.selected=null;
+s.selected=null;
  // Persistent defenders act automatically, prioritizing the first invader in their lane.
  for(const u of living(s.units)){
    if(u.species==='sporeling'){const ally=living(s.units).filter(x=>x.lane===u.lane).sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp)[0];if(ally&&ally.hp<ally.maxHp){ally.hp=Math.min(ally.maxHp,ally.hp+3);note(s,'Sporeling restores 3 health.');}}
@@ -101,7 +99,7 @@ const cmd=s.selected;if(cmd){const u=living(s.units).find(x=>x.id===cmd.targetId
  }
  if(!living(s.enemies).length){s.phase=s.raid===RAIDS.length-1?'won':'reward';note(s,s.phase==='won'?'The dungeon survived every raid!':'Raid repelled. Choose a reinforcement.');return true;}
  for(const e of living(s.enemies)){
-   if(e.poison>0){harm(s,e,e.poison);e.poison=Math.max(0,e.poison-1);note(s,`${e.name} suffers poison.`);if(!e.alive){s.gold+=5;s.hunger=clamp(s.hunger+20,0,100);continue;}}
+   if(e.poison>0){harm(s,e,e.poison);e.poison=Math.max(0,e.poison-1);note(s,`${e.name} suffers poison.`);if(!e.alive){s.gold+=5;s.hunger=clamp(s.hunger+20,0,100);const source=living(s.units).find(u=>u.species==='slime');if(source){source.kills++;experience(s,source,2);}continue;}}
    const defender=living(s.units).filter(u=>u.lane===e.lane).sort((a,b)=>b.armor-a.armor)[0];
    if(defender){const actual=harm(s,defender,Math.max(0,e.attack-(e.weaken||0)));e.weaken=0;note(s,`${e.name} strikes ${defender.name} for ${actual}.`);}else{s.integrity=clamp(s.integrity-Math.max(0,e.attack-(e.weaken||0)),0,s.maxIntegrity);e.weaken=0;emit(s,'king-mimic','damage');note(s,`${e.name} breaches lane ${e.lane+1}! -${e.attack} integrity.`);}
  }
