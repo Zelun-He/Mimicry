@@ -85,6 +85,7 @@ test('new page keeps every battle input and all secondary panels available',()=>
  assert.equal((html.match(/<details /g)||[]).length,3);
  assert.equal((html.match(/<\/details>/g)||[]).length,3);
  assert.ok(html.includes('CLICK AN ENEMY TO FOCUS'));
+ assert.ok(html.includes('id="combat-feedback"'));
  assert.ok(html.includes('THE MIMIC\'S HAND'));
  assert.ok(html.indexOf('id="arena-scene"')<html.indexOf('id="combat-controls"'));
  assert.ok(html.indexOf('id="combat-controls"')<html.indexOf('CREATURE CODEX'));

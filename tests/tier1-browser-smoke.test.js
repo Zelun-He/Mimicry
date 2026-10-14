@@ -20,6 +20,7 @@ test('Tier 1 UI boots, illustrates its first hand, toggles tips and queues a car
  try{
   await import('../dist/siege.js?test=forest-boot');
   assert.equal(get('arena-scene').dataset.scene,'sunbreak');
+  assert.ok(get('combat-feedback').textContent.length>15);
   assert.equal(get('scene-title').textContent,'Sunbreak Clearing');
   assert.ok(get('forest-progress').innerHTML.includes('forest-progress__dot'));
   const hand=get('commands').innerHTML;

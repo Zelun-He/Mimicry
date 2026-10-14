@@ -251,3 +251,9 @@ footer{margin-top:15px;font-size:10px;color:#a0b29b}
  .hand-card,.hand-card__illustration,.chain-card,.chain-next-slot,.link-readout{animation:none!important;transition:none!important}
  .hand-card:is(:hover,:focus-visible,.is-previewed){transform:none!important}
 }
+
+/* Keep the latest combat consequence visible even when the full journal is closed. */
+.combat-feedback{display:flex;align-items:center;min-height:33px;margin-top:9px;
+ border-left:3px solid #d4b06e;background:#15231ad9;border-radius:4px;
+ padding:7px 11px;color:#f2deb7;font-size:12px;line-height:1.4}
+@media(max-width:480px){.combat-feedback{font-size:11px;min-height:37px}}

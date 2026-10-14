@@ -114,6 +114,7 @@ function render(){
  $('discard-mode').setAttribute('aria-pressed',String(discardMode));
  $('discard-mode').textContent=discardMode?'CANCEL DISCARD':`DISCARD · ${state.deck.discardsLeft} LEFT`;
  $('turn-button').textContent='ATTACK →';
+ $('combat-feedback').textContent=state.log[0]||'Choose your cards, then press Attack to defend the chest.';
  $('creature-bestiary').innerHTML=Object.entries(CREATURES).map(([species,creature])=>{
   const ids={spider:'spider-summon','slime-bud':'slime-summon',mimicling:'mimicling-summon'};
   const owned=state.deck.acquired.includes(ids[species]);
