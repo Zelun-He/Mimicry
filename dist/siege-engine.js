@@ -18,7 +18,7 @@ export const RAIDS=[
 const clamp=(x,min,max)=>Math.max(min,Math.min(max,x));
 function unit(species,id,lane){const def=SPECIES[species];return {id,species,name:def.name,level:1,xp:0,maxHp:def.hp,hp:def.hp,attack:def.attack,lane,armor:0,alive:true,kills:0};}
 function enemiesFor(index){return RAIDS[index].enemies.map((e,i)=>({...e,id:`e${index}-${i}`,maxHp:e.hp,hp:e.hp,alive:true,poison:0,weaken:0}));}
-export function newSiege(rng=Math.random){const deck=makeDeck(rng);drawCards(deck,8,rng);return {version:4,deck,mutations:[],shopOffers:[],phase:'battle',raid:0,turn:1,integrity:30,maxIntegrity:30,hunger:0,gold:0,log:['The first raid approaches.'],units:[unit('goblin','u1',1),unit('slime','u2',1),unit('skeleton','u3',0),unit('sporeling','u4',2)],enemies:enemiesFor(0),selected:null,animations:[],nextId:5,chainTargetId:null};}
+export function newSiege(rng=Math.random){const deck=makeDeck(rng);drawCards(deck,8,rng);return {version:5,deck,mutations:[],shopOffers:[],phase:'battle',raid:0,turn:1,integrity:30,maxIntegrity:30,hunger:0,gold:0,log:['The first raid approaches.'],units:[unit('goblin','u1',1),unit('slime','u2',1),unit('skeleton','u3',0),unit('sporeling','u4',2)],enemies:enemiesFor(0),selected:null,animations:[],nextId:5,chainTargetId:null};}
 const living=(a)=>a.filter(x=>x.alive&&x.hp>0);
 function emit(s,id,state){s.animations.push({id,state});}
 function note(s,msg){s.log.unshift(msg);s.log=s.log.slice(0,16);}
@@ -90,6 +90,51 @@ function resolveChain(s){
    case 'corrode':foe.armor=Math.max(0,(foe.armor||0)-power);foe.poison=clamp((foe.poison||0)+power+(specialist?1:0),0,50);break;
    case 'spread':for(const e of living(s.enemies))if(e!==foe)e.poison=clamp((e.poison||0)+Math.max(2,foe.poison),0,50);break;
    case 'detonate':hit(foe,(foe.poison||0)*power,specialist);foe.poison=0;break;
+   case 'sacrifice':{
+    // The strongest survivor pays the cost; never reduce a defender below 1 HP.
+    const donor=livingAllies().filter(u=>u.hp>1).sort((a,b)=>b.hp-a.hp)[0];
+    if(!donor){note(s,'Sacrificial Strike fizzles: no defender can pay the price.');break;}
+    const cost=Math.min(donor.hp-1,Math.max(1,Math.ceil(donor.hp/4)));
+    donor.hp-=cost;emit(s,donor.id,'damage');
+    hit(foe,power+cost,specialist);
+    note(s,`${donor.name} sacrifices ${cost} HP to empower the strike.`);
+    break;
+   }
+   case 'tithe':{
+    let remaining=power,spent=0;
+    for(const u of livingAllies().sort((a,b)=>b.armor-a.armor)){
+     if(remaining<=0)break;
+     const used=Math.min(remaining,u.armor);u.armor-=used;spent+=used;remaining-=used;
+    }
+    if(spent>0){hit(foe,spent*2,specialist);note(s,`Bone Tithe consumes ${spent} armor for ${spent*2} damage.`);}
+    else note(s,'Bone Tithe fizzles: no armor to sacrifice.');
+    break;
+   }
+   case 'harvest':{
+    const consumed=Math.min(power,foe.poison||0);
+    foe.poison-=consumed;
+    if(consumed>0){for(const u of livingAllies())u.hp=Math.min(u.maxHp,u.hp+consumed*3);note(s,`Spore Harvest spends ${consumed} poison to heal every defender.`);}
+    else note(s,'Spore Harvest fizzles: the target has no poison.');
+    break;
+   }
+   case 'mirror':{
+    // Explicit finite whitelist: no nested mirrors, Hunger recursion, or duplicate rituals.
+    const repeatable=['strike','heal','armor','poison','teamheal','weaken'];
+    if(!previous||!repeatable.includes(previous.kind)){
+     note(s,'Mirror Fang fizzles: place it after Strike, Mend, Fortify, Poison, or a similar simple command.');
+     break;
+    }
+    s.hunger-=def.cost;
+    const copied=Math.max(1,Math.floor(previous.power/2));
+    if(previous.kind==='strike')hit(foe,copied,null);
+    else if(previous.kind==='poison')foe.poison=clamp((foe.poison||0)+copied,0,50);
+    else if(previous.kind==='weaken')foe.weaken=clamp((foe.weaken||0)+copied,0,foe.attack);
+    else if(previous.kind==='teamheal'){for(const u of livingAllies())u.hp=Math.min(u.maxHp,u.hp+copied);}
+    else if(previous.kind==='heal'){if(ally)ally.hp=Math.min(ally.maxHp,ally.hp+copied);}
+    else if(previous.kind==='armor'){if(ally)ally.armor=clamp(ally.armor+copied,0,100);}
+    note(s,`Mirror Fang repeats a ${previous.kind} command at half strength.`);
+    break;
+   }
    case 'decree':if(s.hunger>=def.cost&&previous&&previous.kind!=='decree'&&previous.kind!=='feast'){s.hunger-=def.cost;const bonus=Math.min(12,previous.power);for(const u of livingAllies())attackUnit(s,u,bonus);}break;
    case 'feast':if(s.hunger>=def.cost){s.hunger-=def.cost;hit(foe,power,null);}break;
   }
@@ -123,14 +168,41 @@ s.selected=null;
 export function devour(s,rng=Math.random){if(s.phase!=='battle'||s.hunger<100)return false;const foe=living(s.enemies).sort((a,b)=>a.hp-b.hp)[0];if(!foe)return false;s.animations=[];emit(s,'king-mimic','attack');harm(s,foe,25);s.hunger=0;note(s,`The King Mimic devours ${foe.name} for 25 damage!`);if(!foe.alive){s.gold+=5;if(!living(s.enemies).length)finishRaid(s,rng);}return true;}
 export function reinforce(s,choice){if(s.phase!=='reward')return false;if(choice==='rest'){for(const u of living(s.units))u.hp=Math.min(u.maxHp,u.hp+8);s.integrity=Math.min(s.maxIntegrity,s.integrity+5);}else if(choice==='recruit'){const types=Object.keys(SPECIES);if(living(s.units).length>=5)return false;const species=types[s.raid%types.length];s.units.push(unit(species,`u${s.nextId++}`,s.raid%3));}else if(choice==='train'){const u=living(s.units).sort((a,b)=>a.level-b.level)[0];if(!u)return false;experience(s,u,u.level*2);}else return false;
  s.raid++;s.shopOffers=[];s.enemies=enemiesFor(s.raid);if(s.deck){s.deck.discard.push(...s.deck.hand,...s.deck.chain);s.deck.hand=[];s.deck.chain=[];s.deck.discardsLeft=2;drawCards(s.deck,handSize(s));}s.turn=1;s.phase='battle';s.selected=null;s.chainTargetId=null;s.animations=[];for(const u of s.units)u.armor=0;note(s,`Raid ${s.raid+1}: ${RAIDS[s.raid].name}.`);return true;}
-export function restoreSiege(v){if(!v||![2,3,4].includes(v.version)||!['battle','reward','won','lost'].includes(v.phase)||!Number.isInteger(v.raid)||v.raid<0||v.raid>=RAIDS.length||!Array.isArray(v.units)||v.units.length>12||!Array.isArray(v.enemies)||v.enemies.length>10||!Number.isInteger(v.integrity)||v.integrity<0||v.integrity>(v.version===4?v.maxIntegrity:30)||!Number.isInteger(v.hunger)||v.hunger<0||v.hunger>100||!Number.isInteger(v.turn)||v.turn<1||!Number.isInteger(v.nextId)||v.nextId<1)return null;
+export function restoreSiege(v){
+ if(!v||![2,3,4,5].includes(v.version)||!['battle','reward','won','lost'].includes(v.phase)||
+    !Number.isInteger(v.raid)||v.raid<0||v.raid>=RAIDS.length||
+    !Array.isArray(v.units)||v.units.length>12||
+    !Array.isArray(v.enemies)||v.enemies.length>10||
+    !Number.isInteger(v.integrity)||v.integrity<0||
+    v.integrity>(v.version>=4?v.maxIntegrity:30)||
+    !Number.isInteger(v.hunger)||v.hunger<0||v.hunger>100||
+    !Number.isInteger(v.turn)||v.turn<1||
+    !Number.isInteger(v.nextId)||v.nextId<1)return null;
  const validUnit=u=>u&&typeof u.id==='string'&&SPECIES[u.species]&&Number.isInteger(u.lane)&&u.lane>=0&&u.lane<=2&&Number.isInteger(u.hp)&&Number.isInteger(u.maxHp)&&u.maxHp>=SPECIES[u.species].hp&&u.maxHp<=100&&u.hp>=0&&u.hp<=u.maxHp&&Number.isInteger(u.attack)&&u.attack>=0&&u.attack<=100&&Number.isInteger(u.level)&&u.level>=1&&u.level<=3&&Number.isInteger(u.xp)&&u.xp>=0&&u.xp<=100&&Number.isInteger(u.armor)&&u.armor>=0&&u.armor<=100&&u.alive===(u.hp>0);
- const expected=RAIDS[v.raid].enemies;if(!v.units.every(validUnit)||new Set(v.units.map(u=>u.id)).size!==v.units.length||v.enemies.length!==expected.length||!v.enemies.every((e,i)=>e&&e.id===`e${v.raid}-${i}`&&e.name===expected[i].name&&e.lane===expected[i].lane&&e.maxHp===expected[i].hp&&Number.isInteger(e.hp)&&e.hp>=0&&e.hp<=e.maxHp&&e.alive===(e.hp>0)&&(!e.armor||Number.isInteger(e.armor)))||!Number.isInteger(v.gold)||v.gold<0||!Array.isArray(v.log))return null;
- if(v.version===4&&!validShopState(v))return null;
- if(v.version>=3&&!validateDeck(v.deck,v.version===4?handSize(v):8))return null;
- if(v.version>=3&&v.chainTargetId!==undefined&&v.chainTargetId!==null&&(typeof v.chainTargetId!=='string'||!v.enemies.some(e=>e.id===v.chainTargetId&&e.alive)))return null;
- const deck=v.version>=3?v.deck:makeDeck(()=>0.5);if(v.version===2)drawCards(deck,8,()=>0.5);
- const mutations=v.version===4?v.mutations:[];
- const shopOffers=v.version===4?v.shopOffers:(v.phase==='reward'?createShop({mutations},()=>0.5):[]);
- return {...v,version:4,deck,mutations,shopOffers,chainTargetId:living(v.enemies).some(e=>e.id===v.chainTargetId)?v.chainTargetId:null,selected:null,animations:[],log:v.log.filter(x=>typeof x==='string').slice(0,16)};
+ const expected=RAIDS[v.raid].enemies;
+ if(!v.units.every(validUnit)||new Set(v.units.map(u=>u.id)).size!==v.units.length||
+    v.enemies.length!==expected.length||
+    !v.enemies.every((e,i)=>e&&e.id===`e${v.raid}-${i}`&&e.name===expected[i].name&&
+      e.lane===expected[i].lane&&e.maxHp===expected[i].hp&&
+      Number.isInteger(e.hp)&&e.hp>=0&&e.hp<=e.maxHp&&e.alive===(e.hp>0)&&
+      (!e.armor||Number.isInteger(e.armor)))||
+    !Number.isInteger(v.gold)||v.gold<0||!Array.isArray(v.log))return null;
+ // Validate old formats before migration; do not trust malformed mutation fields.
+ if(v.version===4&&!validShopState(v,true))return null;
+ if(v.version===5&&!validShopState(v))return null;
+ if(v.version>=3&&!validateDeck(v.deck,v.version>=4?handSize(v):8,v.version<5))return null;
+ if(v.version>=3&&v.chainTargetId!==undefined&&v.chainTargetId!==null&&
+    (typeof v.chainTargetId!=='string'||!v.enemies.some(e=>e.id===v.chainTargetId&&e.alive)))return null;
+ if(v.version===5&&(v.deck.acquired.length>v.raid+(v.phase==='reward'?1:0)||
+    v.deck.acquiredAt.some(raid=>raid>=v.raid+(v.phase==='reward'?1:0))))return null;
+ const deck=v.version>=3?{...v.deck,acquired:v.version===5?v.deck.acquired:[],
+   acquiredAt:v.version===5?v.deck.acquiredAt:[]}:makeDeck(()=>0.5);
+ if(v.version===2)drawCards(deck,8,()=>0.5);
+ const mutations=v.version>=4?v.mutations:[];
+ const shopOffers=v.version===5?v.shopOffers:
+   v.version===4?(v.phase==='reward'?[...v.shopOffers,createShop({mutations},()=>0.5)[3]]:v.shopOffers):
+   (v.phase==='reward'?createShop({mutations},()=>0.5):[]);
+ return {...v,version:5,deck,mutations,shopOffers,
+   chainTargetId:living(v.enemies).some(e=>e.id===v.chainTargetId)?v.chainTargetId:null,
+   selected:null,animations:[],log:v.log.filter(x=>typeof x==='string').slice(0,16)};
 }

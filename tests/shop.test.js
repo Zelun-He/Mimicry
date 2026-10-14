@@ -12,13 +12,13 @@ function winRaid(s){
 }
 function takeMutationOffer(s){return s.shopOffers.find(o=>Object.hasOwn(MUTATIONS,o.id));}
 
-test('victory grants raid-clear gold once and opens three shop offers',()=>{
+test('victory grants raid-clear gold once and opens four shop offers',()=>{
  const s=newSiege(rng);
  assert.equal(s.deck.hand.length,8);
  winRaid(s);
  assert.equal(s.gold,18);
  assert.deepEqual(s.shopOffers.map(o=>o.id).slice(0,2),['card','monster']);
- assert.equal(s.shopOffers.length,3);
+ assert.equal(s.shopOffers.length,4);
  const before=s.gold;
  assert.equal(endTurn(s,rng),false);
  assert.equal(devour(s,rng),false);
@@ -105,13 +105,13 @@ test('royal satchel increases hand to nine while chain cap remains five',()=>{
  assert.ok(validateDeck(s.deck,9));
 });
 
-test('saving version 3 games migrates safely to shop-capable version 4',()=>{
+test('saving version 3 games migrates safely to shop-capable version 5',()=>{
  const v3=newSiege(rng);
  v3.version=3;
  delete v3.mutations;delete v3.shopOffers;
  const result=restoreSiege(structuredClone(v3));
  assert.ok(result);
- assert.equal(result.version,4);
+ assert.equal(result.version,5);
  assert.deepEqual(result.mutations,[]);
  assert.deepEqual(result.shopOffers,[]);
  assert.equal(result.deck.hand.length,8);
@@ -123,7 +123,7 @@ test('saving version 3 at a reward creates shop offers on migration',()=>{
  delete s.shopOffers;delete s.mutations;
  const result=restoreSiege(structuredClone(s));
  assert.ok(result);
- assert.equal(result.shopOffers.length,3);
+ assert.equal(result.shopOffers.length,4);
  assert.equal(result.phase,'reward');
 });
 
