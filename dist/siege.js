@@ -135,11 +135,11 @@ function render(){
  const king=state.enemies.find(e=>e.alive&&e.id===state.chainTargetId)||state.enemies.filter(e=>e.alive).sort((a,b)=>a.hp-b.hp)[0];
  const finishingBite=king&&king.hp+(king.armor||0)<=25;
  const gnawCapture=king&&king.hp+(king.armor||0)<=8;
- $('gnaw').textContent=king?`GNAW ${king.name.toUpperCase()} · ${gnawCapture?'ESSENCE READY':'8 DAMAGE'}`:'GNAW · 20 HUNGER';
+ $('gnaw').textContent=king&&gnawCapture?'GNAW · STEAL TRAIT':'GNAW · 20';
  $('gnaw').title=king?`Costs 20 Hunger. Deals up to 8 damage to ${king.name}. ${gnawCapture?'A killing Gnaw captures its essence.':'Soften the enemy before trying to capture it.'}`:'Requires a living enemy.';
- $('devour').textContent=king?`DEVOUR ${king.name.toUpperCase()} · ${finishingBite?'ESSENCE READY':'WEAKEN PREY'}`:'DEVOUR · 100 HUNGER';
+ $('devour').textContent=king&&finishingBite?'DEVOUR · STEAL TRAIT':'DEVOUR · 100';
  $('devour').title=king?`Costs 100 Hunger. Deals up to 25 damage to ${king.name}. ${finishingBite?'A killing bite would capture its essence.':'Lower its HP and armor before attempting a capture.'}`:'Requires a living enemy.';
- $('king-essences').innerHTML=essenceSlotsHTML();
+ $('king-essences').innerHTML=state.essences.length?essenceSlotsHTML():'';
  $('log').innerHTML=state.log.map(x=>`<p>${x.replaceAll('&','&amp;').replaceAll('<','&lt;')}</p>`).join('');$('turn-button').disabled=state.phase!=='battle'||!!state.pendingEssence;$('gnaw').disabled=state.phase!=='battle'||!!state.pendingEssence||state.hunger<20;$('devour').disabled=state.phase!=='battle'||!!state.pendingEssence||state.hunger<100;
  const pending=Boolean(state.pendingEssence);
  $('overlay').hidden=state.phase==='battle'&&!pending;

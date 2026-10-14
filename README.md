@@ -261,3 +261,35 @@ Hunger, raid progression, or version-8 saves. Added locally hosted stylesheet
 `dist/siege/link-feedback.js` and tests in
 `tests/card-link-feedback.test.js`. CSS respects reduced-motion and touch
 input. See `DESIGN-CARD-LINKS.md`.
+
+## First Siege 0.13 — Hand-First Combat Interface
+
+The previous Siege presentation accidentally inherited an old four-column
+`.commands` parent grid. This squeezed the entire eight-card hand into
+a quarter-width cell, producing unreadable slivers and giant blank queue
+areas. First Siege now uses a compact, readable combat loop inspired by
+the clarity of tactical hands such as Demon's Hand, with original Mimicry
+art, creatures and rules intact:
+
+1. Read the invaders in **three compact horizontal lanes** at the top.
+   Click an enemy to select your focus (or leave Auto: weakest).
+2. **Click any legal card** in the eight-card hand to queue it. The visible
+   five-slot combo strip shows category, rank, link type and Mob/Horde stacks;
+   click a queued card to undo. Invalid cards are dimmed, but readable.
+3. Tap **DISCARD** to enter discard mode, then click the exact card to redraw
+   (up to the current redraw allowance). Cancel the mode any time.
+4. Tap **ATTACK** to resolve the queued commands and battlefield turn.
+   King Mimic's Gnaw, Devour, Hunger and stolen traits remain available.
+5. Deeper information (creature codex, veteran roster, combat journal)
+   sits in expandable sections below combat, rather than crowding the hand.
+
+The same five category crests and numerical links are retained. Hover/focus
+still previews link legality and bonus. Cards are real buttons, so keyboard
+Enter/Space and a single tap activate the same action. The mobile hand
+scrolls sideways instead of becoming a squeezed multi-column grid.
+
+This is a **UI reorganization**, not a new card game or a change to enemy
+AI, card IDs, damage, saves, loot or shop math. There is no new save
+version. Implementation: `dist/siege/combat-ui.js` (renderers),
+`dist/siege/combat-clarity.css` (responsive layout), and
+`tests/combat-clarity.test.js`.
