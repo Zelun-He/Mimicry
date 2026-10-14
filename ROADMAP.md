@@ -30,6 +30,12 @@ combat tests, save migration, and a manual browser playtest before release.
   readable row, shrink the five-slot combo bar, and introduce click-to-queue,
   deliberate discard mode, clickable enemy focus and compact horizontal lanes.
   Keep the existing Demon's Hand-inspired link rules and Mimicry creature systems.
+- [x] **03f — Restore original Forest Edge battle** (`feature/original-forest-battle-ui`).
+  Use the actual original pixel-art forest, Mimic and adventurer sprite sheets,
+  parchment chain table, turn readouts and eight-card hand for the **main**
+  / and /siege.html gameplay. Preserve new Siege swarms, multi-enemy targeting,
+  card links, Gnaw/Devour, traits, shops and save version 8. Archive the
+  standalone original one-on-one mode at /classic.html.
 - [ ] **04 — Treasure bait and invasion control.** Choose between visible risk/reward
   lures before raids; enemy types and rewards vary accordingly.
 - [ ] **05 — Counterplay-driven enemy abilities.** Bards, thieves, paladins,

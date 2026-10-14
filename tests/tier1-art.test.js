@@ -93,20 +93,34 @@ test('first-run tips react to player actions without locking game rules or alter
  assert.equal(s.turn>=1,true);
  assert.ok(nextActionTip(s).title.length>0);
 });
-test('tier one styles, stage artwork and helper scripts are referenced by the playable page',()=>{
- const html=read('dist/siege.html');
- const css=read('dist/siege/tier1.css');
+test('Tier 1 keeps the original forest artwork and new Siege card logic on the home screen',()=>{
+ const html=read('dist/index.html');
+ const css=read('dist/siege/forest-game.css');
  const js=read('dist/siege.js');
- const combat=read('dist/siege/combat-ui.js');
- assert.ok(html.includes('href="siege/tier1.css"'));
- for(const id of ['arena-scene','scene-title','scene-eyebrow','scene-subtitle','forest-progress','tips-toggle','first-run-tip','tip-kicker','tip-title','tip-copy'])assert.ok(html.includes('id="'+id+'"'),id);
- for(const scene of FOREST_SCENES)assert.ok(css.includes('./scenes/'+scene.id+'.svg'),scene.id);
- for(const selector of ['.card-hand','.hand-card__illustration','.chain-card__portrait','.scene-plate','.first-run-tip','.shop-offer__card-preview'])assert.ok(css.includes(selector));
+ const hand=read('dist/siege/forest-hand.js');
+ const renderer=read('dist/siege/forest-renderer.js');
+ assert.ok(html.includes('href="style.css"'));
+ assert.ok(html.includes('href="siege/forest-game.css"'));
+ assert.ok(html.includes('id="world"'));
+ assert.ok(html.includes('id="hand"'));
+ assert.ok(html.includes('id="chain"'));
+ assert.ok(html.includes('id="attack"'));
+ assert.ok(html.includes('id="gnaw"'));
+ assert.ok(html.includes('id="devour"'));
+ assert.ok(html.includes('id="summon-lane"'));
+ assert.ok(css.includes('.battle canvas'));
+ assert.ok(css.includes('.hand{display:grid'));
  assert.ok(css.includes('prefers-reduced-motion:reduce'));
- assert.ok(combat.includes('artFor(card.type)'));
- assert.ok(combat.includes('renderCompactChain'));
- assert.ok(js.includes("nextActionTip(state)"));
- assert.ok(js.includes("data-queue"));
- assert.ok(combat.includes('type="button"')); // Native keyboard activation rather than extra keydown handling.
- assert.ok(js.includes("querySelector('.shop-offer__card-preview')"));
+ assert.ok(renderer.includes('assets/forest.png'));
+ assert.ok(renderer.includes('assets/mimic.png'));
+ assert.ok(renderer.includes('assets/visitors.png'));
+ assert.ok(hand.includes('cardArt'));
+ assert.ok(hand.includes('previewCardLink'));
+ assert.ok(js.includes('renderForestHand(state'));
+ assert.ok(js.includes('renderForestChain(state'));
+ assert.ok(js.includes('createForestBattle'));
+ assert.ok(js.includes('queueCommand(state'));
+ assert.ok(js.includes('devour(state'));
+ assert.ok(js.includes('chooseEssence'));
+ assert.ok(js.includes('buyUpgrade'));
 });
