@@ -1,0 +1,28 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import {newSiege,endTurn,restoreSiege,queueCommand,unqueueCommand} from '../dist/siege-engine.js';
+import {validateDeck,linkCards} from '../dist/chain-engine.js';
+const rng=()=>0.5;
+test('tampered card type cannot bypass save integrity',()=>{const s=newSiege(rng);s.deck.hand[0].type='decree';assert.equal(validateDeck(s.deck),false);assert.equal(restoreSiege(s),null);});
+test('tampered card id cannot bypass save integrity',()=>{const s=newSiege(rng);s.deck.hand[0].id='c999';assert.equal(validateDeck(s.deck),false);});
+test('unlinked cards cannot enter chain',()=>{const s=newSiege(rng);const cards=[...s.deck.draw,...s.deck.hand,...s.deck.discard];const a=cards.find(c=>c.type==='execute'),b=cards.find(c=>c.type==='mend');assert.equal(linkCards(a,b),false);s.deck.hand=[a,b];s.deck.draw=cards.filter(c=>c!==a&&c!==b);assert.equal(queueCommand(s,a.id),true);assert.equal(queueCommand(s,b.id),false);assert.ok(validateDeck(s.deck));});
+test('poison kill awards XP and kill credit to living slime',()=>{const s=newSiege(rng);s.units.forEach(u=>u.lane=2);s.enemies[0].hp=1;s.enemies[0].poison=3;const slime=s.units.find(u=>u.species==='slime');const before=slime.kills;endTurn(s,rng);assert.equal(s.enemies[0].alive,false);assert.equal(slime.kills,before+1);assert.ok(slime.xp>0||slime.level>1);});
+test('unaffordable hunger card logs failure and does not spend hunger',()=>{const s=newSiege(rng);const all=[...s.deck.draw,...s.deck.hand];const feast=all.find(c=>c.type==='feast');s.deck.hand=[feast];s.deck.draw=all.filter(c=>c!==feast);assert.equal(queueCommand(s,feast.id),true);endTurn(s,rng);assert.ok(s.log.some(x=>x.includes('fizzles')));assert.equal(s.hunger,0);});
+test('old order field cannot grant extra actions',()=>{const a=newSiege(rng),b=structuredClone(a);a.selected={command:'frenzy'};endTurn(a,rng);endTurn(b,rng);assert.deepEqual(a.enemies,b.enemies);});
+test('removing a bridging card restores chain validity and returns orphaned suffix to hand',()=>{
+ const s=newSiege(rng);
+ const all=[...s.deck.draw,...s.deck.hand];
+ const take=type=>{const i=all.findIndex(c=>c.type===type);assert.ok(i>=0);return all.splice(i,1)[0];};
+ const execute=take('execute'),feast=take('feast'),mend=take('mend');
+ s.deck.draw=all;s.deck.hand=[execute,feast,mend];
+ for(const c of [execute,feast,mend])assert.equal(queueCommand(s,c.id),true);
+ assert.equal(s.deck.chain.length,3);
+ assert.equal(s.deck.hand.length,0);
+ assert.equal(linkCards(execute,mend),false);
+ const bridge=s.deck.chain[1].id;
+ assert.equal(unqueueCommand(s,bridge),true);
+ assert.deepEqual(s.deck.chain.map(c=>c.id),[execute.id]);
+ assert.deepEqual(new Set(s.deck.hand.map(c=>c.id)),new Set([feast.id,mend.id]));
+ assert.equal(validateDeck(s.deck),true);
+ assert.ok(restoreSiege(structuredClone(s)));
+});
