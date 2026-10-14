@@ -171,3 +171,12 @@ test('an unsold mutation cannot be granted free by a forged shop receipt',()=>{
  const forged=structuredClone(s);forged.shopOffers.find(o=>o.id===offer.id).sold=true;
  assert.equal(restoreSiege(forged),null);
 });
+
+test('malformed mutation fields are rejected without throwing during restore',()=>{
+ const s=newSiege(rng);
+ for(const malformed of [42,{},'iron-fangs',null]){
+  const v=structuredClone(s);v.mutations=malformed;
+  assert.doesNotThrow(()=>restoreSiege(v));
+  assert.equal(restoreSiege(v),null);
+ }
+});

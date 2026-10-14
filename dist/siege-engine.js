@@ -126,9 +126,9 @@ export function reinforce(s,choice){if(s.phase!=='reward')return false;if(choice
 export function restoreSiege(v){if(!v||![2,3,4].includes(v.version)||!['battle','reward','won','lost'].includes(v.phase)||!Number.isInteger(v.raid)||v.raid<0||v.raid>=RAIDS.length||!Array.isArray(v.units)||v.units.length>12||!Array.isArray(v.enemies)||v.enemies.length>10||!Number.isInteger(v.integrity)||v.integrity<0||v.integrity>(v.version===4?v.maxIntegrity:30)||!Number.isInteger(v.hunger)||v.hunger<0||v.hunger>100||!Number.isInteger(v.turn)||v.turn<1||!Number.isInteger(v.nextId)||v.nextId<1)return null;
  const validUnit=u=>u&&typeof u.id==='string'&&SPECIES[u.species]&&Number.isInteger(u.lane)&&u.lane>=0&&u.lane<=2&&Number.isInteger(u.hp)&&Number.isInteger(u.maxHp)&&u.maxHp>=SPECIES[u.species].hp&&u.maxHp<=100&&u.hp>=0&&u.hp<=u.maxHp&&Number.isInteger(u.attack)&&u.attack>=0&&u.attack<=100&&Number.isInteger(u.level)&&u.level>=1&&u.level<=3&&Number.isInteger(u.xp)&&u.xp>=0&&u.xp<=100&&Number.isInteger(u.armor)&&u.armor>=0&&u.armor<=100&&u.alive===(u.hp>0);
  const expected=RAIDS[v.raid].enemies;if(!v.units.every(validUnit)||new Set(v.units.map(u=>u.id)).size!==v.units.length||v.enemies.length!==expected.length||!v.enemies.every((e,i)=>e&&e.id===`e${v.raid}-${i}`&&e.name===expected[i].name&&e.lane===expected[i].lane&&e.maxHp===expected[i].hp&&Number.isInteger(e.hp)&&e.hp>=0&&e.hp<=e.maxHp&&e.alive===(e.hp>0)&&(!e.armor||Number.isInteger(e.armor)))||!Number.isInteger(v.gold)||v.gold<0||!Array.isArray(v.log))return null;
+ if(v.version===4&&!validShopState(v))return null;
  if(v.version>=3&&!validateDeck(v.deck,v.version===4?handSize(v):8))return null;
  if(v.version>=3&&v.chainTargetId!==undefined&&v.chainTargetId!==null&&(typeof v.chainTargetId!=='string'||!v.enemies.some(e=>e.id===v.chainTargetId&&e.alive)))return null;
- if(v.version===4&&!validShopState(v))return null;
  const deck=v.version>=3?v.deck:makeDeck(()=>0.5);if(v.version===2)drawCards(deck,8,()=>0.5);
  const mutations=v.version===4?v.mutations:[];
  const shopOffers=v.version===4?v.shopOffers:(v.phase==='reward'?createShop({mutations},()=>0.5):[]);
