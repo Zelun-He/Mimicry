@@ -106,32 +106,42 @@ function renderTargets(){
 }
 
 function renderDefenders(){
- const living=state.units.filter(u=>u.alive);
- const recruits=liveMinions(state);
- const small=living.map(u=>
-  '<span class="ally-chip" title="'+escapeHTML(u.name)+' · Level '+u.level+
-  ' · Lane '+(u.lane+1)+'"><span class="unit-portrait" style="background-image:url(./siege/sprites/'+u.species+'.png)"></span>'+
-  '<b>'+escapeHTML(u.name)+'</b><small>L'+(u.lane+1)+'</small></span>');
- const counts=new Map();
- for(const u of recruits)counts.set(u.species,(counts.get(u.species)||0)+1);
- for(const [species,count] of counts){
-  small.push('<span class="ally-chip summon-chip"><span>✦</span><b>'+escapeHTML(species.replace('-bud','').replace('-',' '))+'</b><small>×'+count+'</small></span>');
+ // Cards are the monster portraits; only readable tactical status goes beneath
+ // the original Mimic-versus-adventurer battle.
+ const badges=state.units.filter(u=>u.alive).map(u=>
+  '<span class="ally-chip veteran-chip" title="'+escapeHTML(u.name)+' · Level '+u.level+
+  ' · Lane '+(u.lane+1)+' · '+u.hp+'/'+u.maxHp+' HP">'+
+  '<b>'+escapeHTML(u.name)+'</b><small>'+u.hp+'/'+u.maxHp+' HP · L'+(u.lane+1)+'</small></span>');
+ // Different lanes are deliberately different groups: the player needs to
+ // know where a mob is defending even though it has no board sprite.
+ const groups=new Map();
+ for(const minion of liveMinions(state)){
+  const key=minion.species+':'+minion.lane;
+  const group=groups.get(key)||{name:minion.name,lane:minion.lane,count:0};
+  group.count++;
+  groups.set(key,group);
  }
- $('defenders').innerHTML=small.join('')||'<span class="ally-chip">No defenders remaining</span>';
+ for(const group of groups.values()){
+  badges.push('<span class="ally-chip summon-chip" title="'+
+   escapeHTML(group.name)+' formation · '+group.count+' summons · Lane '+(group.lane+1)+'">'+
+   '<b>'+escapeHTML(group.name)+' ×'+group.count+'</b><small>L'+(group.lane+1)+'</small></span>');
+ }
+ $('defenders').innerHTML=badges.join('')||'<span class="ally-chip">No defenders remaining</span>';
 }
 
 function renderRoster(){
  $('roster').innerHTML=state.units.map(u=>
-  '<article class="roster-card '+(u.alive?'':'dead')+'"><div class="unit-portrait" style="background-image:url(./siege/sprites/'+u.species+'.png)"></div><div>'+
-  '<b>'+escapeHTML(u.name)+'</b><small>'+SPECIES[u.species].role+' · Level '+u.level+
+  '<article class="roster-card '+(u.alive?'':'dead')+'">'+
+  '<span class="roster-role" aria-hidden="true">'+escapeHTML(SPECIES[u.species].name[0])+'</span><div>'+
+  '<b>'+escapeHTML(u.name)+'</b><small>'+escapeHTML(SPECIES[u.species].role)+' · Level '+u.level+
   ' · '+u.hp+'/'+u.maxHp+' HP</small><small>'+u.attack+' ATK · '+u.kills+
-  ' kills</small></div><label>LANE <select data-move="'+u.id+'" '+(state.phase!=='battle'||!u.alive?'disabled':'')+'>'+
+  ' kills</small></div><label>LANE <select data-move="'+escapeHTML(u.id)+'" '+(state.phase!=='battle'||!u.alive?'disabled':'')+'>'+
   [0,1,2].map(l=>'<option value="'+l+'" '+(l===u.lane?'selected':'')+'>Lane '+(l+1)+'</option>').join('')+
   '</select></label></article>').join('');
  $('creature-bestiary').innerHTML=Object.entries(CREATURES).map(([species,creature])=>{
   const image={spider:'exotic-spider.svg','slime-bud':'exotic-slime.svg',mimicling:'exotic-mimicling.svg'}[species];
   return '<article class="creature-profile"><img width="54" height="54" src="./siege/'+image+
-  '" alt="'+escapeHTML(creature.name)+' sprite"><div><strong>'+escapeHTML(creature.name)+'</strong>'+
+  '" alt="'+escapeHTML(creature.name)+' portrait"><div><strong>'+escapeHTML(creature.name)+'</strong>'+
   '<p>'+escapeHTML(creature.mechanic)+'</p></div></article>';
  }).join('');
 }

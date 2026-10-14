@@ -27,16 +27,15 @@ export function createForestBattle(canvas,{reducedMotion=false}={}){
  if(!ctx)return {setState(){},setCaption(){},async replay(){},hitTarget(){return null;},stop(){}};
  ctx.imageSmoothingEnabled=false;
  const images=new Map(),drawBoxes=[];
+ // Only the original battle protagonists belong on the canvas.
+ // Allies and summons are represented in the command cards and status chips.
  for(const [key,path] of Object.entries({
-  forest:'assets/forest.png',mimic:'assets/mimic.png',visitors:'assets/visitors.png',
-  goblin:'siege/sprites/goblin.png',slime:'siege/sprites/slime.png',
-  skeleton:'siege/sprites/skeleton.png',sporeling:'siege/sprites/sporeling.png'
+  forest:'assets/forest.png',mimic:'assets/mimic.png',visitors:'assets/visitors.png'
  })){
   const img=new Image();img.src=path;images.set(key,img);
  }
  let state=null,pose=0,poseUntil=0,heroShake=0,foeShake=0,flash=null;
  let last=0,running=true,raf=0,viewRaid=0;
- const particles=[];
  const ready=key=>{const img=images.get(key);return img?.complete&&img.naturalWidth>0?img:null;};
  const sprite=(key,sx,sy,sw,sh,x,y,w,h)=>{
   const img=ready(key);if(img)ctx.drawImage(img,sx,sy,sw,sh,x,y,w,h);
@@ -46,9 +45,6 @@ export function createForestBattle(canvas,{reducedMotion=false}={}){
   ctx.lineWidth=4;ctx.strokeStyle='#162a20';ctx.strokeText(text,x,y);
   ctx.fillStyle=color;ctx.fillText(text,x,y);ctx.textAlign='start';
  };
- function particle(text,color,x=650,y=220){
-  particles.push({text,color,x,y,born:performance.now()});
- }
  function setState(s){state=s;viewRaid=s?.raid||0;}
  function hitTarget(x,y){
   const box=drawBoxes.findLast(r=>x>=r.x&&x<=r.x+r.w&&y>=r.y&&y<=r.y+r.h);
@@ -101,25 +97,8 @@ export function createForestBattle(canvas,{reducedMotion=false}={}){
    if(focus.poison>0)paintText('☣ '+focus.poison,x+70,y-15,'#d5a4e6',15);
    if(focus.web>0)paintText('⌘ '+focus.web,x+70,y-30,'#c2e5d9',12);
   }
-  // Show veteran monster sprites in the same pixel-art plane, without crowding
-  // the focal King Mimic vs visitor composition.
-  const allies=(state?.units||[]).filter(u=>u.alive);
-  allies.slice(0,4).forEach((u,i)=>{
-   const img=ready(u.species),x=325+i*54,y=292+((i%2)*8);
-   if(img){sprite(u.species,0,0,64,64,x,y,55,55);}
-   else{ctx.fillStyle='#557249';ctx.fillRect(x+12,y+15,26,28);}
-  });
-  const minions=(state?.minions||[]).filter(u=>u.alive);
-  if(minions.length){
-   const types=[...new Set(minions.map(m=>m.species))].slice(0,3);
-   types.forEach((species,i)=>{
-    const img=ready(species==='slime-bud'||species==='slimelet'||species==='slime-giant'?'slime':species);
-    const x=350+i*54,y=350;
-    if(img)ctx.drawImage(img,0,0,64,64,x,y,43,43);
-    else{ctx.fillStyle='#77a77a';ctx.beginPath();ctx.arc(x+22,y+22,17,0,7);ctx.fill();}
-   });
-   paintText('×'+minions.length,517,382,'#f2dd9d',13);
-  }
+  // Creature strategy lives in the card hand and defender status row.
+  // Do not paint veteran or summoned monster sprites on this battlefield.
   if(flash&&time-flash.born<380){
    const age=(time-flash.born)/380;
    ctx.strokeStyle=flash.color;ctx.lineWidth=7*(1-age);
@@ -132,12 +111,6 @@ export function createForestBattle(canvas,{reducedMotion=false}={}){
    ctx.fillRect((time/46+i*157)%960,170+i*26%190,2,2);
   }
   ctx.globalAlpha=1;
-  for(let i=particles.length-1;i>=0;i--){
-   const p=particles[i],age=time-p.born;
-   if(age>1000){particles.splice(i,1);continue;}
-   ctx.globalAlpha=1-age/1000;
-   paintText(p.text,p.x,p.y-age/25,p.color,16);
-  }
   ctx.globalAlpha=1;
  }
  raf=requestAnimationFrame(draw);
@@ -145,12 +118,10 @@ export function createForestBattle(canvas,{reducedMotion=false}={}){
   const color=SCHOOL_COLOR[step.def.suit]||'#ffe1ac';
   pose=2;poseUntil=performance.now()+230;foeShake=performance.now()+170;
   flash={color,born:performance.now()};
-  particle(step.def.name.toUpperCase(),color);
  }
  function triggerHit(event){
-  if(event.state==='damage'&&event.id.startsWith('e')){foeShake=performance.now()+145;particle('HIT','#fff1c0');}
+  if(event.state==='damage'&&event.id.startsWith('e'))foeShake=performance.now()+145;
   else if(event.id==='king-mimic'&&event.state==='damage'){heroShake=performance.now()+210;pose=3;poseUntil=performance.now()+240;}
-  else if(event.state==='attack'){pose=1;poseUntil=performance.now()+160;}
  }
  async function replay(steps,events,next,{onStep=()=>{},onFinish=()=>{}}={}){
   const pause=ms=>new Promise(resolve=>setTimeout(resolve,reducedMotion?5:ms));
@@ -158,11 +129,13 @@ export function createForestBattle(canvas,{reducedMotion=false}={}){
    triggerCard(steps[i]);onStep(steps[i],i);
    await pause(255);
   }
-  for(const ev of events.filter(e=>e.state==='attack'||e.state==='damage').slice(0,12)){
-   triggerHit(ev);await pause(105);
+  // Only real damage events produce a subtle reaction. Allied attacks should
+  // not make the King Mimic perform unrelated "extra" attack poses.
+  for(const ev of events.filter(e=>e.state==='damage').slice(0,12)){
+   triggerHit(ev);await pause(95);
   }
   setState(next);onFinish();
  }
  function stop(){running=false;cancelAnimationFrame(raf);}
- return {setState,hitTarget,replay,triggerCard,particle,stop};
+ return {setState,hitTarget,replay,triggerCard,stop};
 }

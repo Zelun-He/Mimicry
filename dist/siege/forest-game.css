@@ -45,9 +45,11 @@ header{margin-bottom:22px}
 .ally-chip{display:inline-flex;align-items:center;gap:5px;min-height:34px;
  border:1px solid #c8cba9;border-radius:4px;background:#e1e8ca;padding:3px 6px;
  color:#506649;font-size:10px;white-space:nowrap}
-.ally-chip .unit-portrait{display:inline-block;width:27px;height:27px;flex:none;
- background-repeat:no-repeat;background-position:top left;background-size:108px 108px;
- image-rendering:pixelated}
+/* Army strength is communicated with legible formation/HP labels, not
+   miniature actors competing with the original King Mimic on the canvas. */
+.ally-chip.veteran-chip{background:#e6eace;gap:7px}
+.ally-chip.summon-chip{background:#e9dfc4;border-color:#bda77a;gap:7px}
+.ally-chip small{border-left:1px solid #b3bb9b;padding-left:6px;font-variant-numeric:tabular-nums}
 .ally-chip b{font-size:10px;color:#334d35}
 .ally-chip small{font-size:9px;color:#677a5b}
 .ally-chip.dead{opacity:.48;filter:grayscale(.8)}
@@ -119,6 +121,10 @@ header{margin-bottom:22px}
 .extra-panel section>.eyebrow{display:block;margin-bottom:12px}
 #roster{display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px}
 #roster .roster-card{min-width:0}
+#roster .roster-role{display:grid;place-items:center;flex:none;width:37px;height:37px;
+ border:1px solid #82966e;border-radius:6px;background:#2a4831;color:#f3dca9;
+ font:800 20px Georgia,serif;letter-spacing:0}
+
 #creature-bestiary{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
 #creature-bestiary .creature-profile{min-width:0}
 .outcome{position:fixed;inset:0;display:grid;place-items:center;overflow:auto;z-index:50;padding:18px;
