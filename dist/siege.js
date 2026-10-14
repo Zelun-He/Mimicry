@@ -71,7 +71,9 @@ function render(){
  const living=state.units.filter(u=>u.alive);
  $('roster').innerHTML=state.units.map(u=>`<article class="roster-card ${u.alive?'':'dead'}">${sprite(u.species,`roster-${u.id}`)}<div><b>${u.name}</b><small>${SPECIES[u.species].role} · Lv ${u.level} · ${u.alive?`${u.xp}/${u.level*2} XP`:'FALLEN'}</small>${hpBar(u.hp,u.maxHp)}<small>${u.attack} attack · ${u.kills} kills</small></div><label>Lane <select data-move="${u.id}" ${state.phase!=='battle'||!u.alive?'disabled':''}>${[0,1,2].map(l=>`<option value="${l}" ${l===u.lane?'selected':''}>${l+1}</option>`).join('')}</select></label></article>`).join('');
  const king=state.enemies.find(e=>e.alive&&e.id===state.chainTargetId)||state.enemies.filter(e=>e.alive).sort((a,b)=>a.hp-b.hp)[0];
- $('devour').textContent=king?`DEVOUR ${king.name.toUpperCase()} · 100 HUNGER`:'DEVOUR · 100 HUNGER';
+ const finishingBite=king&&king.hp+(king.armor||0)<=25;
+ $('devour').textContent=king?`DEVOUR ${king.name.toUpperCase()} · ${finishingBite?'ESSENCE READY':'WEAKEN PREY'}`:'DEVOUR · 100 HUNGER';
+ $('devour').title=king?`Costs 100 Hunger. Deals up to 25 damage to ${king.name}. ${finishingBite?'A killing bite would capture its essence.':'Lower its HP and armor before attempting a capture.'}`:'Requires a living enemy.';
  $('king-essences').innerHTML=essenceSlotsHTML();
  $('log').innerHTML=state.log.map(x=>`<p>${x.replaceAll('&','&amp;').replaceAll('<','&lt;')}</p>`).join('');$('turn-button').disabled=state.phase!=='battle'||!!state.pendingEssence;$('devour').disabled=state.phase!=='battle'||!!state.pendingEssence||state.hunger<100;
  const pending=Boolean(state.pendingEssence);
@@ -84,7 +86,7 @@ function render(){
 }
 let busy=false;
 function replay(events){if(!events.length)return;busy=true;const actions=events.filter(x=>x.state!=='damage'||x.id==='king-mimic').slice(0,14);let i=0;const play=()=>{if(i>=actions.length){busy=false;return;}const e=actions[i++];const u=state.units.find(x=>x.id===e.id);const species=u?.species||'king-mimic';document.querySelectorAll(`[data-unit="${e.id}"]`).forEach(el=>animate(el,species,e.state));if(e.id==='king-mimic')animate($('king-sprite'),'king-mimic',e.state);setTimeout(play,e.state==='death'?550:320);};play();}
-$('commands').addEventListener('change',e=>{if(e.target.id==='chain-target'){targetChain(state,e.target.value||null);save();}});
+$('commands').addEventListener('change',e=>{if(e.target.id==='chain-target'){if(targetChain(state,e.target.value||null))render();}});
 $('commands').addEventListener('click',e=>{if(busy||state.phase!=='battle')return;const b=e.target.closest('[data-queue],[data-unqueue],[data-redraw]');if(!b)return;if(b.dataset.queue)queueCommand(state,b.dataset.queue);else if(b.dataset.unqueue)unqueueCommand(state,b.dataset.unqueue);else if(b.dataset.redraw)redrawCommand(state,b.dataset.redraw);render();});
 $('roster').addEventListener('change',e=>{if(e.target.matches('[data-move]')){moveUnit(state,e.target.dataset.move,Number(e.target.value));render();}});
 $('turn-button').addEventListener('click',()=>{if(busy)return;endTurn(state);const events=[...state.animations];render();replay(events);});
