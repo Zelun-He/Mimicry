@@ -96,7 +96,7 @@ function resolveChain(s){
     if(!donor){note(s,'Sacrificial Strike fizzles: no defender can pay the price.');break;}
     const cost=Math.min(donor.hp-1,Math.max(1,Math.ceil(donor.hp/4)));
     donor.hp-=cost;emit(s,donor.id,'damage');
-    hit(foe,power+cost,specialist);
+    hit(foe,power+cost+(specialist?2:0),specialist);
     note(s,`${donor.name} sacrifices ${cost} HP to empower the strike.`);
     break;
    }

@@ -36,7 +36,7 @@ function prepare(s,types){
  s.deck.draw=all;s.deck.discard=[];s.deck.hand=hand;s.deck.chain=[];
  s.units.forEach(u=>u.lane=1);
  assert.ok(validateDeck(s.deck));
- return hand;
+ return [...hand]; // Independent copy: queueCard mutates the deck's hand array.
 }
 
 test('four unique rare card designs are shop-only; original eight-card hand and five-card chain remain',()=>{
@@ -161,6 +161,7 @@ test('mirror fang repeats a compatible previous command once, for twenty hunger'
  const hand=prepare(s,['strike','mirror']);
  s.hunger=100;
  for(const c of hand)assert.equal(queueCommand(s,c.id),true);
+ assert.equal(s.deck.chain.length,hand.length);
  endTurn(s,baseRng);
  assert.equal(s.enemies[0].hp,16,JSON.stringify({log:s.log,hunger:s.hunger,enemies:s.enemies})); // strike 4+2 affinity; copied base 4/2
  assert.equal(s.hunger,80);
