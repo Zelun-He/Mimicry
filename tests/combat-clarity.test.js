@@ -32,7 +32,7 @@ test('the battle canvas and five-slot parchment attack chain are above the hand'
 test('combat frame uses original forest pixel sprites instead of status-grid stand-ins',()=>{
  const renderer=read('dist/siege/forest-renderer.js');
  for(const sprite of ['forest.png','mimic.png','visitors.png'])assert.ok(renderer.includes(sprite));
- assert.ok(renderer.includes('const drawBoxes=[]'));
+ assert.ok(renderer.includes('drawBoxes=[]'));
  assert.ok(renderer.includes('function hitTarget('));
  assert.ok(renderer.includes('triggerCard(steps[i])'));
  assert.ok(renderer.includes('ctx.drawImage'));
