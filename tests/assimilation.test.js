@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {newSiege,RAIDS,endTurn,reinforce,devour,targetChain,chooseEssence,restoreSiege,
- queueCommand,redrawCommand,moveUnit,buyUpgrade} from '../dist/siege-engine.js';
+ queueCommand,redrawCommand,moveUnit,buyUpgrade,gnaw} from '../dist/siege-engine.js';
 import {ESSENCE_CAPACITY,ESSENCE_BY_ENEMY,ESSENCE_TRAITS,hasEssence,killGold,redrawLimit,hungerCost} from '../dist/assimilation-engine.js';
 import {validateDeck} from '../dist/chain-engine.js';
 
@@ -266,4 +266,67 @@ test('ordinary monster kills and card attacks cannot trigger essence capture',()
  endTurn(s,rng);
  assert.equal(s.pendingEssence,null);
  assert.equal(s.essences.length,0);
+});
+
+test('Gnaw is a cheaper, weaker feeding action and cannot be used without 20 Hunger',()=>{
+ const s=newSiege(rng);
+ assert.equal(gnaw(s,rng),false);
+ s.hunger=20;
+ assert.equal(gnaw(s,rng),true);
+ assert.equal(s.hunger,0);
+ assert.equal(s.enemies[0].hp,10); // 18 - 8; nonlethal
+ assert.equal(s.pendingEssence,null);
+ assert.deepEqual(s.essences,[]);
+ assert.ok(restoreSiege(structuredClone(s)));
+});
+test('Gnaw can capture first-raid prey naturally after collecting Hunger from battle',()=>{
+ const s=newSiege(rng);
+ let prey=null;
+ for(let turn=0;turn<9&&s.phase==='battle';turn++){
+  prey=s.enemies.find(e=>e.alive&&e.hp+(e.armor||0)<=8);
+  if(s.hunger>=20&&prey)break;
+  assert.equal(endTurn(s,rng),true);
+ }
+ assert.ok(prey&&prey.alive,'a first-raid invader should be available to Gnaw');
+ assert.ok(s.hunger>=20);
+ assert.equal(targetChain(s,prey.id),true);
+ assert.equal(gnaw(s,rng),true);
+ assert.deepEqual(s.pendingEssence,{enemyId:prey.id,enemyType:prey.name});
+ assert.ok(ESSENCE_BY_ENEMY[prey.name].length===2);
+ assert.ok(restoreSiege(structuredClone(s)));
+});
+test('Gnaw follows focused targeting rather than auto-choosing the weakest enemy',()=>{
+ const s=newSiege(rng);
+ s.hunger=50;
+ s.enemies[1].hp=6;
+ assert.equal(targetChain(s,s.enemies[1].id),true);
+ assert.equal(gnaw(s,rng),true);
+ assert.equal(s.enemies[1].alive,false);
+ assert.equal(s.enemies[0].alive,true);
+ assert.equal(s.hunger,30);
+ assert.equal(s.pendingEssence.enemyType,'Forager');
+ assert.equal(chooseEssence(s,'herbal-gut'),true);
+ assert.ok(restoreSiege(structuredClone(s)));
+});
+test('Armor can keep a weakened Gnaw target alive, so captures require actual lethal damage',()=>{
+ const s=newSiege(rng);
+ s.hunger=20;
+ s.enemies[0].hp=7;
+ s.enemies[0].armor=2;
+ assert.equal(gnaw(s,rng),true);
+ assert.equal(s.enemies[0].hp,1); // 2 armor absorbs part of the 8
+ assert.equal(s.enemies[0].alive,true);
+ assert.equal(s.pendingEssence,null);
+});
+test('Gnaw and Devour cannot stack actions while an essence choice is pending',()=>{
+ const s=newSiege(rng);
+ s.hunger=100;s.enemies[0].hp=5;
+ assert.equal(gnaw(s,rng),true);
+ assert.ok(s.pendingEssence);
+ const hunger=s.hunger,enemyHp=s.enemies[1].hp;
+ assert.equal(gnaw(s,rng),false);
+ assert.equal(devour(s,rng),false);
+ assert.equal(s.hunger,hunger);
+ assert.equal(s.enemies[1].hp,enemyHp);
+ assert.equal(chooseEssence(s,'skip'),true);
 });

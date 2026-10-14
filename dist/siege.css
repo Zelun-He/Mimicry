@@ -96,3 +96,9 @@
  .essence-chip{font-size:11px}
  .essence-prey h3{font-size:18px}
 }
+
+/* Early-run feeding: a cheap precise bite beside the full royal Devour. */
+.king #gnaw{margin-left:auto;border-color:#b1a578;background:#354b36;color:#e8e8b7;font-weight:800}
+.king #devour{margin-left:0}
+.king #gnaw:hover:not(:disabled){background:#496747}
+@media(max-width:720px){.king #gnaw,.king #devour{margin:0;width:100%}}

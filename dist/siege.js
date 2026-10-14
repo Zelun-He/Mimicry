@@ -1,7 +1,7 @@
 import {CARDS,linkCards} from './chain-engine.js';
 import {MUTATIONS,handSize,upgradeableCards,trainableUnits,cardPower} from './shop-engine.js';
 import {ESSENCE_CAPACITY,ESSENCE_BY_ENEMY,ESSENCE_TRAITS,hungerCost,redrawLimit} from './assimilation-engine.js';
-import {newSiege,restoreSiege,RAIDS,SPECIES,moveUnit,endTurn,devour,reinforce,buyUpgrade,chooseEssence,queueCommand,unqueueCommand,redrawCommand,previewChain,previewRituals,targetChain} from './siege-engine.js';
+import {newSiege,restoreSiege,RAIDS,SPECIES,moveUnit,endTurn,devour,gnaw,reinforce,buyUpgrade,chooseEssence,queueCommand,unqueueCommand,redrawCommand,previewChain,previewRituals,targetChain} from './siege-engine.js';
 const $=id=>document.getElementById(id),KEY='mimicry-siege-v6';
 let state;try{state=restoreSiege(JSON.parse(localStorage.getItem(KEY)||localStorage.getItem('mimicry-siege-v5')||localStorage.getItem('mimicry-siege-v4')||localStorage.getItem('mimicry-siege-v3')||localStorage.getItem('mimicry-siege-v2')))}catch{}state??=newSiege();
 const manifest=await fetch('./siege/animations.json').then(r=>r.json());
@@ -72,10 +72,13 @@ function render(){
  $('roster').innerHTML=state.units.map(u=>`<article class="roster-card ${u.alive?'':'dead'}">${sprite(u.species,`roster-${u.id}`)}<div><b>${u.name}</b><small>${SPECIES[u.species].role} · Lv ${u.level} · ${u.alive?`${u.xp}/${u.level*2} XP`:'FALLEN'}</small>${hpBar(u.hp,u.maxHp)}<small>${u.attack} attack · ${u.kills} kills</small></div><label>Lane <select data-move="${u.id}" ${state.phase!=='battle'||!u.alive?'disabled':''}>${[0,1,2].map(l=>`<option value="${l}" ${l===u.lane?'selected':''}>${l+1}</option>`).join('')}</select></label></article>`).join('');
  const king=state.enemies.find(e=>e.alive&&e.id===state.chainTargetId)||state.enemies.filter(e=>e.alive).sort((a,b)=>a.hp-b.hp)[0];
  const finishingBite=king&&king.hp+(king.armor||0)<=25;
+ const gnawCapture=king&&king.hp+(king.armor||0)<=8;
+ $('gnaw').textContent=king?`GNAW ${king.name.toUpperCase()} · ${gnawCapture?'ESSENCE READY':'8 DAMAGE'}`:'GNAW · 20 HUNGER';
+ $('gnaw').title=king?`Costs 20 Hunger. Deals up to 8 damage to ${king.name}. ${gnawCapture?'A killing Gnaw captures its essence.':'Soften the enemy before trying to capture it.'}`:'Requires a living enemy.';
  $('devour').textContent=king?`DEVOUR ${king.name.toUpperCase()} · ${finishingBite?'ESSENCE READY':'WEAKEN PREY'}`:'DEVOUR · 100 HUNGER';
  $('devour').title=king?`Costs 100 Hunger. Deals up to 25 damage to ${king.name}. ${finishingBite?'A killing bite would capture its essence.':'Lower its HP and armor before attempting a capture.'}`:'Requires a living enemy.';
  $('king-essences').innerHTML=essenceSlotsHTML();
- $('log').innerHTML=state.log.map(x=>`<p>${x.replaceAll('&','&amp;').replaceAll('<','&lt;')}</p>`).join('');$('turn-button').disabled=state.phase!=='battle'||!!state.pendingEssence;$('devour').disabled=state.phase!=='battle'||!!state.pendingEssence||state.hunger<100;
+ $('log').innerHTML=state.log.map(x=>`<p>${x.replaceAll('&','&amp;').replaceAll('<','&lt;')}</p>`).join('');$('turn-button').disabled=state.phase!=='battle'||!!state.pendingEssence;$('gnaw').disabled=state.phase!=='battle'||!!state.pendingEssence||state.hunger<20;$('devour').disabled=state.phase!=='battle'||!!state.pendingEssence||state.hunger<100;
  const pending=Boolean(state.pendingEssence);
  $('overlay').hidden=state.phase==='battle'&&!pending;
  $('overlaytag').textContent=pending?'THE KING MIMIC EVOLVES':state.phase==='reward'?'RAID REPELLED':state.phase==='won'?'VICTORY':'DEFEAT';
@@ -91,6 +94,7 @@ $('commands').addEventListener('click',e=>{if(busy||state.phase!=='battle')retur
 $('roster').addEventListener('change',e=>{if(e.target.matches('[data-move]')){moveUnit(state,e.target.dataset.move,Number(e.target.value));render();}});
 $('turn-button').addEventListener('click',()=>{if(busy)return;endTurn(state);const events=[...state.animations];render();replay(events);});
 $('devour').addEventListener('click',()=>{if(busy)return;if(devour(state)){const events=[...state.animations];render();replay(events);}});
+$('gnaw').addEventListener('click',()=>{if(busy)return;if(gnaw(state)){const events=[...state.animations];render();replay(events);}});
 $('rewards').addEventListener('click',e=>{if(busy)return;const b=e.target.closest('button');if(!b)return;
  if(b.dataset.chooseEssence){const replaceId=$('essence-replace')?.value||null;if(chooseEssence(state,b.dataset.chooseEssence,replaceId))render();return;}
  if(b.hasAttribute('data-skip-essence')){if(chooseEssence(state,'skip'))render();return;}if(b.dataset.buy){const card=b.closest('[data-shop-offer]');const targetId=card?.querySelector('[data-shop-target]')?.value||null;if(buyUpgrade(state,b.dataset.buy,targetId))render();return;}if(b.hasAttribute('data-reset')){state=newSiege();render();return;}if(b.dataset.reward&&reinforce(state,b.dataset.reward))render();});

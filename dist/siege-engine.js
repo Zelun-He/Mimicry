@@ -200,16 +200,28 @@ s.selected=null;
  s.turn++;if(s.deck)drawCards(s.deck,handSize(s),rng);
  return true;
 }
-export function devour(s,rng=Math.random){if(s.phase!=='battle'||combatLocked(s)||s.hunger<100)return false;
- const foes=living(s.enemies),foe=foes.find(e=>e.id===s.chainTargetId)||foes.sort((a,b)=>a.hp-b.hp)[0];if(!foe)return false;s.animations=[];emit(s,'king-mimic','attack');harm(s,foe,25);s.hunger=0;note(s,`The King Mimic devours ${foe.name} for 25 damage!`);if(!foe.alive){
+// Two feeding modes reward different skills: Gnaw is cheap but demands
+// precise setup; Devour is expensive but a reliable finisher.
+function feed(s,cost,damage,verb,rng=Math.random){
+ if(s.phase!=='battle'||combatLocked(s)||s.hunger<cost)return false;
+ const foes=living(s.enemies);
+ const foe=foes.find(e=>e.id===s.chainTargetId)||foes.sort((a,b)=>a.hp-b.hp)[0];
+ if(!foe)return false;
+ s.animations=[];emit(s,'king-mimic','attack');
+ harm(s,foe,damage);
+ s.hunger-=cost;
+ note(s,`The King Mimic ${verb} ${foe.name} for ${damage} damage!`);
+ if(!foe.alive){
   s.gold+=killGold(s);
-  s.chainTargetId=null; // Never leave an invalid focus in a version 6 save.
+  s.chainTargetId=null;
   if(captureEssence(s,foe))note(s,`The King Mimic swallowed ${foe.name}'s essence! Choose an inherited trait.`);
-  else note(s,`The King Mimic devoured ${foe.name}, but learned nothing new.`);
+  else note(s,`The King Mimic consumed ${foe.name}, but learned nothing new.`);
   if(!living(s.enemies).length)finishRaid(s,rng);
  }
  return true;
 }
+export function gnaw(s,rng=Math.random){return feed(s,20,8,'gnaws',rng);}
+export function devour(s,rng=Math.random){return feed(s,100,25,'devours',rng);}
 export function reinforce(s,choice){if(s.phase!=='reward'||combatLocked(s))return false;if(choice==='rest'){for(const u of living(s.units))u.hp=Math.min(u.maxHp,u.hp+8);s.integrity=Math.min(s.maxIntegrity,s.integrity+5);}else if(choice==='recruit'){const types=Object.keys(SPECIES);if(living(s.units).length>=5)return false;const species=types[s.raid%types.length];s.units.push(unit(species,`u${s.nextId++}`,s.raid%3));}else if(choice==='train'){const u=living(s.units).sort((a,b)=>a.level-b.level)[0];if(!u)return false;experience(s,u,u.level*2);}else return false;
  s.raid++;s.shopOffers=[];s.enemies=enemiesFor(s.raid);if(s.deck){s.deck.discard.push(...s.deck.hand,...s.deck.chain);s.deck.hand=[];s.deck.chain=[];s.deck.discardsLeft=redrawLimit(s);drawCards(s.deck,handSize(s));}s.turn=1;s.phase='battle';s.selected=null;s.chainTargetId=null;s.animations=[];for(const u of s.units)u.armor=u.alive&&hasEssence(s,'unyielding-heart')?4:0;note(s,`Raid ${s.raid+1}: ${RAIDS[s.raid].name}.`);return true;}
 export function restoreSiege(v){

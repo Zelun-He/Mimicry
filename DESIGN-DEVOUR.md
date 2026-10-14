@@ -1,8 +1,9 @@
 # Devour & Assimilation — gameplay design
 
 ## Core decision
-Devour costs **100 Hunger**, hits a focused target for **25 damage**, and
-captures a trait **only on the killing blow**. Captured essence is never a
+The Mimic has two deliberate feeding attacks: **Gnaw (20 Hunger, 8 damage)**
+and **Devour (100 Hunger, 25 damage)**. Both attack a focused enemy and
+capture a trait **only when the bite deals the killing blow**. Captured essence is never a
 random permanent power increase. Its two offers are tied to the identity of
 the defeated adventurer. The player chooses one (or explicitly skips).
 
@@ -45,3 +46,11 @@ the defeated adventurer. The player chooses one (or explicitly skips).
   monster upgrades against high-cost Mimic mutations.
 - **Encounter diversity:** Treasure bait and later dungeon stages should
   allow more control over which archetype's trait a player can seek.
+
+## Early-game accessibility
+A 100-Hunger-only Devour would leave Farmhand and Forager essences unreachable
+before the opening raid ends. **Gnaw is intentionally weak but affordable**:
+its eight damage demand tactical setup, while a successful kill offers the
+same two archetype-specific traits as full Devour. This introduces the system
+in Forest Edge without giving the Mimic a guaranteed 25-damage first-turn
+attack. Hunger spent on either feeding action is not refunded by that kill.

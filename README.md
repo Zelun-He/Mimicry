@@ -90,12 +90,10 @@ for effect/purchase/migration regression tests.
 
 ## First Siege 0.8 — Devour & Assimilation
 
-The King Mimic can **aim Devour using Command focus & Devour target**, which
-shares targeting with normal command chains. At **100 Hunger**, Devour deals
-**25 damage immediately**, before the end of the turn.
+The King Mimic can **aim both feeding attacks using Command focus & Devour target**, shared with normal command chains. **Gnaw** costs 20 Hunger and deals **8 damage**; **Devour** costs 100 Hunger and deals **25 damage**. Either attack resolves immediately before the turn ends. Gnaw permits high-skill first-stage captures, while Devour is a more reliable but costly finisher.
 
-- A **nonlethal Devour** deals its damage and spends Hunger but grants no trait.
-- **Only a killing Devour** captures the enemy's essence. Other monster, poison,
+- A **nonlethal feeding attack** deals its damage and spends Hunger but grants no trait.
+- **Only a killing Gnaw or Devour** captures the enemy's essence. Other monster, poison,
   and command kills still grant gold/Hunger but cannot capture essence.
 - Each named adventurer archetype offers **two fixed traits**. Choose one,
   or let the essence fade. The captured decision briefly blocks combat/shop
@@ -106,7 +104,7 @@ shares targeting with normal command chains. At **100 Hunger**, Devour deals
   system and are not overwritten.
 - Both options are shown up front, with visible existing trait slots and
   descriptions. A trait owned already cannot be selected again.
-- No gold cost for capture; the cost is the **100 Hunger commitment**, choosing
+- No gold cost for capture; the cost is the **20- or 100-Hunger commitment**, choosing
   a viable finishing blow, and an increasingly difficult opportunity cost.
 - The final enemy of a raid can be devoured. The capture choice resolves before
   the Quartermaster or victory panel becomes interactive.
