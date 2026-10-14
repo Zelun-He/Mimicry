@@ -36,3 +36,9 @@ Open `/siege.html` from the same `npm start` server (or click **PLAY FIRST SIEGE
 - First Siege saves separately to browser localStorage under `mimicry-siege-v2`.
 
 This is a playable mechanics prototype. Tactical command chaining, equipment, deeper dungeon construction, and elaborate sprite artwork are not implemented yet.
+
+## Command Chain 0.4 — Rituals & Targeting
+
+Select a specific invader in **Command focus** to direct damaging command cards toward it; otherwise the weakest invader is targeted. Focus resets after each turn. Monster auto-attacks still follow their lane rules.
+
+Contiguous three-card school patterns trigger rituals after their third card resolves. Overlapping patterns can each trigger once: Fang–Fang–Fang = Bloodbath (Goblin follow-up); Shell–Shell–Fang = Counteroffensive (armor damage); Bloom–Venom–Venom = Toxic Garden (poison and Sporeling heal); Bloom–Shell–Shell = Living Wall (team armor); Venom–Venom–Venom = Plague (teamwide poison). Hunger wild cards can link chains but do not substitute in rituals. See `tests/rituals.test.js` for deterministic examples.
