@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {CARDS,SHOP_CARD_TYPES,STARTER_DECK,validateDeck} from '../dist/chain-engine.js';
+import {CARDS,SHOP_CARD_TYPES,STARTER_DECK,FOUNDING_CARDS,validateDeck} from '../dist/chain-engine.js';
 import {deckCards} from '../dist/shop-engine.js';
 import {newSiege,endTurn,reinforce,buyUpgrade,restoreSiege,queueCommand,redrawCommand} from '../dist/siege-engine.js';
 
@@ -35,7 +35,7 @@ function prepare(s,types){
  });
  s.deck.draw=all;s.deck.discard=[];s.deck.hand=hand;s.deck.chain=[];
  s.units.forEach(u=>u.lane=1);
- assert.ok(validateDeck(s.deck));
+ assert.ok(validateDeck(s.deck,8,false,2,true));
  return [...hand]; // Independent copy: queueCard mutates the deck's hand array.
 }
 
@@ -43,7 +43,7 @@ test('four unique rare card designs are shop-only; original eight-card hand and 
  const s=newSiege(baseRng);
  assert.equal(s.deck.hand.length,8);
  assert.equal(s.deck.acquired.length,0);
- assert.equal(deckCards(s).length,STARTER_DECK.length);
+ assert.equal(deckCards(s).length,STARTER_DECK.length+FOUNDING_CARDS.length);
  assert.equal(SHOP_CARD_TYPES.length,4);
  assert.equal(new Set(SHOP_CARD_TYPES).size,4);
  for(const type of SHOP_CARD_TYPES){
@@ -66,7 +66,7 @@ test('buying a rare card spends gold once and it appears in the first next-raid 
  assert.equal(buyUpgrade(s,'rare'),false);
  assert.equal(s.deck.acquired[0],'sacrifice');
  assert.equal(deckCards(s).find(c=>c.id==='p0').type,'sacrifice');
- assert.ok(validateDeck(s.deck));
+ assert.ok(validateDeck(s.deck,8,false,2,true));
  assert.equal(reinforce(s,'rest'),true);
  assert.ok(s.deck.hand.some(c=>c.id==='p0'));
  assert.equal(s.deck.hand.length,8);
@@ -85,12 +85,12 @@ test('unaffordable rare cards never modify inventory, gold, or sale status',()=>
 
 test('purchased cards remain conserved through redraws, turn resolution and a save round-trip',()=>{
  const s=purchase('harvest');
- assert.equal(deckCards(s).length,25);
+ assert.equal(deckCards(s).length,29);
  assert.equal(redrawCommand(s,s.deck.hand[0].id,baseRng),true);
- assert.ok(validateDeck(s.deck));
+ assert.ok(validateDeck(s.deck,8,false,2,true));
  endTurn(s,baseRng);
- assert.ok(validateDeck(s.deck));
- assert.equal(deckCards(s).length,25);
+ assert.ok(validateDeck(s.deck,8,false,2,true));
+ assert.equal(deckCards(s).length,29);
  const restored=restoreSiege(structuredClone(s));
  assert.ok(restored);
  assert.equal(restored.deck.acquired[0],'harvest');
@@ -215,26 +215,30 @@ test('save validation rejects acquired cards impossible for current raid',()=>{
 test('v4 reward saves migrate without losing selected shop stock, gold or upgrades',()=>{
  const s=newSiege(baseRng);earnShop(s);
  const type=s.shopOffers[2].id;
+ for(const pile of ['draw','discard','hand','chain'])s.deck[pile]=s.deck[pile].filter(c=>!c.id.startsWith('f'));
+ s.deck.tribal=false;
  s.version=4;
- s.shopOffers.pop();
+ s.shopOffers.pop();s.shopOffers.pop();
  delete s.deck.acquired;
  const restored=restoreSiege(structuredClone(s));
  assert.ok(restored);
- assert.equal(restored.version,6);
- assert.equal(restored.shopOffers.length,4);
+ assert.equal(restored.version,7);
+ assert.equal(restored.shopOffers.length,5);
  assert.equal(restored.shopOffers[2].id,type);
  assert.equal(restored.shopOffers[3].id,'rare');
  assert.deepEqual(restored.deck.acquired,[]);
- assert.ok(validateDeck(restored.deck));
+ assert.ok(validateDeck(restored.deck,8,false,2,true));
 });
 
 test('v4 battle saves migrate without changing the original deck or hand',()=>{
  const s=newSiege(baseRng);
+ for(const pile of ['draw','discard','hand','chain'])s.deck[pile]=s.deck[pile].filter(c=>!c.id.startsWith('f'));
  const ids=s.deck.hand.map(c=>c.id);
+ s.deck.tribal=false;
  s.version=4;delete s.deck.acquired;
  const restored=restoreSiege(structuredClone(s));
  assert.ok(restored);
- assert.equal(restored.version,6);
+ assert.equal(restored.version,7);
  assert.deepEqual(restored.deck.acquired,[]);
  assert.deepEqual(restored.deck.hand.map(c=>c.id),ids);
  assert.equal(restored.shopOffers.length,0);

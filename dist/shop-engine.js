@@ -1,5 +1,5 @@
 // Between-raid upgrades. The shop is data-only so save files and tests stay deterministic.
-import {CARDS,HAND_SIZE,SHOP_CARD_TYPES} from './chain-engine.js';
+import {CARDS,HAND_SIZE,SHOP_CARD_TYPES,GOBLIN_SHOP_TYPES,SKELETON_SHOP_TYPES,TRIBAL_SHOP_TYPES} from './chain-engine.js';
 
 export const MUTATIONS=Object.freeze({
  'iron-fangs':{name:'Iron Fangs',cost:18,description:'Fang strikes and executions deal +2 damage.'},
@@ -32,11 +32,16 @@ export function createShop(s,rng=Math.random){
  const unseen=SHOP_CARD_TYPES.filter(type=>!s.deck?.acquired?.includes(type));
  const selection=unseen.length?unseen:SHOP_CARD_TYPES;
  const rareType=selection[Math.floor(rareRoll*selection.length)];
+ const gobRoll=rng(),skeletonRoll=rng();
+ if(![gobRoll,skeletonRoll].every(v=>typeof v==='number'&&Number.isFinite(v)&&v>=0&&v<1))throw Error('Invalid shop RNG');
+ const goblin=GOBLIN_SHOP_TYPES[Math.floor(gobRoll*GOBLIN_SHOP_TYPES.length)];
+ const skeleton=SKELETON_SHOP_TYPES[Math.floor(skeletonRoll*SKELETON_SHOP_TYPES.length)];
  return [
   {id:'card',cost:CARD_UPGRADE_COST,sold:false},
   {id:'monster',cost:MONSTER_UPGRADE_COST,sold:false},
   ...(mutation?[{id:mutation,cost:MUTATIONS[mutation].cost,sold:false}]:[]),
-  {id:'rare',cardType:rareType,cost:CARDS[rareType].price,sold:false}
+  {id:'rare',cardType:rareType,cost:CARDS[rareType].price,sold:false},
+  {id:'tribal',options:[goblin,skeleton],cost:12,sold:false}
  ];
 }
 
@@ -57,7 +62,7 @@ export function buyUpgrade(s,offerId,targetId=null){
   apply=()=>{target.training=trainingLevel(target)+1;target.attack+=2;target.maxHp+=4;target.hp+=4;};
   description=`${target.name} trained: +2 attack, +4 HP.`;
  }else if(offerId==='rare'){
-  if(!SHOP_CARD_TYPES.includes(offer.cardType)||!Array.isArray(s.deck.acquired)||s.deck.acquired.length>=4)return false;
+  if(!SHOP_CARD_TYPES.includes(offer.cardType)||!Array.isArray(s.deck.acquired)||s.deck.acquired.length>=8)return false;
   const type=offer.cardType;
   apply=()=>{
    const next=s.deck.acquired.length;
@@ -67,6 +72,19 @@ export function buyUpgrade(s,offerId,targetId=null){
    s.deck.draw.push({id:`p${next}`,type});
   };
   description=`${CARDS[type].name} added to your deck.`;
+ }else if(offerId==='tribal'){
+  if(!Array.isArray(offer.options)||!offer.options.includes(targetId)||
+     !TRIBAL_SHOP_TYPES.includes(targetId)||!Array.isArray(s.deck.acquired)||
+     s.deck.acquired.length>=8||!s.deck.tribal)return false;
+  const type=targetId;
+  apply=()=>{
+   const next=s.deck.acquired.length;
+   s.deck.acquired.push(type);
+   s.deck.acquiredAt.push(s.raid);
+   s.deck.draw.push({id:`p${next}`,type});
+   offer.purchasedType=type;
+  };
+  description=`${CARDS[type].name} recruited to your deck.`;
  }else if(Object.hasOwn(MUTATIONS,offerId)&&!s.mutations.includes(offerId)){
   apply=()=>{s.mutations.push(offerId);if(offerId==='stolen-plating'){s.maxIntegrity+=5;s.integrity=Math.min(s.maxIntegrity,s.integrity+5);}};
   description=`King Mimic absorbed ${MUTATIONS[offerId].name}.`;
@@ -79,19 +97,34 @@ export function buyUpgrade(s,offerId,targetId=null){
 }
 
 // legacy=true validates v4 (three-offer) saves before adding the new card offer.
-export function validShopState(s,legacy=false){
+// Historical shops: v4 had 3 offers, v5–v6 had 4, v7 has 5.
+export function validShopState(s,legacy=false,withTribes=false){
  if(!Array.isArray(s.mutations)||new Set(s.mutations).size!==s.mutations.length||
     s.mutations.some(id=>!Object.hasOwn(MUTATIONS,id)))return false;
  if(!Array.isArray(s.shopOffers))return false;
  if(s.phase==='reward'){
-  if(s.shopOffers.length!==(legacy?3:4)||
+  if(s.shopOffers.length!==(legacy?3:withTribes?5:4)||
      s.shopOffers[0]?.id!=='card'||s.shopOffers[1]?.id!=='monster')return false;
   if(!Object.hasOwn(MUTATIONS,s.shopOffers[2]?.id))return false;
   if(!legacy){
    const offer=s.shopOffers[3];
    if(offer?.id!=='rare'||!SHOP_CARD_TYPES.includes(offer.cardType))return false;
-   if(offer.sold&&s.deck?.acquired?.at(-1)!==offer.cardType)return false;
-   if(offer.sold!==s.deck?.acquiredAt?.includes(s.raid))return false;
+   const boughtRare=s.deck?.acquired?.some((type,i)=>
+      SHOP_CARD_TYPES.includes(type)&&s.deck.acquiredAt[i]===s.raid);
+   if(Boolean(offer.sold)!==Boolean(boughtRare)||
+      (offer.sold&&s.deck.acquired.some((type,i)=>
+        SHOP_CARD_TYPES.includes(type)&&s.deck.acquiredAt[i]===s.raid&&type!==offer.cardType)))return false;
+  }
+  if(withTribes){
+   const offer=s.shopOffers[4];
+   if(offer?.id!=='tribal'||offer.cost!==12||!Array.isArray(offer.options)||
+      offer.options.length!==2||!GOBLIN_SHOP_TYPES.includes(offer.options[0])||
+      !SKELETON_SHOP_TYPES.includes(offer.options[1]))return false;
+   const bought=s.deck?.acquired?.find((type,i)=>
+      TRIBAL_SHOP_TYPES.includes(type)&&s.deck.acquiredAt[i]===s.raid);
+   if(Boolean(offer.sold)!==Boolean(bought)||
+      (offer.sold?(offer.purchasedType!==bought||!offer.options.includes(bought)):
+       offer.purchasedType!==undefined))return false;
   }
  }else if(s.shopOffers.length!==0)return false;
  for(const offer of s.shopOffers){
@@ -100,6 +133,7 @@ export function validShopState(s,legacy=false){
   const expected=offer.id==='card'?CARD_UPGRADE_COST:
     offer.id==='monster'?MONSTER_UPGRADE_COST:
     offer.id==='rare'&&SHOP_CARD_TYPES.includes(offer.cardType)?CARDS[offer.cardType].price:
+    offer.id==='tribal'&&withTribes?12:
     MUTATIONS[offer.id]?.cost;
   if(offer.cost!==expected)return false;
   if(Object.hasOwn(MUTATIONS,offer.id)&&offer.sold!==s.mutations.includes(offer.id))return false;

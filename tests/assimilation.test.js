@@ -114,7 +114,7 @@ test('the last devoured enemy creates the shop but captures must be resolved bef
  const prey=capture(s,1);
  assert.equal(prey.name,'Forager');
  assert.equal(s.phase,'reward');
- assert.equal(s.shopOffers.length,4);
+ assert.equal(s.shopOffers.length,5);
  assert.equal(buyUpgrade(s,'card',s.deck.hand[0].id),false);
  assert.equal(reinforce(s,'rest'),false);
  assert.ok(restoreSiege(structuredClone(s)));
@@ -160,11 +160,14 @@ test('tampered inventory, history, duplicate origins, and pending prey are rejec
  }
 });
 test('save migration from v5 preserves the deck, gold, and offers while initializing an empty stomach',()=>{
- const s=newSiege(rng);const ids=s.deck.hand.map(c=>c.id);
+ const s=newSiege(rng);
+ for(const pile of ['draw','discard','hand','chain'])s.deck[pile]=s.deck[pile].filter(c=>!c.id.startsWith('f'));
+ s.deck.tribal=false;
+ const ids=s.deck.hand.map(c=>c.id);
  s.version=5;delete s.essences;delete s.essenceHistory;delete s.pendingEssence;
  const restored=restoreSiege(structuredClone(s));
  assert.ok(restored);
- assert.equal(restored.version,6);
+ assert.equal(restored.version,7);
  assert.deepEqual(restored.deck.hand.map(c=>c.id),ids);
  assert.deepEqual(restored.essences,[]);
  assert.deepEqual(restored.essenceHistory,[]);
@@ -195,7 +198,7 @@ test('Wild Pockets permits three redraws, then removal restores the ordinary lim
  assert.equal(s.deck.discardsLeft,3);
  for(let i=0;i<3;i++)assert.equal(redrawCommand(s,s.deck.hand[0].id,rng),true);
  assert.equal(redrawCommand(s,s.deck.hand[0].id,rng),false);
- assert.ok(validateDeck(s.deck,8,false,3));
+ assert.ok(validateDeck(s.deck,8,false,3,true));
  assert.ok(restoreSiege(structuredClone(s)));
 });
 test('Opening Gambit grants exactly two base power to the first chain card',()=>{

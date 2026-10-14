@@ -123,3 +123,48 @@ in the five-raid prototype, intended for reuse once we add more dungeon floors.
 v2–v5 saves. The assimilation history records prey, raid, trait, and any
 replaced ability so the three-slot limit can be validated after reload.
 See `tests/assimilation.test.js` for deterministic scenarios.
+
+## First Siege 0.9 — Tribal Cards & Swarm Formations
+
+The First Siege now has **summonable Goblin and Skeleton formations** in addition
+to its persistent defender army. New runs include two **Goblin Recruit** and
+two **Raise Skeleton** cards as fixed founding cards, retaining the **8-card
+hand** and **5-slot chain**. Previously saved runs automatically receive these
+four founding cards in the draw pile after migration.
+
+**Stacking:** Consecutive identical recruit cards automatically form a stack
+of **up to three per tactical chain slot**. Each physical card is still consumed
+once; a 3-recruit horde summons 3 individual minions, but does **not** provide
+three chain boosts or three separate ritual symbols. Removing a queued recruit
+peels one card off the stack. Four recruits form stacks of 3+1, rather than
+an unlimited bundle.
+
+**Temporary lane army:** Choose a summon lane before resolving the chain.
+Summoned minions fight immediately and then attack once automatically each
+turn. They intercept enemy attacks before veteran defenders, but have no XP.
+Capacity is **6 minions total / 3 per lane**; surplus summon requests fizzle
+without creating phantom units or breaking deck conservation. Minions disappear
+after each raid, while veteran HP, levels, and deaths still persist.
+
+**Goblins — Scavenger:** Summoned Goblins fighting together (2+ in one lane)
+gain +1 attack. A three-Goblin gang can earn +1 gold when its minion scores a
+kill. The shop can offer **Goblin Recruit**, **Pack Attack** (immediate extra
+mob strike), or **Loot the Fallen** (once-per-turn +3 gold with an active Goblin).
+
+**Skeletons — Bonebound:** Every normal summoned Skeleton that dies leaves
+one **Bone** (6 maximum). **Bone March** orders extra Skeleton attacks,
+**Ossuary Wall** converts up to 3 Bones into lane armor, and **Rattle the
+Dead** spends 2 Bones to raise a Skeleton. A resurrected Skeleton cannot
+generate a Bone if it dies during its creation turn, preventing same-turn
+resource loops. Bones do not carry into the next raid.
+
+**Quartermaster:** The new **Tribal Recruitment** offer presents one random
+Goblin command and one random Skeleton command for **12 gold**; buy one per
+shop. The previous rare-card offer still appears separately. Purchases use
+stable identities `p0..` and preserve the acquisition ledger, even if a
+player buys both a rare and a tribal card in the same shop visit.
+
+**Save format:** Version 7 under `mimicry-siege-v7`; v2–v6 saves migrate.
+The engine validates founding cards, purchased cards, stack-slot counts,
+minion stats/limits, resource caps and lane selection. See
+`tests/swarm.test.js` and `DESIGN-SWARM.md`.
