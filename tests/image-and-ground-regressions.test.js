@@ -81,7 +81,7 @@ test('source sprite atlas stays undistorted in both small cards and wide Quarter
  assert.ok(card.includes('creature-art__family'));
 });
 
-test('sprites are grounded and identical in every idle frame at full motion',()=>{
+test('idle animation preserves sprite draw rectangles and the visible boot baseline',()=>{
  const saved={Image:globalThis.Image,document:globalThis.document,
   requestAnimationFrame:globalThis.requestAnimationFrame,
   cancelAnimationFrame:globalThis.cancelAnimationFrame};
@@ -99,7 +99,8 @@ test('sprites are grounded and identical in every idle frame at full motion',()=
  const draws=[];
  const ctx={drawImage:(img,...args)=>draws.push({path:img.src,args}),
   fillRect:()=>{},beginPath:()=>{},ellipse:()=>{},fill:()=>{},
-  stroke:()=>{},moveTo:()=>{},lineTo:()=>{},fillText:()=>{},strokeText:()=>{}};
+  stroke:()=>{},moveTo:()=>{},lineTo:()=>{},fillText:()=>{},strokeText:()=>{},
+  save:()=>{},restore:()=>{},translate:()=>{},rotate:()=>{}};
  try{
   const s=newSiege(()=>0.5);
   const battle=createForestBattle({getContext:()=>ctx},{reducedMotion:false});
@@ -117,7 +118,7 @@ test('sprites are grounded and identical in every idle frame at full motion',()=
   draws.length=0;tick(1900);
   const second=draws.filter(d=>d.path==='assets/visitors.png'||d.path==='assets/mimic.png');
   assert.deepEqual(second.map(d=>d.args.slice(4)),first.map(d=>d.args.slice(4)),
-    'no breathing bob, parallax or moving shadows between idle frames');
+    'idle sway must not change draw rectangles, cause vertical bobbing, or move shadows');
   battle.stop();
  }finally{
   for(const [key,value] of Object.entries(saved)){

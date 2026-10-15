@@ -30,6 +30,14 @@ export const VISITOR_GROUND_Y=342;
 // Different bottom transparency must not be treated as visual height.
 export const VISITOR_FOOT_ROWS=Object.freeze([700,676,676,675,706]);
 export const MIMIC_FOOT_ROWS=Object.freeze([512,512,488,478]);
+// Small rotational idle motion (≈0.6° max) pivots at each character's feet.
+// Unlike vertical bobbing, this keeps boots/claws touching the ground while
+// the body gently sways. All sprite dimensions remain perfectly proportional.
+export const IDLE_SWAY_RADIANS=0.0105;
+export function idleSwayAngle(time,phase=0,reducedMotion=false){
+ if(reducedMotion||!Number.isFinite(time))return 0;
+ return IDLE_SWAY_RADIANS*Math.sin(time/600+phase);
+}
 const VISITOR_X_CENTERS=Object.freeze({
  1:[688],
  2:[636,787],
@@ -87,6 +95,18 @@ export function createForestBattle(canvas,{reducedMotion=false}={}){
  const sprite=(key,sx,sy,sw,sh,x,y,w,h)=>{
   const img=ready(key);if(img)ctx.drawImage(img,sx,sy,sw,sh,x,y,w,h);
  };
+ // A grounded sway is a rotation around the shared foot line, not a
+ // translation. This keeps the visible feet and frame geometry in place.
+ // Drawing state is restored before markers, effects, or other characters.
+ const idleSprite=(key,sx,sy,sw,sh,x,y,w,h,footX,angle)=>{
+  if(!angle){sprite(key,sx,sy,sw,sh,x,y,w,h);return;}
+  ctx.save();
+  ctx.translate(footX,VISITOR_GROUND_Y);
+  ctx.rotate(angle);
+  ctx.translate(-footX,-VISITOR_GROUND_Y);
+  sprite(key,sx,sy,sw,sh,x,y,w,h);
+  ctx.restore();
+ };
  const paintText=(text,x,y,color,size=18)=>{
   ctx.textAlign='center';ctx.font='900 '+size+'px monospace';
   ctx.lineWidth=4;ctx.strokeStyle='#162a20';ctx.strokeText(text,x,y);
@@ -121,7 +141,8 @@ export function createForestBattle(canvas,{reducedMotion=false}={}){
    const heroHeight=187,frame=pose%4;
    // Place the actual claws on the same grounded baseline in each pose.
    const heroY=Math.round(VISITOR_GROUND_Y-MIMIC_FOOT_ROWS[frame]/512*heroHeight);
-   sprite('mimic',frame%2*sw,Math.floor(frame/2)*sh,sw,sh,heroX,heroY,280,heroHeight);
+   idleSprite('mimic',frame%2*sw,Math.floor(frame/2)*sh,sw,sh,heroX,heroY,280,heroHeight,
+    heroX+140,idleSwayAngle(time,0.3,reducedMotion));
   }
   const focus=featuredInvader(state),atlas=ready('visitors');
   const sourceWidth=atlas?.naturalWidth||2172,sourceHeight=atlas?.naturalHeight||724;
@@ -139,7 +160,8 @@ export function createForestBattle(canvas,{reducedMotion=false}={}){
     ctx.strokeStyle='#ffdf8b';ctx.lineWidth=2;
     ctx.beginPath();ctx.ellipse(actor.cx,VISITOR_GROUND_Y+1,40,6,0,0,Math.PI*2);ctx.stroke();
    }
-   if(atlas)sprite('visitors',actor.sx,actor.sy,actor.sw,actor.sh,x,y,w,h);
+   if(atlas)idleSprite('visitors',actor.sx,actor.sy,actor.sw,actor.sh,x,y,w,h,
+    actor.cx+shake,idleSwayAngle(time,actor.index*1.17+actor.cx/190,reducedMotion));
    // Do not display stretched colored blocks before the atlas finishes loading.
    drawBoxes.push({id:actor.id,x,y,w,h});
    if(selected){
