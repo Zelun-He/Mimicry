@@ -76,10 +76,13 @@
  repeating-linear-gradient(0deg,transparent 0 9px,#00000008 9px 10px);
  box-shadow:inset 0 0 16px #080e1377;
 }
+/* Keep each source sprite at the same x/y scale. The 400×69 atlas has
+   five 80×69 portraits; stretching its tiles to an arbitrary 148×80
+   Quartermaster preview was warping every character. */
 .creature-art__focus{
- display:block;
- position:absolute;inset:0;
- max-width:148px;
+ display:flex;align-items:center;justify-content:center;
+ position:absolute;inset:0;width:100%;
+ max-width:none;
  margin:auto;
  overflow:hidden;
  filter:drop-shadow(0 3px 1px #110f1f55);
@@ -87,7 +90,10 @@
  transition:transform .22s cubic-bezier(.2,.8,.25,1),filter .22s ease;
 }
 .creature-art__sprite{
- position:absolute;inset:0;display:block;
+ display:block;position:relative;inset:auto;flex:none;
+ width:auto;max-width:none;
+ height:min(100%,85px);
+ aspect-ratio:80/69;
  background-image:url("./creature-portraits.png");
  background-repeat:no-repeat;
  background-size:500% 100%;
@@ -98,8 +104,13 @@
 .creature-art__sprite--slime{background-position:50% 50%}
 .creature-art__sprite--sporeling{background-position:75% 50%}
 .creature-art__sprite--king-mimic{background-position:100% 50%}
+/* Spider/Mimicling SVG art is embedded inline, not fetched in an <img>.
+   Intrinsic square viewBoxes render without distortion or broken icon. */
 .creature-art__illustration{
- display:block;width:100%;height:100%;object-fit:contain;
+ display:block;flex:none;
+ width:auto;height:min(100%,85px);max-width:100%;
+ aspect-ratio:1;
+ object-fit:contain;
  image-rendering:pixelated;filter:drop-shadow(0 3px 2px #07171466);
 }
 .creature-art__family{
@@ -197,7 +208,17 @@
  min-height:78px;border:1px solid var(--tribe-ink,#bca879);
  border-radius:4px;
 }
-.shop-offer__card-preview .creature-art__focus{max-width:148px}
+.shop-offer__card-preview .creature-art__focus{max-width:none}
+/* Dark shop panels inherited a dark selected-card label from the older
+   parchment UI; keep the actual selected card name legible. */
+.shop-offer .shop-offer__selected-name,
+.shop-rare .shop-offer__selected-name,
+.shop-tribal .shop-offer__selected-name,
+.shop-exotic .shop-offer__selected-name{
+ color:#f7e4c2!important;
+ font-weight:800;
+ text-shadow:0 1px 1px #0b1315;
+}
 @media(prefers-reduced-motion:reduce){
  .card.tribe-card .creature-art__glimmer,
  .card.tribe-card .creature-art__focus{animation:none!important;transition:none!important}
