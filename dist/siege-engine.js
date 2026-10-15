@@ -3,6 +3,7 @@ import {handSize,cardPower,killHunger,fangDamageBonus,createShop,buyUpgrade,vali
 import {ESSENCE_TRAITS,ESSENCE_BY_ENEMY,hasEssence,redrawLimit,killGold,hungerCost,combatLocked,captureEssence,chooseEssence,validAssimilation} from './assimilation-engine.js';
 import {MAX_MINIONS,MAX_LANE_MINIONS,MAX_BONES,liveMinions,lanePopulation,summonMinions,earnBone,goblinPackBonus,goblinScavenge,clearMinions,validSwarmState} from './swarm-engine.js';
 import {MAX_WEB,webPrey,consumeWeb,lurePrey,splitSlime,fuseSlimes,mimiclingFeed,validCreatureState} from './creature-engine.js';
+import {validEncounterPlan,generateEncounterPlan,enemyTemplatesFor,authoredRaidsForPlan,enemyAttackBonus} from './forest-enemies.js';
 export {buyUpgrade} from './shop-engine.js';
 export {chooseEssence} from './assimilation-engine.js';
 // Mimicry 0.2: deterministic, serializable persistent-army battle simulation.
@@ -21,8 +22,8 @@ export const RAIDS=[
 ];
 const clamp=(x,min,max)=>Math.max(min,Math.min(max,x));
 function unit(species,id,lane){const def=SPECIES[species];return {id,species,name:def.name,level:1,xp:0,maxHp:def.hp,hp:def.hp,attack:def.attack,lane,armor:0,alive:true,kills:0};}
-function enemiesFor(index){return RAIDS[index].enemies.map((e,i)=>({...e,id:`e${index}-${i}`,maxHp:e.hp,hp:e.hp,alive:true,poison:0,weaken:0,web:0}));}
-export function newSiege(rng=Math.random){const deck=makeDeck(rng,true);deck.exotic=true;drawCards(deck,8,rng);return {version:8,deck,lastLureTurn:-1,minions:[],bones:0,summonLane:1,nextMinionId:1,lootClaimedTurn:-1,mutations:[],shopOffers:[],essences:[],essenceHistory:[],pendingEssence:null,phase:'battle',raid:0,turn:1,integrity:30,maxIntegrity:30,hunger:0,gold:0,log:['The first raid approaches.'],units:[unit('goblin','u1',1),unit('slime','u2',1),unit('skeleton','u3',0),unit('sporeling','u4',2)],enemies:enemiesFor(0),selected:null,animations:[],nextId:5,chainTargetId:null};}
+function enemiesFor(index,plan){return enemyTemplatesFor(RAIDS,index,plan).map((e,i)=>({...e,id:`e${index}-${i}`,maxHp:e.hp,hp:e.hp,alive:true,poison:0,weaken:0,web:0}));}
+export function newSiege(rng=Math.random){const deck=makeDeck(rng,true);deck.exotic=true;drawCards(deck,8,rng);const encounterPlan=generateEncounterPlan(RAIDS,rng);return {version:8,deck,encounterPlan,lastLureTurn:-1,minions:[],bones:0,summonLane:1,nextMinionId:1,lootClaimedTurn:-1,mutations:[],shopOffers:[],essences:[],essenceHistory:[],pendingEssence:null,phase:'battle',raid:0,turn:1,integrity:30,maxIntegrity:30,hunger:0,gold:0,log:['The first raid approaches.'],units:[unit('goblin','u1',1),unit('slime','u2',1),unit('skeleton','u3',0),unit('sporeling','u4',2)],enemies:enemiesFor(0,encounterPlan),selected:null,animations:[],nextId:5,chainTargetId:null};}
 const living=(a)=>a.filter(x=>x.alive&&x.hp>0);
 function emit(s,id,state){s.animations.push({id,state});}
 function note(s,msg){s.log.unshift(msg);s.log=s.log.slice(0,16);}
@@ -286,6 +287,17 @@ s.selected=null;
    attackUnit(s,u,frenzy);
  }
  if(!living(s.enemies).length){finishRaid(s,rng);return true;}
+ // Forest support acts AFTER the player's chain and allied attacks: a healer
+ // can save wounded attackers, but killing it first prevents the heal.
+ for(const healer of living(s.enemies).filter(e=>e.name==='Herbalist')){
+   const wounded=living(s.enemies).filter(e=>e.hp<e.maxHp)
+    .sort((a,b)=>a.hp/a.maxHp-b.hp/b.maxHp)[0];
+   if(wounded){
+     const amount=Math.min(3,wounded.maxHp-wounded.hp);
+     wounded.hp+=amount;emit(s,healer.id,'heal');
+     note(s,`Herbalist mends ${wounded.name} for ${amount} HP.`);
+   }
+ }
  let defenderWard=hasEssence(s,'iron-reflex'),breachWard=hasEssence(s,'straw-ward');
  for(const e of living(s.enemies)){
    if(e.poison>0){harm(s,e,e.poison);e.poison=Math.max(0,e.poison-1);note(s,`${e.name} suffers poison.`);if(!e.alive){s.gold+=killGold(s);s.hunger=clamp(s.hunger+killHunger(s),0,100);const source=living(s.units).find(u=>u.species==='slime');if(source){source.kills++;experience(s,source,2);}continue;}}
@@ -295,7 +307,8 @@ s.selected=null;
     const webs=consumeWeb(e);
     const prevented=!defender.summoned&&defenderWard?3:0;
     if(!defender.summoned)defenderWard=false;
-    const actual=harm(s,defender,Math.max(0,e.attack-(e.weaken||0)-prevented-webs));
+    const bonus=enemyAttackBonus(e,defender,living(s.enemies));
+    const actual=harm(s,defender,Math.max(0,e.attack+bonus-(e.weaken||0)-prevented-webs));
     if(defender.alive&&defender.summoned&&defender.species==='slime-bud'){
      const split=splitSlime(s,defender);
      if(split)note(s,`${defender.name} survives and divides! +${split} Tiny Slime in lane ${defender.lane+1}.`);
@@ -305,7 +318,7 @@ s.selected=null;
     const webs=consumeWeb(e);
     const prevented=breachWard?3:0;breachWard=false;
     const before=s.integrity;
-    s.integrity=clamp(s.integrity-Math.max(0,e.attack-(e.weaken||0)-prevented-webs),0,s.maxIntegrity);
+    s.integrity=clamp(s.integrity-Math.max(0,e.attack+enemyAttackBonus(e,null,living(s.enemies))-(e.weaken||0)-prevented-webs),0,s.maxIntegrity);
     e.weaken=0;emit(s,'king-mimic','damage');
     note(s,`${e.name} breaches lane ${e.lane+1}! -${before-s.integrity} integrity.`);
    }
@@ -339,7 +352,7 @@ function feed(s,cost,damage,verb,rng=Math.random){
 export function gnaw(s,rng=Math.random){return feed(s,20,8,'gnaws',rng);}
 export function devour(s,rng=Math.random){return feed(s,100,25,'devours',rng);}
 export function reinforce(s,choice){if(s.phase!=='reward'||combatLocked(s))return false;if(choice==='rest'){for(const u of living(s.units))u.hp=Math.min(u.maxHp,u.hp+8);s.integrity=Math.min(s.maxIntegrity,s.integrity+5);}else if(choice==='recruit'){const types=Object.keys(SPECIES);if(living(s.units).length>=5)return false;const species=types[s.raid%types.length];s.units.push(unit(species,`u${s.nextId++}`,s.raid%3));}else if(choice==='train'){const u=living(s.units).sort((a,b)=>a.level-b.level)[0];if(!u)return false;experience(s,u,u.level*2);}else return false;
- s.raid++;s.shopOffers=[];s.enemies=enemiesFor(s.raid);clearMinions(s);s.summonLane=1;s.lastLureTurn=-1;if(s.deck){s.deck.discard.push(...s.deck.hand,...s.deck.chain);s.deck.hand=[];s.deck.chain=[];s.deck.discardsLeft=redrawLimit(s);drawCards(s.deck,handSize(s));}s.turn=1;s.phase='battle';s.selected=null;s.chainTargetId=null;s.animations=[];for(const u of s.units)u.armor=u.alive&&hasEssence(s,'unyielding-heart')?4:0;note(s,`Raid ${s.raid+1}: ${RAIDS[s.raid].name}.`);return true;}
+ s.raid++;s.shopOffers=[];s.enemies=enemiesFor(s.raid,s.encounterPlan||Array(RAIDS.length).fill(0));clearMinions(s);s.summonLane=1;s.lastLureTurn=-1;if(s.deck){s.deck.discard.push(...s.deck.hand,...s.deck.chain);s.deck.hand=[];s.deck.chain=[];s.deck.discardsLeft=redrawLimit(s);drawCards(s.deck,handSize(s));}s.turn=1;s.phase='battle';s.selected=null;s.chainTargetId=null;s.animations=[];for(const u of s.units)u.armor=u.alive&&hasEssence(s,'unyielding-heart')?4:0;note(s,`Raid ${s.raid+1}: ${RAIDS[s.raid].name}.`);return true;}
 export function restoreSiege(v){
  if(!v||![2,3,4,5,6,7,8].includes(v.version)||!['battle','reward','won','lost'].includes(v.phase)||
     !Number.isInteger(v.raid)||v.raid<0||v.raid>=RAIDS.length||
@@ -351,7 +364,11 @@ export function restoreSiege(v){
     !Number.isInteger(v.turn)||v.turn<1||
     !Number.isInteger(v.nextId)||v.nextId<1)return null;
  const validUnit=u=>u&&typeof u.id==='string'&&SPECIES[u.species]&&Number.isInteger(u.lane)&&u.lane>=0&&u.lane<=2&&Number.isInteger(u.hp)&&Number.isInteger(u.maxHp)&&u.maxHp>=SPECIES[u.species].hp&&u.maxHp<=100&&u.hp>=0&&u.hp<=u.maxHp&&Number.isInteger(u.attack)&&u.attack>=0&&u.attack<=100&&Number.isInteger(u.level)&&u.level>=1&&u.level<=3&&Number.isInteger(u.xp)&&u.xp>=0&&u.xp<=100&&Number.isInteger(u.armor)&&u.armor>=0&&u.armor<=100&&u.alive===(u.hp>0);
- const expected=RAIDS[v.raid].enemies;
+ // Older saves never had an encounter plan: their original visitor parties
+ // remain authentic. New saves must pick exactly one authored party per raid.
+ const plan=v.encounterPlan===undefined?Array(RAIDS.length).fill(0):v.encounterPlan;
+ if(!validEncounterPlan(RAIDS,plan))return null;
+ const expected=enemyTemplatesFor(RAIDS,v.raid,plan);
  if(!v.units.every(validUnit)||new Set(v.units.map(u=>u.id)).size!==v.units.length||
     v.enemies.length!==expected.length||
     !v.enemies.every((e,i)=>e&&e.id===`e${v.raid}-${i}`&&e.name===expected[i].name&&
@@ -362,7 +379,7 @@ export function restoreSiege(v){
  // Validate old formats before migration; do not trust malformed mutation fields.
  if(v.version===4&&!validShopState(v,true))return null;
  if(v.version>=5&&!validShopState(v,false,v.version>=7,v.version===8))return null;
- if(v.version>=6&&!validAssimilation(v,RAIDS))return null;
+ if(v.version>=6&&!validAssimilation(v,authoredRaidsForPlan(RAIDS,plan)))return null;
  if(v.version>=7&&!validSwarmState(v))return null;
  if(v.version===8&&!validCreatureState(v))return null;
  if(v.version>=3&&!validateDeck(v.deck,v.version>=4?handSize(v):8,v.version<5,v.version>=6?redrawLimit(v):2,v.version>=7,v.version===8))return null;
@@ -392,7 +409,7 @@ export function restoreSiege(v){
   shopOffers=[...shopOffers,exoticOffer];
  }
  const enemies=v.version===8?v.enemies:v.enemies.map(e=>({...e,web:0}));
- return {...v,version:8,deck,mutations,shopOffers,enemies,
+ return {...v,version:8,deck,encounterPlan:plan,mutations,shopOffers,enemies,
    lastLureTurn:v.version===8?v.lastLureTurn:-1,
    minions:v.version>=7?v.minions:[],bones:v.version>=7?v.bones:0,
    summonLane:v.version>=7?v.summonLane:1,

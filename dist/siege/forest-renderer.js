@@ -5,7 +5,10 @@ export const SCHOOL_COLOR=Object.freeze({
 });
 const INDEX=Object.freeze({
  Farmhand:0,Forager:1,Scout:1,Guard:3,Archer:2,
- Rogue:2,Mage:3,Watchman:4
+ Rogue:2,Mage:3,Watchman:4,
+ // New Tier I roles reuse original *complete* proportional visitor frames.
+ // Roles are distinguished with target chips and intent, not tiny new sprites.
+ 'Lantern Bearer':2,Herbalist:1,Poacher:3,Sapper:4
 });
 export function visitorSpriteIndex(name,raid=0){
  return INDEX[name]??Math.min(4,Math.max(0,raid));

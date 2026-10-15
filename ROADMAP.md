@@ -51,6 +51,11 @@ combat tests, save migration, and a manual browser playtest before release.
   physical scale and visible-foot baseline for all invaders, and make target
   focus a ring instead of a giant foreground actor. Remove CSS constraints
   that stretched the entire battle canvas on wide or mobile screens.
+- [x] **03h2 — Forest Edge visitor variety** (`feature/forest-visitor-variety`).
+  Four counterplay-driven enemy roles (Lantern Bearer, Herbalist, Poacher,
+  Sapper), readable enemy intent and focus chips, and authored alternate
+  human visitor parties within the original five raids. Save-compatible
+  encounter plan, old saves keep canonical encounters, Devour still works.
 - [ ] **03i — Mob/Horde formation cards, Phase 3.**
   Rework queue-slot presentation so duplicates visibly form a growing mob
   and distinguish those formations from ordinary suit/rank combos.
