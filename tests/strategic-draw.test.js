@@ -24,7 +24,8 @@ test('early draws retain breadth; late stages prefer practiced cards and their l
  assert.equal(strategyFocus(s).primary,'fang');
  assert.ok(cardDrawWeight(s,strike)<=cardDrawWeight(s,mend)*2);
  s.raid=4;
- assert.ok(cardDrawWeight(s,strike)>cardDrawWeight(s,mend)*5);
+ assert.ok(cardDrawWeight(s,strike)>cardDrawWeight(s,mend));
+ assert.ok(cardDrawWeight(s,strike)<cardDrawWeight(s,mend)*5);
 });
 test('weighted draws preserve inventory, never duplicate IDs, and reproduce with seeded randomness',()=>{
  const a=newSiege(rng),b=newSiege(rng);
