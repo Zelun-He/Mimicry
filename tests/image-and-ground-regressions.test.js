@@ -46,8 +46,12 @@ test('every type of card renders with well-formed attributes; shop preview never
  state.deck.chain=[];
  const html=renderForestHand(state);
  assert.equal((html.match(/<button type="button" class="card /g)||[]).length,8);
- assert.equal((html.match(/aria-disabled="/g)||[]).length,8);
- assert.equal((html.match(/aria-label="/g)||[]).length,8);
+ const buttons=[...html.matchAll(/<button[^>]*>/g)].map(match=>match[0]);
+ assert.equal(buttons.length,8);
+ for(const button of buttons){
+  assert.ok(button.includes('aria-disabled="'),button);
+  assert.ok(button.includes('aria-label="'),button);
+ }
  assert.ok(!html.includes('"" aria-disabled'),'malformed quote leaked into card tag');
  assert.ok(html.includes('data-tribe="spider" aria-disabled='));
  assert.ok(html.includes('data-tribe="mimicling" aria-disabled='));
