@@ -481,3 +481,16 @@ See `DESIGN-PREMIUM-CARDS.md`.
 
 The core combat simulation, link legality, shop costs, purchases,
 summoning, Gold, Hunger and v8 save format are unchanged.
+
+## Grounded character idle animation
+
+The original **Mimic and invaders subtly sway at rest** again, independently
+and without leaving the earth. A maximum ~0.6° sinusoidal rotation around
+the **verified ground/foot pivot** provides the light breathing movement
+without restoring the prior vertical bob, detached shadows or arbitrary
+backline scaling. Actual sprite source dimensions, target hitboxes and
+canvas aspect ratio are unchanged; motion is visual-only. The `prefers-
+reduced-motion` option disables every idle rotation, and the normal
+attack/shake poses remain available. See
+`tests/grounded-idle-sway.test.js` for animation, foot contact, and
+accessible reduced-motion checks.

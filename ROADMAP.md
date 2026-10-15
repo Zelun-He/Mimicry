@@ -51,6 +51,10 @@ combat tests, save migration, and a manual browser playtest before release.
   physical scale and visible-foot baseline for all invaders, and make target
   focus a ring instead of a giant foreground actor. Remove CSS constraints
   that stretched the entire battle canvas on wide or mobile screens.
+- [x] **03h-idle — Grounded idle animation** (`fix/grounded-idle-sway`).
+  Restore subtle asynchronous Mimic/visitor breathing-sway motion using a
+  tiny rotation around each sprite's actual foot baseline. No vertical
+  floating, stretching, extra actors or moving hitboxes. Honor reduced motion.
 - [x] **03h2 — Forest Edge visitor variety** (`feature/forest-visitor-variety`).
   Four counterplay-driven enemy roles (Lantern Bearer, Herbalist, Poacher,
   Sapper), readable enemy intent and focus chips, and authored alternate
