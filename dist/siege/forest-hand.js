@@ -41,10 +41,6 @@ export function renderForestHand(s,{artFor,ruleFor,discardMode=false}={}){
    '</button>';
  }).join('');
 }
-lass="card-effect">'+rule+'</span><span class="card-link">'+
-   (locked?'WAIT':link.symbol+' '+link.short)+'</span></button>';
- }).join('');
-}
 
 export function renderForestChain(s){
  const steps=previewChain(s),kinds=queuedLinkKinds(s.deck.chain),slots=[];
