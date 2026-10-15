@@ -173,7 +173,7 @@ test('save migration from v5 preserves the deck, gold, and offers while initiali
  s.version=5;delete s.essences;delete s.essenceHistory;delete s.pendingEssence;
  const restored=restoreSiege(structuredClone(s));
  assert.ok(restored);
- assert.equal(restored.version,8);
+ assert.equal(restored.version,11);
  assert.deepEqual(restored.deck.hand.map(c=>c.id),ids);
  assert.deepEqual(restored.essences,[]);
  assert.deepEqual(restored.essenceHistory,[]);
@@ -204,7 +204,7 @@ test('Wild Pockets permits three redraws, then removal restores the ordinary lim
  assert.equal(s.deck.discardsLeft,3);
  for(let i=0;i<3;i++)assert.equal(redrawCommand(s,s.deck.hand[0].id,rng),true);
  assert.equal(redrawCommand(s,s.deck.hand[0].id,rng),false);
- assert.ok(validateDeck(s.deck,8,false,3,true,true));
+ assert.ok(validateDeck(s.deck,11,false,3,true,true));
  assert.ok(restoreSiege(structuredClone(s)));
 });
 test('Opening Gambit grants exactly two base power to the first chain card',()=>{
