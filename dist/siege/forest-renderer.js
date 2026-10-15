@@ -21,11 +21,12 @@ export function featuredInvader(s){
 // rather than squeezing a tall sprite into a guessed width/height.
 export const VISITOR_COLUMNS=5;
 export const VISITOR_HEIGHT=205;
-export const VISITOR_GROUND_Y=328;
-// Measured last opaque pixel in each original 724px-high source frame.
-// Compensating for the transparent padding aligns the *visible feet*, not
-// merely the transparent bottoms of the different frames.
-const VISITOR_FOOT_FRACTIONS=Object.freeze([700,676,676,675,706].map(y=>y/724));
+export const VISITOR_GROUND_Y=342;
+// Last opaque pixel rows measured from the actual shipped RGBA images:
+// five 434.4×724 visitor frames, then the 2×2 768×512 Mimic frames.
+// Different bottom transparency must not be treated as visual height.
+export const VISITOR_FOOT_ROWS=Object.freeze([700,676,676,675,706]);
+export const MIMIC_FOOT_ROWS=Object.freeze([512,512,488,478]);
 const VISITOR_X_CENTERS=Object.freeze({
  1:[688],
  2:[636,787],
@@ -34,7 +35,7 @@ const VISITOR_X_CENTERS=Object.freeze({
 
 // Stable lane-order formation: changing focus only changes the highlight,
 // never the characters' positions. All enemy sprites use identical scale.
-export function visitorFormation(enemies,sourceWidth,sourceHeight,{bob=0}={}){
+export function visitorFormation(enemies,sourceWidth,sourceHeight){
  const units=[...(enemies||[])].filter(e=>e.alive&&e.hp>0)
   .sort((a,b)=>a.lane-b.lane||String(a.id).localeCompare(String(b.id)));
  const n=units.length;
@@ -48,12 +49,12 @@ export function visitorFormation(enemies,sourceWidth,sourceHeight,{bob=0}={}){
  return units.map((enemy,i)=>{
   const index=visitorSpriteIndex(enemy.name);
   const x=Math.round(centers[i]-width/2);
-  const y=Math.round(VISITOR_GROUND_Y-VISITOR_FOOT_FRACTIONS[index]*height+bob);
+  const y=Math.round(VISITOR_GROUND_Y-VISITOR_FOOT_ROWS[index]/frameH*height);
   return {
    id:enemy.id,enemy,index,
    sx:index*frameW,sy:0,sw:frameW,sh:frameH,
    x,y,w:width,h:height,
-   groundY:VISITOR_GROUND_Y+bob,
+   groundY:VISITOR_GROUND_Y,
    cx:centers[i]
   };
  });
@@ -107,19 +108,21 @@ export function createForestBattle(canvas,{reducedMotion=false}={}){
   // A single familiar Forest Edge background; dusk creeps in as the raids escalate.
   const twilight=[0,.025,.075,.13,.20][Math.min(viewRaid,4)];
   if(twilight){ctx.fillStyle='rgba(23,40,58,'+twilight+')';ctx.fillRect(0,0,960,420);}
-  const bob=reducedMotion?0:Math.sin(time/640)*2.2;
   if(time>poseUntil)pose=0;
-  ctx.fillStyle='#1f402a4f';
-  ctx.beginPath();ctx.ellipse(301,321,73,11,0,0,Math.PI*2);ctx.fill();
+  // No offset fake ground shadow. Source art has its own lighting;
+  // additional detached ovals made boots and claws look airborne.
   const hero=ready('mimic');
   const heroX=160+(!reducedMotion&&time<heroShake?Math.sin(time/22)*5:0);
   if(hero){
    const sw=hero.naturalWidth/2,sh=hero.naturalHeight/2;
-   sprite('mimic',pose%2*sw,Math.floor(pose/2)*sh,sw,sh,heroX,145+bob,280,187);
-  }else{ctx.fillStyle='#745744';ctx.fillRect(225,215,150,91);}
+   const heroHeight=187,frame=pose%4;
+   // Place the actual claws on the same grounded baseline in each pose.
+   const heroY=Math.round(VISITOR_GROUND_Y-MIMIC_FOOT_ROWS[frame]/512*heroHeight);
+   sprite('mimic',frame%2*sw,Math.floor(frame/2)*sh,sw,sh,heroX,heroY,280,heroHeight);
+  }
   const focus=featuredInvader(state),atlas=ready('visitors');
   const sourceWidth=atlas?.naturalWidth||2172,sourceHeight=atlas?.naturalHeight||724;
-  const formation=visitorFormation(livingInvaders(state),sourceWidth,sourceHeight,{bob});
+  const formation=visitorFormation(livingInvaders(state),sourceWidth,sourceHeight);
   drawBoxes.length=0;
   // Every enemy is the same physical size. No foreground vs background scale.
   // A subtle selection ring and a pointer distinguish the current target.
@@ -127,12 +130,11 @@ export function createForestBattle(canvas,{reducedMotion=false}={}){
    const selected=actor.id===focus?.id;
    const shake=selected&&!reducedMotion&&time<foeShake?Math.sin(time/18)*5:0;
    const x=actor.x+shake,y=actor.y,w=actor.w,h=actor.h;
-   ctx.fillStyle=selected?'#273a2677':'#263a2852';
-   ctx.beginPath();ctx.ellipse(actor.cx,VISITOR_GROUND_Y+3,35,8,0,0,Math.PI*2);ctx.fill();
    if(selected){
-    // Selection is communicated by an understated ground ring, not scale.
+    // Thin focus ring hugs boots directly on the shared ground line.
+    // Never render detached dark shadow ovals below the characters.
     ctx.strokeStyle='#ffdf8b';ctx.lineWidth=2;
-    ctx.beginPath();ctx.ellipse(actor.cx,VISITOR_GROUND_Y+3,45,11,0,0,Math.PI*2);ctx.stroke();
+    ctx.beginPath();ctx.ellipse(actor.cx,VISITOR_GROUND_Y+1,40,6,0,0,Math.PI*2);ctx.stroke();
    }
    if(atlas)sprite('visitors',actor.sx,actor.sy,actor.sw,actor.sh,x,y,w,h);
    // Do not display stretched colored blocks before the atlas finishes loading.
@@ -161,7 +163,6 @@ export function createForestBattle(canvas,{reducedMotion=false}={}){
    ctx.fillStyle='#e6f0b6';ctx.globalAlpha=.18+Math.sin(time/530+i)*.14;
    ctx.fillRect((time/46+i*157)%960,170+i*26%190,2,2);
   }
-  ctx.globalAlpha=1;
   ctx.globalAlpha=1;
  }
  raf=requestAnimationFrame(draw);

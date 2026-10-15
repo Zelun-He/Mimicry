@@ -67,8 +67,11 @@ test('creature art uses the sprite board while Spider and Mimicling keep their a
  }
  for(const [type,file] of [['spider-summon','exotic-spider.svg'],['family-dinner','exotic-mimicling.svg']]){
   const html=creatureCardArt(type);
-  assert.ok(html.includes('./siege/'+file),type);
-  assert.ok(html.includes('loading="lazy"'),type);
+  assert.ok(html.includes('<svg'),type);
+  assert.ok(html.includes('class="creature-art__illustration"'),type);
+  assert.ok(html.includes('viewBox="0 0 16 16"'),type);
+  assert.ok(!html.includes('<img'),type);
+  assert.ok(!html.includes('src="./siege/'),type);
   assert.ok(!html.includes('creature-art__sprite--'),type);
   assert.ok(read('dist/siege/'+file).includes('<svg'),file);
  }

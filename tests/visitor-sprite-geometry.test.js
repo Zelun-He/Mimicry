@@ -2,11 +2,11 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
 import {RAIDS,newSiege} from '../dist/siege-engine.js';
-import {VISITOR_COLUMNS,VISITOR_HEIGHT,VISITOR_GROUND_Y,visitorFormation,
+import {VISITOR_COLUMNS,VISITOR_HEIGHT,VISITOR_GROUND_Y,VISITOR_FOOT_ROWS,MIMIC_FOOT_ROWS,visitorFormation,
  visitorSpriteIndex,featuredInvader,createForestBattle} from '../dist/siege/forest-renderer.js';
 
 const W=2172,H=724;
-const fractions=[700,676,676,675,706].map(v=>v/H);
+const fractions=VISITOR_FOOT_ROWS.map(row=>row/H);
 const fighters=index=>RAIDS[index].enemies.map((e,i)=>({
  ...e,id:'e'+index+'-'+i,alive:true,maxHp:e.hp
 }));
@@ -18,6 +18,8 @@ test('the actual original visitor atlas has five full-height frames',()=>{
  assert.equal(png.readUInt32BE(20),H);
  assert.equal(VISITOR_COLUMNS,5);
  assert.equal(VISITOR_HEIGHT,205);
+ assert.deepEqual(VISITOR_FOOT_ROWS,[700,676,676,675,706]);
+ assert.deepEqual(MIMIC_FOOT_ROWS,[512,512,488,478]);
 });
 
 test('all three Watchman attackers have EXACTLY equal on-screen scale and original aspect ratio',()=>{

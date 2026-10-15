@@ -21,7 +21,7 @@ export function renderForestHand(s,{artFor,ruleFor}={}){
    (family?' tribe-card tribe-'+family.key:'')+
    '" data-card-id="'+id+'" data-school="'+def.suit+'" data-link-kind="'+link.kind+
    '" data-rarity="'+(def.rarity||'common')+'"'+(family?' data-tribe="'+family.key+'"':'')+
-   '" aria-disabled="'+(!playable)+'" aria-label="'+htmlName+', '+def.suit+' rank '+rank+
+   ' aria-disabled="'+(!playable)+'" aria-label="'+htmlName+', '+def.suit+' rank '+rank+
    '. '+rule+'. '+(family?family.name+' family. ':'')+(playable?link.label:link.explanation)+
    '"><span class="card-top"><span class="card-rank">'+rank+'</span><span class="card-symbol">'+mark+'</span></span>'+
    '<span class="card-portrait">'+(artFor||creatureCardArt)(card.type)+'</span>'+

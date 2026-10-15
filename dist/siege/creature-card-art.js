@@ -3,6 +3,7 @@
 // Pure presentation: no combat, deck, save or random effects.
 import {CARDS} from '../chain-engine.js';
 import {cardArt} from './card-art.js';
+import {EXOTIC_CARD_PORTRAITS} from './exotic-inline-art.js';
 
 export const CREATURE_FAMILIES=Object.freeze({
  goblin:Object.freeze({key:'goblin',name:'GOBLIN',group:'RAIDERS',atlasIndex:0}),
@@ -35,8 +36,10 @@ export function creatureCardIdentity(type){
 export function creatureCardArt(type){
  const card=CARDS[type],family=creatureCardIdentity(type);
  if(!card||!family)return cardArt(type);
- const picture=family.image?
-  '<img class="creature-art__illustration" src="./siege/'+family.image+'" alt="" loading="lazy" decoding="async">':
+ // Inline the original Spider and Mimicling pixel SVGs so dynamically
+ // injected Quartermaster previews cannot display a broken <img> icon.
+ // Other creature portraits still use the original local PNG atlas.
+ const picture=EXOTIC_CARD_PORTRAITS[family.key]||
   '<span class="creature-art__sprite creature-art__sprite--'+family.key+'" aria-hidden="true"></span>';
  return '<span class="creature-art creature-art--'+family.key+'" role="img" aria-label="'+
   card.name+' — '+family.name+' portrait">'+
