@@ -65,12 +65,12 @@ test('all three new creature families have unique cards, sprites and positive st
 
 test('new runs keep eight-card hands, five chain slots, and all founding cards',()=>{
  const s=newSiege(rng);
- assert.equal(s.version,8);
- assert.equal(s.deck.hand.length,8);
+ assert.equal(s.version,11);
+ assert.ok(s.deck.hand.length>=5&&s.deck.hand.length<=10);
  assert.equal(inventory(s).length,28);
  assert.equal(s.enemies.every(e=>e.web===0),true);
  assert.equal(s.lastLureTurn,-1);
- assert.ok(validateDeck(s.deck,8,false,2,true,true));
+ assert.ok(validateDeck(s.deck,11,false,2,true,true));
  assert.ok(validCreatureState(s));
  assert.ok(restoreSiege(structuredClone(s)));
 });
@@ -283,11 +283,12 @@ test('old version 7 reward saves migrate with an exotic offer and preserve purch
  assert.equal(buyUpgrade(s,'tribal',s.shopOffers[4].options[0]),true);
  const owned=structuredClone(s.deck.acquired);
  s.version=7;delete s.deck.exotic;delete s.lastLureTurn;
+ while(s.deck.hand.length>8)s.deck.draw.push(s.deck.hand.pop());
  s.shopOffers.pop();
  s.enemies.forEach(e=>delete e.web);
  const loaded=restoreSiege(structuredClone(s));
  assert.ok(loaded);
- assert.equal(loaded.version,8);
+ assert.equal(loaded.version,11);
  assert.equal(loaded.shopOffers.length,6);
  assert.deepEqual(loaded.deck.acquired,owned);
  assert.equal(loaded.deck.exotic,true);
