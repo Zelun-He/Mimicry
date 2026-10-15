@@ -50,7 +50,7 @@ test('all eight cards remain visible with school/rank, card art and one-click in
  assert.equal((html.match(/card-symbol/g)||[]).length,8);
  assert.equal((html.match(/card-portrait/g)||[]).length,8);
  assert.equal((html.match(/card-name/g)||[]).length,8);
- assert.equal((html.match(/card-effect/g)||[]).length,8);
+ assert.equal((html.match(/class="card-effect"/g)||[]).length,8);
  assert.equal((html.match(/card-link/g)||[]).length,8);
  assert.ok(html.includes('<svg'));
  assert.ok(html.includes('data-link-kind='));

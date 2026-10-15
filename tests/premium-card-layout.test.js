@@ -99,7 +99,7 @@ test('eight-card opening view shows eight different roles, no universal START ba
 test('link states change only as the player builds the chain; role identity remains stable',()=>{
  const s=newSiege(()=>0.5);
  s.deck.hand=[{id:'t1',type:'strike'},{id:'t2',type:'blood'},
-  {id:'t3',type:'fortify'},{id:'t4',type:'mirror'}];
+  {id:'t3',type:'counter'},{id:'t4',type:'mirror'}];
  s.deck.chain=[];
  const before=renderForestHand(s);
  assert.ok(!before.includes('class="card-link-status"'));
