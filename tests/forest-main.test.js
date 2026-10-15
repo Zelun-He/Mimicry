@@ -12,19 +12,15 @@ const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const read=p=>readFileSync(resolve(root,p),'utf8');
 const sample=()=>newSiege(()=>0.5);
 
-test('index and siege URLs serve the same original Forest Edge-style combat screen',()=>{
+test('index and siege URLs expose the poker battle and preserve classic prototype',()=>{
  const index=read('dist/index.html'),siege=read('dist/siege.html');
  assert.equal(index,siege);
- assert.ok(index.includes('<canvas id="world" width="960" height="420"'));
- for(const id of ['route','your-health','your-hp','enemy-name','enemy-health','intent','battle-caption','chain','hand','preview','redraw','attack','rewards','targets','defenders','gnaw','devour','summon-lane']){
+ for(const id of ['hand','attack','discard','clock','enemy-name','enemy-health','shop','continue','overlay']){
   assert.ok(index.includes('id="'+id+'"'),id);
  }
- assert.ok(index.includes('style.css'));
- assert.ok(index.includes('siege/forest-game.css'));
- assert.ok(index.includes('src="siege.js"'));
- const classic=read('dist/classic.html');
- assert.ok(classic.includes('src="main.js"'));
- assert.ok(classic.includes('THE MIMIC’S HAND'));
+ assert.ok(index.includes('href="demons.css"'));
+ assert.ok(index.includes('src="demons.js"'));
+ assert.ok(read('dist/classic.html').includes('src="main.js"'));
 });
 
 test('existing original pixel sprites and forest background remain included',()=>{
@@ -44,14 +40,14 @@ test('existing original pixel sprites and forest background remain included',()=
 
 test('all eight cards remain visible with school/rank, card art and one-click interaction',()=>{
  const s=sample(),html=renderForestHand(s);
- assert.equal((html.match(/class="card /g)||[]).length,8);
- assert.equal((html.match(/data-card-id=/g)||[]).length,8);
- assert.equal((html.match(/card-rank/g)||[]).length,8);
- assert.equal((html.match(/card-symbol/g)||[]).length,8);
- assert.equal((html.match(/card-portrait/g)||[]).length,8);
- assert.equal((html.match(/card-name/g)||[]).length,8);
- assert.equal((html.match(/class="card-effect"/g)||[]).length,8);
- assert.equal((html.match(/card-link/g)||[]).length,8);
+ assert.equal((html.match(/class="card /g)||[]).length,5);
+ assert.equal((html.match(/data-card-id=/g)||[]).length,5);
+ assert.equal((html.match(/card-rank/g)||[]).length,5);
+ assert.equal((html.match(/card-symbol/g)||[]).length,5);
+ assert.equal((html.match(/card-portrait/g)||[]).length,5);
+ assert.equal((html.match(/card-name/g)||[]).length,5);
+ assert.equal((html.match(/class="card-effect"/g)||[]).length,5);
+ assert.equal((html.match(/card-link/g)||[]).length,5);
  assert.ok(html.includes('<svg'));
  assert.ok(html.includes('data-link-kind='));
  assert.ok(!html.includes('card-play'));
@@ -102,18 +98,10 @@ test('multiple actual Siege invaders retain individual identities and focus',()=
  assert.deepEqual(damageSummary(before,s),[{id:s.enemies[1].id,name:'Forager',damage:5}]);
 });
 
-test('the original large canvas, parchment table, and eight-wide hand are the visual authority',()=>{
- const css=read('dist/siege/forest-game.css'),original=read('dist/style.css');
- assert.ok(original.includes('.battle{position:relative'));
- assert.ok(original.includes('.table{background:#ede7ce'));
- assert.ok(original.includes('.hand{display:grid;grid-template-columns:repeat(8,1fr)'));
- assert.ok(css.includes('.hand{display:grid;grid-template-columns:repeat(8,minmax(0,1fr))'));
- assert.ok(css.includes('flex:0 0 126px'));
- assert.ok(css.includes('.chain-slot{height:80px;min-height:80px'));
- assert.ok(css.includes('@media(max-width:1100px)'));
- assert.ok(css.includes('@media(max-width:700px)'));
+test('active poker hand uses accessible, responsive card styling',()=>{
+ const css=read('dist/demons.css'),html=read('dist/index.html');
+ assert.ok(css.includes('.poker-card'));
+ assert.ok(css.includes('overflow-x:auto'));
  assert.ok(css.includes('prefers-reduced-motion:reduce'));
- const html=read('dist/siege.html');
- assert.ok(html.indexOf('class="battle"')<html.indexOf('class="table"'));
- assert.ok(html.indexOf('id="chain"')<html.indexOf('id="hand"'));
+ assert.ok(html.indexOf('class="battlefield"')<html.indexOf('id="hand"'));
 });
