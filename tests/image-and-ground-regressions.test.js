@@ -148,7 +148,7 @@ test('the local game server serves SVG, PNG, HTML, CSS and JS with correct MIME 
    ['/assets/mimic.png','image/png',null],
    ['/siege/creature-cards.css','text/css','aspect-ratio:80/69'],
    ['/siege/creature-card-art.js','text/javascript','EXOTIC_CARD_PORTRAITS'],
-   ['/','text/html','siege/creature-cards.css']
+   ['/','text/html','demons.css']
   ];
   for(const [route,mime,marker] of cases){
    const response=await fetch('http://127.0.0.1:'+port+route);
