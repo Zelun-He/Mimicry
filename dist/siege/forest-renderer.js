@@ -19,16 +19,17 @@ export function featuredInvader(s){
  return foes.find(e=>e.id===s.chainTargetId)||
   [...foes].sort((a,b)=>a.hp-b.hp)[0]||null;
 }
-// The atlas has five side-by-side full-height frames (2,172 × 724 px).
+// The repaired atlas has five *complete*, equal-width frames (2,410 × 724 px).
+// The Novice's sword is now wholly within its frame, never in the Wanderer's.
 // Render all visitors with ONE uniform scale. Keep their original proportions
 // rather than squeezing a tall sprite into a guessed width/height.
 export const VISITOR_COLUMNS=5;
 export const VISITOR_HEIGHT=205;
 export const VISITOR_GROUND_Y=342;
 // Last opaque pixel rows measured from the actual shipped RGBA images:
-// five 434.4×724 visitor frames, then the 2×2 768×512 Mimic frames.
+// five 482×724 repaired visitor frames, then the 2×2 768×512 Mimic frames.
 // Different bottom transparency must not be treated as visual height.
-export const VISITOR_FOOT_ROWS=Object.freeze([700,676,676,675,706]);
+export const VISITOR_FOOT_ROWS=Object.freeze([713,713,713,713,713]);
 export const MIMIC_FOOT_ROWS=Object.freeze([512,512,488,478]);
 // Small rotational idle motion (≈0.6° max) pivots at each character's feet.
 // Unlike vertical bobbing, this keeps boots/claws touching the ground while
@@ -145,7 +146,7 @@ export function createForestBattle(canvas,{reducedMotion=false}={}){
     heroX+140,idleSwayAngle(time,0.3,reducedMotion));
   }
   const focus=featuredInvader(state),atlas=ready('visitors');
-  const sourceWidth=atlas?.naturalWidth||2172,sourceHeight=atlas?.naturalHeight||724;
+  const sourceWidth=atlas?.naturalWidth||2410,sourceHeight=atlas?.naturalHeight||724;
   const formation=visitorFormation(livingInvaders(state),sourceWidth,sourceHeight);
   drawBoxes.length=0;
   // Every enemy is the same physical size. No foreground vs background scale.

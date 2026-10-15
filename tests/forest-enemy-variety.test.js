@@ -151,7 +151,7 @@ test('new roles use the existing five original visitor portraits at identical sc
   const foes=enemyTemplatesFor(RAIDS,raid,plan).map((e,i)=>({
    ...e,alive:true,id:'e'+raid+'-'+i
   }));
-  const actors=visitorFormation(foes,2172,724);
+  const actors=visitorFormation(foes,2410,724);
   assert.equal(actors.length,foes.length);
   for(const actor of actors){
    assert.ok(visitorSpriteIndex(actor.enemy.name)>=0);
