@@ -40,9 +40,18 @@ combat tests, save migration, and a manual browser playtest before release.
   Remove mini allied/veteran/summon sprites and noisy combat popups from the
   forest canvas. Keep the original King Mimic and opponents, with compact,
   readable HP/formation/lane badges below. Combat rules and saves are unchanged.
-- [ ] **03h — Sprite-board creature card portraits, Phase 2.**
-  Use the prepared creature art on cards with tribe-specific frames. Keep
-  monster personalities on the cards instead of in small battlefield actors.
+- [x] **03h — Sprite-board creature card portraits, Phase 2** (`feature/tier1-creature-card-portraits`).
+  Bring original user-created Goblin, Skeleton, Slime, Sporeling and King Mimic
+  portraits onto cards using one local optimized atlas; keep existing Spider
+  and Mimicling illustrations. Add restrained tribe-specific frames, hover/focus
+  responses, readable category/rank labels and Quartermaster previews.
+  No card effects, horde thresholds or save rules change.
+- [ ] **03i — Mob/Horde formation cards, Phase 3.**
+  Rework queue-slot presentation so duplicates visibly form a growing mob
+  and distinguish those formations from ordinary suit/rank combos.
+- [ ] **03j — Card-slot attack choreography, Phase 4.**
+  Make linked creature cards drive the impact sequence without returning
+  mini-monster sprites to the forest canvas.
 - [ ] **04 — Treasure bait and invasion control.** Choose between visible risk/reward
   lures before raids; enemy types and rewards vary accordingly.
 - [ ] **05 — Counterplay-driven enemy abilities.** Bards, thieves, paladins,

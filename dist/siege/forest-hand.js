@@ -1,6 +1,7 @@
 // Adapt newer Siege cards to the original bright parchment attack-chain table.
 import {CARDS} from '../chain-engine.js';
 import {cardArt,cardRule,SUIT_STYLES} from './card-art.js';
+import {creatureCardArt,creatureCardIdentity} from './creature-card-art.js';
 import {previewChain} from '../siege-engine.js';
 import {previewCardLink,queuedLinkKinds} from './link-feedback.js';
 import {cardPower} from '../shop-engine.js';
@@ -14,13 +15,16 @@ export function renderForestHand(s,{artFor,ruleFor}={}){
   const htmlName=escapeHTML(def.name),id=escapeHTML(card.id),rank=def.rank||'★';
   const rule=escapeHTML((ruleFor||cardRule)(card.type));
   const mark=SUIT_STYLES[def.suit].symbol;
+  const family=creatureCardIdentity(card.type);
   return '<button type="button" class="card '+def.suit+' '+(playable?'playable':'card-inactive')+
    (link.kind==='stack'&&playable?' is-stack':'')+
+   (family?' tribe-card tribe-'+family.key:'')+
    '" data-card-id="'+id+'" data-school="'+def.suit+'" data-link-kind="'+link.kind+
+   '" data-rarity="'+(def.rarity||'common')+'"'+(family?' data-tribe="'+family.key+'"':'')+
    '" aria-disabled="'+(!playable)+'" aria-label="'+htmlName+', '+def.suit+' rank '+rank+
-   '. '+rule+'. '+(playable?link.label:link.explanation)+
+   '. '+rule+'. '+(family?family.name+' family. ':'')+(playable?link.label:link.explanation)+
    '"><span class="card-top"><span class="card-rank">'+rank+'</span><span class="card-symbol">'+mark+'</span></span>'+
-   '<span class="card-portrait">'+(artFor||cardArt)(card.type)+'</span>'+
+   '<span class="card-portrait">'+(artFor||creatureCardArt)(card.type)+'</span>'+
    '<span class="card-name">'+htmlName+(card.level?' +'+card.level:'')+'</span>'+
    '<span class="card-effect">'+rule+'</span><span class="card-link">'+
    (locked?'WAIT':link.symbol+' '+link.short)+'</span></button>';

@@ -1,0 +1,206 @@
+/* Phase 2 — creatures live in cards, never as tiny battlefield actors.
+   References one lightweight local atlas extracted from the original sprite
+   board and two existing exotic illustrations. Vanilla command art is intact. */
+.card.fang{--suit:#a64d4d}
+.card.shell{--suit:#446d81}
+.card.bloom{--suit:#3d7650}
+.card.venom{--suit:#76568c}
+.card.hunger{--suit:#947038}
+.card.tribe-card{
+ --tribe-ink:#667653;
+ --tribe-shadow:#b6b89a;
+ border:1px solid var(--tribe-shadow);
+ border-top:3px solid var(--tribe-ink);
+ background:linear-gradient(154deg,#fff9e7 0%,#f3ead2 60%,#e7dfc7 100%);
+ box-shadow:0 3px 0 #bec4a8,inset 0 0 0 1px #fffce5;
+ isolation:isolate;
+}
+.card.tribe-goblin{--tribe-ink:#a55c40;--tribe-shadow:#ce9a6c;--tribe-glow:#f2a66d;--tribe-background:#44372b}
+.card.tribe-skeleton{--tribe-ink:#83718b;--tribe-shadow:#b1a1ad;--tribe-glow:#ded0e7;--tribe-background:#373044}
+.card.tribe-slime{--tribe-ink:#368d74;--tribe-shadow:#8bc0a0;--tribe-glow:#78dfb3;--tribe-background:#224d46}
+.card.tribe-spider{--tribe-ink:#6b4a82;--tribe-shadow:#af98be;--tribe-glow:#c4a0e4;--tribe-background:#392e49}
+.card.tribe-mimicling{--tribe-ink:#94704b;--tribe-shadow:#d1aa70;--tribe-glow:#f5d281;--tribe-background:#45342c}
+.card.tribe-sporeling{--tribe-ink:#ab6645;--tribe-shadow:#c9a870;--tribe-glow:#ecce80;--tribe-background:#4a4730}
+.card.tribe-king-mimic{--tribe-ink:#b68537;--tribe-shadow:#cead6a;--tribe-glow:#ffe0a0;--tribe-background:#3a2d2b}
+.card.tribe-card .card-top{position:relative;z-index:1}
+.card.tribe-card .card-top .card-rank{color:var(--suit);text-shadow:none}
+.card.tribe-card .card-top .card-symbol{color:var(--suit)}
+.card.tribe-card .card-portrait{
+ position:relative;
+ flex:none;
+ min-height:0;
+ height:98px;
+ overflow:hidden;
+ border:1px solid var(--tribe-shadow);
+ border-radius:4px;
+ background:var(--tribe-background);
+ box-shadow:inset 0 0 0 1px #fbf4d68c;
+}
+.card.tribe-card .card-name{font-size:11px;line-height:1.14;color:#384a35}
+.card.tribe-card .card-effect{color:#686b53;font-size:9px}
+.card.tribe-card[data-rarity="uncommon"]{
+ background:linear-gradient(154deg,#fff9e7 0%,#f3e9cd 52%,#e6dbc0 100%);
+ box-shadow:0 3px 0 #bec4a8,inset 0 0 0 1px #fffce5,0 0 0 1px #cfbc9b66;
+}
+.card.tribe-card:hover:not(:disabled),
+.card.tribe-card:focus-visible{
+ border-color:var(--tribe-ink);
+ box-shadow:0 9px 0 #c4c4a1,0 11px 18px #293b293c,0 0 14px color-mix(in srgb,var(--tribe-glow) 32%,transparent);
+}
+.card.tribe-card.card-inactive{opacity:.68;filter:saturate(.65)}
+.card.tribe-card.card-inactive:hover{box-shadow:0 3px 0 #c6c3a8}
+/* The portrait fills the artwork window. On wide Quartermaster cards it is
+   capped, so a 96px sprite never becomes an oversized blurry illustration. */
+.creature-art{
+ display:block;
+ position:relative;
+ width:100%;
+ height:100%;
+ min-height:0;
+ overflow:hidden;
+ background:radial-gradient(ellipse at 50% 82%,color-mix(in srgb,var(--tribe-glow) 28%,transparent),transparent 74%),
+ linear-gradient(160deg,#52493433,#1b312b32 60%,#181d22bb);
+}
+/* Also supply tribe palettes when artwork is shown in Quartermaster offers
+   rather than nested inside a hand-card frame. */
+.creature-art--goblin{--tribe-ink:#a55c40;--tribe-glow:#f2a66d;--tribe-background:#44372b}
+.creature-art--skeleton{--tribe-ink:#83718b;--tribe-glow:#ded0e7;--tribe-background:#373044}
+.creature-art--slime{--tribe-ink:#368d74;--tribe-glow:#78dfb3;--tribe-background:#224d46}
+.creature-art--spider{--tribe-ink:#6b4a82;--tribe-glow:#c4a0e4;--tribe-background:#392e49}
+.creature-art--mimicling{--tribe-ink:#94704b;--tribe-glow:#f5d281;--tribe-background:#45342c}
+.creature-art--sporeling{--tribe-ink:#ab6645;--tribe-glow:#ecce80;--tribe-background:#4a4730}
+.creature-art--king-mimic{--tribe-ink:#b68537;--tribe-glow:#ffe0a0;--tribe-background:#3a2d2b}
+.creature-art__texture{
+ position:absolute;inset:0;pointer-events:none;
+ background:repeating-linear-gradient(90deg,transparent 0 9px,#f7e6c304 9px 10px),
+ repeating-linear-gradient(0deg,transparent 0 9px,#00000008 9px 10px);
+ box-shadow:inset 0 0 16px #080e1377;
+}
+.creature-art__focus{
+ display:block;
+ position:absolute;inset:0;
+ max-width:148px;
+ margin:auto;
+ overflow:hidden;
+ filter:drop-shadow(0 3px 1px #110f1f55);
+ transform-origin:50% 70%;
+ transition:transform .22s cubic-bezier(.2,.8,.25,1),filter .22s ease;
+}
+.creature-art__sprite{
+ position:absolute;inset:0;display:block;
+ background-image:url("./creature-portraits.png");
+ background-repeat:no-repeat;
+ background-size:500% 100%;
+ image-rendering:pixelated;
+}
+.creature-art__sprite--goblin{background-position:0% 50%}
+.creature-art__sprite--skeleton{background-position:25% 50%}
+.creature-art__sprite--slime{background-position:50% 50%}
+.creature-art__sprite--sporeling{background-position:75% 50%}
+.creature-art__sprite--king-mimic{background-position:100% 50%}
+.creature-art__illustration{
+ display:block;width:100%;height:100%;object-fit:contain;
+ image-rendering:pixelated;filter:drop-shadow(0 3px 2px #07171466);
+}
+.creature-art__family{
+ position:absolute;
+ top:4px;left:4px;z-index:3;
+ padding:2px 5px;
+ border:1px solid color-mix(in srgb,var(--tribe-glow) 65%,#0d1c1c);
+ background:#14251fdc;
+ color:#fff3d5;
+ border-radius:2px;
+ font:900 8px/1.2 system-ui,sans-serif;
+ letter-spacing:.05em;
+ text-shadow:0 1px #071611;
+ pointer-events:none;
+}
+.creature-art__glimmer{
+ position:absolute;inset:0;z-index:2;opacity:0;pointer-events:none;
+ transition:opacity .2s ease;
+}
+.card.tribe-card:is(:hover,:focus-visible) .creature-art__glimmer{opacity:1}
+.card.tribe-card:is(:hover,:focus-visible) .creature-art__focus{
+ transform:translateY(-2px) scale(1.035);
+ filter:drop-shadow(0 4px 4px color-mix(in srgb,var(--tribe-glow) 35%,#091615));
+}
+/* Goblins: energetic diagonal blade gleam, once per hover. */
+.tribe-goblin .creature-art__glimmer{
+ background:linear-gradient(125deg,transparent 41%,#ffefad00 43%,#fff4c3b8 48%,transparent 52%);
+ transform:translateX(-65%);
+}
+.card.tribe-goblin:is(:hover,:focus-visible) .creature-art__glimmer{
+ animation:goblin-flash .37s ease-out both;
+}
+/* Skeletons: a rigid, pale line of march. */
+.tribe-skeleton .creature-art__glimmer{
+ background:repeating-linear-gradient(90deg,transparent 0 18px,#e2e2f544 18px 20px,transparent 20px 22px);
+ clip-path:inset(74% 0 0);
+}
+.card.tribe-skeleton:is(:hover,:focus-visible) .creature-art__glimmer{
+ animation:skeleton-march .42s steps(3,end) both;
+}
+/* Slimes: gentle elastic motion, not permanent idle animation. */
+.card.tribe-slime:is(:hover,:focus-visible) .creature-art__focus{
+ animation:slime-squish .56s ease-in-out 1 both;
+}
+.tribe-slime .creature-art__glimmer{
+ background:radial-gradient(circle at 22% 65%,#a1ffe375 0 4px,transparent 5px),
+ radial-gradient(circle at 70% 43%,#dcffb96b 0 3px,transparent 4px),
+ radial-gradient(circle at 43% 16%,#a8fff066 0 2px,transparent 3px);
+}
+/* Spiders: two diagonal silk threads crossing the artwork. */
+.tribe-spider .creature-art__glimmer{
+ background:repeating-linear-gradient(27deg,transparent 0 28px,#e3d2f280 29px 30px,transparent 31px 54px),
+ repeating-linear-gradient(-27deg,transparent 0 37px,#ead6f457 38px 39px,transparent 40px 64px);
+ animation:none;
+}
+/* Royals and Mimiclings: a gold flash along the lower jaw. */
+.tribe-mimicling .creature-art__glimmer,
+.tribe-king-mimic .creature-art__glimmer{
+ background:linear-gradient(95deg,transparent 18%,#ffe6a375 36%,transparent 54%);
+ transform:translateX(-48%);
+}
+.card.tribe-mimicling:is(:hover,:focus-visible) .creature-art__glimmer,
+.card.tribe-king-mimic:is(:hover,:focus-visible) .creature-art__glimmer{
+ animation:goblin-flash .65s ease-out both;
+}
+/* Sporelings: a few warm spores, kept inside the card. */
+.tribe-sporeling .creature-art__glimmer{
+ background:radial-gradient(circle at 12% 80%,#f5e3a9b8 0 2px,transparent 3px),
+ radial-gradient(circle at 81% 68%,#f5bf82b8 0 3px,transparent 4px),
+ radial-gradient(circle at 60% 16%,#f6e5a1ae 0 2px,transparent 3px);
+}
+.card.tribe-sporeling:is(:hover,:focus-visible) .creature-art__glimmer{
+ animation:spore-rise 1s ease-out both;
+}
+@keyframes goblin-flash{
+ 0%{transform:translateX(-65%);opacity:0}
+ 28%{opacity:1}
+ 100%{transform:translateX(100%);opacity:0}
+}
+@keyframes skeleton-march{
+ 0%{transform:translateY(12px);opacity:.2}
+ 100%{transform:translateY(0);opacity:.68}
+}
+@keyframes slime-squish{
+ 0%,100%{transform:translateY(-2px) scale(1.035)}
+ 38%{transform:translateY(3px) scale(1.07,.91)}
+ 70%{transform:translateY(-4px) scale(.98,1.055)}
+}
+@keyframes spore-rise{
+ from{transform:translateY(13px);opacity:0}
+ to{transform:translateY(-8px);opacity:.86}
+}
+/* Quartermaster uses the same portrait art without loading extra images. */
+.shop-offer__card-preview .creature-art{
+ min-height:78px;border:1px solid var(--tribe-ink,#bca879);
+ border-radius:4px;
+}
+.shop-offer__card-preview .creature-art__focus{max-width:148px}
+@media(prefers-reduced-motion:reduce){
+ .card.tribe-card .creature-art__glimmer,
+ .card.tribe-card .creature-art__focus{animation:none!important;transition:none!important}
+ .card.tribe-card:is(:hover,:focus-visible) .creature-art__focus{transform:none!important}
+ .card.tribe-card:is(:hover,:focus-visible) .creature-art__glimmer{opacity:.25;transform:none!important}
+}

@@ -2,6 +2,7 @@ import {CARDS,FOUNDING_CARDS,STARTER_DECK,chainSlotCount} from './chain-engine.j
 import {MAX_MINIONS,MAX_LANE_MINIONS,MAX_BONES,liveMinions} from './swarm-engine.js';
 import {CREATURES} from './creature-engine.js';
 import {cardArt,cardRule,SUIT_STYLES} from './siege/card-art.js';
+import {creatureCardArt} from './siege/creature-card-art.js';
 import {previewCardLink} from './siege/link-feedback.js';
 import {renderForestHand,renderForestChain,renderForestPrediction,escapeHTML} from './siege/forest-hand.js';
 import {createForestBattle,featuredInvader,damageSummary} from './siege/forest-renderer.js';
@@ -10,7 +11,7 @@ import {ESSENCE_CAPACITY,ESSENCE_BY_ENEMY,ESSENCE_TRAITS,redrawLimit} from './as
 import {newSiege,restoreSiege,RAIDS,SPECIES,moveUnit,endTurn,devour,gnaw,reinforce,buyUpgrade,chooseEssence,queueCommand,unqueueCommand,redrawCommand,previewChain,previewRituals,targetChain,setSummonLane} from './siege-engine.js';
 const $=id=>document.getElementById(id),KEY='mimicry-siege-v8';
 const artCache=new Map();
-const artFor=type=>{if(!artCache.has(type))artCache.set(type,cardArt(type));return artCache.get(type);};
+const artFor=type=>{if(!artCache.has(type))artCache.set(type,creatureCardArt(type));return artCache.get(type);};
 let state;
 try{
  for(const key of [KEY,'mimicry-siege-v7','mimicry-siege-v6','mimicry-siege-v5','mimicry-siege-v4','mimicry-siege-v3','mimicry-siege-v2']){
