@@ -148,24 +148,15 @@ test('the illustrated shop card preview reuses every rules section, not just a s
  assert.ok(cardInspectorText('ambush').includes('Deal 7 damage.'));
 });
 
-test('premium CSS is loaded after original school and creature styles, with responsive hand and reduced motion',()=>{
- const index=read('dist/index.html'),siege=read('dist/siege.html'),css=read('dist/siege/card-system.css');
+test('active route uses poker cards with selected styles and responsive layout',()=>{
+ const index=read('dist/index.html'),siege=read('dist/siege.html'),css=read('dist/demons.css');
  assert.equal(index,siege);
- assert.ok(index.includes('id="card-inspector"'));
- const start=index.indexOf('href="siege/creature-cards.css"');
- const end=index.indexOf('href="siege/card-system.css"');
- assert.ok(start>0&&end>start);
- assert.ok(css.includes('grid-template-columns:repeat(8,minmax(0,1fr))'));
- assert.ok(css.includes('max-width:166px'));
- assert.ok(css.includes('.shop-card-face.card'));
- assert.ok(css.includes('.card-inspector'));
+ assert.ok(index.includes('id="hand"'));
+ assert.ok(index.includes('id="preview-name"'));
+ assert.ok(index.includes('src="demons.js"'));
+ assert.ok(css.includes('.poker-card.chosen'));
+ assert.ok(css.includes('overflow-x:auto'));
  assert.ok(css.includes('prefers-reduced-motion:reduce'));
- assert.ok(!css.includes('animation:infinite'));
- const js=read('dist/siege.js');
- assert.ok(js.includes('renderShopCardPreview(previewType,{artFor})'));
- assert.ok(js.includes('renderShopCardPreview(select.value,{artFor})'));
- assert.ok(js.includes('renderForestHand(state,{artFor,ruleFor:cardRule,discardMode})'));
- assert.ok(js.includes('showCardInspection'));
 });
 
 test('combo-ready marker appears only with live, visible prerequisites and does not mutate state',()=>{
@@ -195,5 +186,5 @@ test('shop presentations never change deterministic card stats or current save s
   cardInspectorText(type);
  }
  assert.deepEqual(s,before);
- assert.equal(s.version,8);
+ assert.equal(s.version,11);
 });
