@@ -44,7 +44,7 @@ function compareEffect(trait,types,configure=()=>{},read=s=>s.enemies[0].hp){
 }
 test('every invader archetype has exactly two distinct, described essence choices',()=>{
  assert.equal(ESSENCE_CAPACITY,3);
- assert.equal(Object.keys(ESSENCE_BY_ENEMY).length,8);
+ assert.equal(Object.keys(ESSENCE_BY_ENEMY).length,12); // 8 original + 4 forest visitors
  assert.equal(Object.keys(ESSENCE_TRAITS).length,16);
  for(const raid of RAIDS)for(const enemy of raid.enemies){
   const choices=ESSENCE_BY_ENEMY[enemy.name];assert.equal(choices.length,2);
@@ -53,6 +53,12 @@ test('every invader archetype has exactly two distinct, described essence choice
    assert.equal(ESSENCE_TRAITS[id].enemy,enemy.name);
    assert.ok(ESSENCE_TRAITS[id].description.length>20);
   }
+ }
+ for(const visitor of ['Lantern Bearer','Herbalist','Poacher','Sapper']){
+  const choices=ESSENCE_BY_ENEMY[visitor];
+  assert.equal(choices.length,2);
+  assert.notEqual(choices[0],choices[1]);
+  for(const trait of choices)assert.ok(ESSENCE_TRAITS[trait]?.description.length>20);
  }
 });
 test('Devour requires 100 Hunger; a nonlethal bite never captures essence',()=>{

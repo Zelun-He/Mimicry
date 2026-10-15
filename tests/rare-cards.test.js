@@ -2,7 +2,7 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import {CARDS,SHOP_CARD_TYPES,STARTER_DECK,FOUNDING_CARDS,validateDeck} from '../dist/chain-engine.js';
 import {deckCards} from '../dist/shop-engine.js';
-import {newSiege,endTurn,reinforce,buyUpgrade,restoreSiege,queueCommand,redrawCommand} from '../dist/siege-engine.js';
+import {newSiege,RAIDS,endTurn,reinforce,buyUpgrade,restoreSiege,queueCommand,redrawCommand} from '../dist/siege-engine.js';
 
 const baseRng=()=>0.5;
 function earnShop(s,rng=baseRng){
@@ -16,6 +16,9 @@ function purchase(type){
  assert.ok(index>=0);
  const rng=()=> (index+0.1)/SHOP_CARD_TYPES.length;
  const s=newSiege(rng);
+ // Rare-card unit tests isolate card arithmetic from replayable Forest Edge
+ // party selection. The original second-raid Scout statline is their fixture.
+ s.encounterPlan=Array(RAIDS.length).fill(0);
  earnShop(s,rng);
  const offer=s.shopOffers[3];
  assert.equal(offer.id,'rare');
