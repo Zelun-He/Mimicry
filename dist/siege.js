@@ -12,12 +12,12 @@ import {createForestBattle,featuredInvader,damageSummary} from './siege/forest-r
 import {MUTATIONS,handSize,upgradeableCards,trainableUnits,cardPower} from './shop-engine.js';
 import {ESSENCE_CAPACITY,ESSENCE_BY_ENEMY,ESSENCE_TRAITS,redrawLimit} from './assimilation-engine.js';
 import {newSiege,restoreSiege,RAIDS,SPECIES,moveUnit,endTurn,devour,gnaw,reinforce,buyUpgrade,chooseEssence,queueCommand,unqueueCommand,redrawCommand,previewChain,previewRituals,targetChain,setSummonLane} from './siege-engine.js';
-const $=id=>document.getElementById(id),KEY='mimicry-siege-v8';
+const $=id=>document.getElementById(id),KEY='mimicry-siege-v9';
 const artCache=new Map();
 const artFor=type=>{if(!artCache.has(type))artCache.set(type,creatureCardArt(type));return artCache.get(type);};
 let state;
 try{
- for(const key of [KEY,'mimicry-siege-v7','mimicry-siege-v6','mimicry-siege-v5','mimicry-siege-v4','mimicry-siege-v3','mimicry-siege-v2']){
+ for(const key of [KEY,'mimicry-siege-v8','mimicry-siege-v7','mimicry-siege-v6','mimicry-siege-v5','mimicry-siege-v4','mimicry-siege-v3','mimicry-siege-v2']){
   const raw=localStorage.getItem(key);
   if(!raw)continue;
   state=restoreSiege(JSON.parse(raw));
@@ -203,7 +203,7 @@ function render(){
  $('redraw').disabled=busy||locked||!state.deck.discardsLeft||!state.deck.hand.length;
  $('redraw').setAttribute('aria-pressed',String(discardMode));
  $('redraw').classList.toggle('is-active',discardMode);
- $('hand-hint').textContent=discardMode?'DISCARD MODE · Click one card to replace it':'Click cards to queue · order matters';
+ $('hand-hint').textContent=discardMode?'DISCARD MODE · Click one card to replace it':'Start with 5 · +1 each turn · +2 per takedown · keep unused cards';
  $('hand').classList.toggle('is-discarding',discardMode);
  $('attack').disabled=busy||locked;
  $('attack').innerHTML=state.deck.chain.length?'PLAY CHAIN <span>↗</span>':'END TURN <span>↗</span>';
@@ -225,7 +225,7 @@ function render(){
   '<span class="relic-pill" title="'+escapeHTML(ESSENCE_TRAITS[id].description)+'">✦ '+escapeHTML(ESSENCE_TRAITS[id].name)+'</span>').join(''):
   'No stolen traits yet. Finish an enemy with Gnaw or Devour.';
  $('log').innerHTML=state.log.map(line=>'<div>'+escapeHTML(line)+'</div>').join('');
- $('deck-count').textContent=state.deck.draw.length+' draw · '+state.deck.discard.length+' discard';
+ $('deck-count').textContent=state.deck.hand.length+'/'+handSize(state)+' held · '+state.deck.draw.length+' draw · '+state.deck.discard.length+' discard'+(state.drawCredits?' · '+state.drawCredits+' banked':'');
  renderRoster();renderOverlay();
  if(!busy)battle.setState(state);
  save();

@@ -1,7 +1,7 @@
 /* Mimicry card system v1: the hand is a collectible deck, not eight copies of
    the same UI tile. Loaded AFTER forest-game.css and creature-cards.css.
    No gameplay values live in this stylesheet. */
-.hand{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px;align-items:stretch}
+.hand{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:12px;align-items:stretch}
 .hand>.card.premium-card,.shop-card-face{
  --school-ink:var(--suit,#61745a);
  --frame-deep:#46583e;

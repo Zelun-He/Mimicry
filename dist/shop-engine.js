@@ -1,10 +1,10 @@
 // Between-raid upgrades. The shop is data-only so save files and tests stay deterministic.
-import {CARDS,HAND_SIZE,SHOP_CARD_TYPES,GOBLIN_SHOP_TYPES,SKELETON_SHOP_TYPES,TRIBAL_SHOP_TYPES,EXOTIC_SHOP_TYPES,EXOTIC_SHOP_GROUPS} from './chain-engine.js';
+import {CARDS,HAND_SIZE,PROGRESSIVE_HAND_CAP,SHOP_CARD_TYPES,GOBLIN_SHOP_TYPES,SKELETON_SHOP_TYPES,TRIBAL_SHOP_TYPES,EXOTIC_SHOP_TYPES,EXOTIC_SHOP_GROUPS} from './chain-engine.js';
 
 export const MUTATIONS=Object.freeze({
  'iron-fangs':{name:'Iron Fangs',cost:18,description:'Fang strikes and executions deal +2 damage.'},
  'stolen-plating':{name:'Stolen Plating',cost:18,description:'Increase dungeon maximum integrity by 5 and restore 5.'},
- 'royal-satchel':{name:'Royal Satchel',cost:24,description:'Draw 9 command cards instead of 8 each turn.'},
+ 'royal-satchel':{name:'Royal Satchel',cost:24,description:'Increase your maximum held cards from 10 to 11.'},
  'hunger-siphon':{name:'Hunger Siphon',cost:22,description:'Gain 5 additional Hunger whenever an invader dies.'}
 });
 export const CARD_UPGRADE_COST=12;
@@ -12,7 +12,7 @@ export const MONSTER_UPGRADE_COST=14;
 export const MAX_CARD_LEVEL=2;
 export const MAX_MONSTER_TRAINING=2;
 
-export function handSize(s){return HAND_SIZE+(s.mutations?.includes('royal-satchel')?1:0);}
+export function handSize(s){return (s.version>=9?PROGRESSIVE_HAND_CAP:HAND_SIZE)+(s.mutations?.includes('royal-satchel')?1:0);}
 export function cardLevel(card){return card.level??0;}
 export function trainingLevel(unit){return unit.training??0;}
 export function deckCards(s){return [...s.deck.draw,...s.deck.discard,...s.deck.hand,...s.deck.chain];}

@@ -1,5 +1,5 @@
 // Pure deterministic command-chain rules. No RNG or DOM dependencies.
-export const HAND_SIZE=8,MAX_CHAIN=5,MAX_DISCARDS=2,MAX_STACK=3;
+export const HAND_SIZE=8,OPENING_HAND_SIZE=5,PROGRESSIVE_HAND_CAP=10,MAX_CHAIN=5,MAX_DISCARDS=2,MAX_STACK=3;
 export const CARDS=Object.freeze({
  strike:{name:'Quick Strike',suit:'fang',rank:1,kind:'strike',power:4},
  blood:{name:'Bloodletting',suit:'fang',rank:2,kind:'strike',power:5},
@@ -59,6 +59,23 @@ export function makeDeck(rng=Math.random,withTribes=false){
  if(withTribes)base.push(...FOUNDING_CARDS.map((type,i)=>({id:`f${i}`,type})));
  return {draw:shuffle(base,rng),discard:[],hand:[],chain:[],discardsLeft:MAX_DISCARDS,acquired:[],acquiredAt:[],tribal:withTribes};
 }
+// Five real opening cards, each filling a distinct combat role.
+export function drawOpeningHand(deck,rng=Math.random){
+ const roles=[
+  card=>CARDS[card.type].suit==='fang'&&['strike','execute'].includes(CARDS[card.type].kind),
+  card=>CARDS[card.type].suit==='shell'&&['armor','thorns'].includes(CARDS[card.type].kind),
+  card=>CARDS[card.type].suit==='bloom'&&['heal','teamheal','weaken'].includes(CARDS[card.type].kind),
+  card=>CARDS[card.type].suit==='venom'&&['poison','corrode'].includes(CARDS[card.type].kind),
+  card=>CARDS[card.type].kind==='summon'
+ ];
+ for(const matches of roles){
+  const index=deck.draw.findIndex(matches);
+  if(index>=0)deck.hand.push(deck.draw.splice(index,1)[0]);
+ }
+ drawCards(deck,OPENING_HAND_SIZE,rng);
+ deck.hand=shuffle(deck.hand,rng);
+ return deck.hand;
+}
 export function chainGroups(cards){
  const groups=[];
  for(const card of cards){
@@ -97,7 +114,7 @@ export function unqueueCard(deck,id){
  }
  return true;
 }
-export function discardCard(deck,id,rng=Math.random,handSize=HAND_SIZE){if(deck.discardsLeft<=0)return false;const i=deck.hand.findIndex(c=>c.id===id);if(i<0)return false;deck.discard.push(deck.hand.splice(i,1)[0]);deck.discardsLeft--;drawCards(deck,handSize-deck.chain.length,rng);return true;}
+export function discardCard(deck,id,rng=Math.random,handSize=HAND_SIZE){if(deck.discardsLeft<=0)return false;const i=deck.hand.findIndex(c=>c.id===id);if(i<0)return false;deck.discard.push(deck.hand.splice(i,1)[0]);deck.discardsLeft--;drawCards(deck,Math.min(handSize-deck.chain.length,deck.hand.length+1),rng);return true;}
 export function linkCards(a,b){const x=CARDS[a.type],y=CARDS[b.type];return !!(x&&y&&(x.suit==='hunger'||y.suit==='hunger'||x.suit===y.suit||y.rank===x.rank||y.rank===x.rank+1));}
 export function analyzeChain(cards){
  const groups=chainGroups(cards);
@@ -114,7 +131,7 @@ export function analyzeChain(cards){
 // Card IDs are stable across shuffles and save/restore: starter c0..c23, purchased p0..p3.
 // Version 7 owns four fixed founding cards plus up to eight paid acquisitions.
 // Earlier saves remain their original 24-card deck until migrated in siege-engine.
-export function validateDeck(d,handSize=HAND_SIZE,allowLegacy=false,discardMax=MAX_DISCARDS,withTribes=false,withExotics=false){
+export function validateDeck(d,handSize=PROGRESSIVE_HAND_CAP+1,allowLegacy=false,discardMax=MAX_DISCARDS,withTribes=false,withExotics=false){
  if(!d||!['draw','discard','hand','chain'].every(k=>Array.isArray(d[k]))||
     !Number.isInteger(d.discardsLeft)||d.discardsLeft<0||d.discardsLeft>discardMax||
     d.hand.length>handSize||chainSlotCount(d.chain)>MAX_CHAIN||
