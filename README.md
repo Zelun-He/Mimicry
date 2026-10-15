@@ -368,3 +368,23 @@ this change.
 Files: `dist/siege/forest-renderer.js`,
 `dist/siege.js`, `dist/siege/forest-game.css`,
 `tests/battlefield-focus.test.js`.
+
+## Creature-card artwork — Phase 2 (Tier I)
+
+Monster identity now belongs **inside the cards**, not as small actors on
+the battlefield. Goblin, Skeleton, Slime, Sporeling, and King Mimic portraits
+were extracted directly from our original creature sprite board into a
+single **400×69, 6.6 KB local pixel PNG atlas**. Spider and Mimicling cards
+reuse the existing local SVG illustrations. The original forest encounter
+and parchment card-table UI remain unchanged in style.
+
+Cards with existing creature associations get distinct restrained frame
+treatments, enlarged portraits, a tribe name inside the art, and hover/focus
+effects that communicate their fantasy (slash, bone march, gel squish,
+web threads, royal glint, spores). The same artwork appears when acquiring
+cards from the Quartermaster. All ordinary action cards retain their
+unique existing art, while school symbols, numbers and effects stay readable.
+
+This is **presentation only**: no changes to link legality, summon counts,
+armor, damage, reward pricing, ownership, save format or monster behavior.
+See `DESIGN-CREATURE-CARDS.md` and `tests/creature-cards-ui.test.js`.
