@@ -112,18 +112,14 @@ test('creature art and previews do not alter saved combat or card-link behavior'
  assert.ok(renderForestHand(state).includes('class="card')===false);
 });
 
-test('parchment UI loads just one new CSS file, and no creature sprites return to the battlefield',()=>{
+test('current battle imports poker assets rather than legacy creature/card modules',()=>{
  const html=read('dist/index.html');
  assert.equal(html,read('dist/siege.html'));
- assert.ok(html.includes('href="style.css"'));
- assert.ok(html.includes('href="siege/forest-game.css"'));
- assert.ok(html.includes('href="siege/creature-cards.css"'));
- assert.ok(html.includes('src="siege.js"'));
- assert.ok(!read('dist/siege/forest-renderer.js').includes('siege/sprites/'));
- assert.ok(!read('dist/siege/forest-renderer.js').includes('creature-portraits.png'));
- const js=read('dist/siege.js');
- assert.ok(js.includes('artCache.set(type,creatureCardArt(type))'));
- assert.ok(js.includes('renderShopCardPreview(previewType,{artFor})'));
+ assert.ok(html.includes('href="demons.css"'));
+ assert.ok(html.includes('src="demons.js"'));
+ assert.ok(!html.includes('href="siege/creature-cards.css"'));
+ assert.ok(!html.includes('src="siege.js"'));
+ assert.ok(read('dist/demons.js').includes('toggleCard(state'));
 });
 
 test('tribe framing respects link readability, keyboard use and reduced motion',()=>{
