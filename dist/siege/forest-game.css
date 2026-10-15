@@ -45,6 +45,12 @@ header{margin-bottom:22px}
 .target-btn.active{background:#daebc0;border-color:#739863;box-shadow:0 0 0 2px #92b87e5a}
 .target-btn:hover:not(:disabled){background:#e3edd0}
 .target-btn[disabled]{opacity:.42;cursor:default}
+.target-btn.special-enemy{border-color:#c7b080;background:#f6ecd3}
+.target-btn.special-enemy.active{border-color:#ad873c;background:#e9ebcd}
+.target-btn.special-enemy .target-emblem{display:grid;place-items:center;
+ flex:0 0 18px;min-height:25px;color:#815e36;font-size:17px;font-weight:800}
+.target-btn.special-enemy small{color:#765f47;font-weight:700}
+.target-btn.special-enemy:hover:not([disabled]){border-color:#9c7942;background:#f4e8c5}
 .ally-chip{display:inline-flex;align-items:center;gap:5px;min-height:34px;
  border:1px solid #c8cba9;border-radius:4px;background:#e1e8ca;padding:3px 6px;
  color:#506649;font-size:10px;white-space:nowrap}

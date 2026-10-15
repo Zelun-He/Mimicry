@@ -412,3 +412,39 @@ unchanged. Sprite sizing and canvas behavior are verified by
 
 This is a dedicated **enemy presentation fix**. It does not introduce a new
 formation combat rule or display miniature allied combatants.
+
+## Forest Edge visitor variety — 4 new archetypes
+
+New runs now draw one of several **authored human adventurer parties** for
+the middle Forest Edge encounters and the Watchman finale. The first Farmhand
+and Forager encounter is always unchanged, teaching the basic card-chain
+loop. Original parties still appear often; alternate parties add meaningful
+counterplay rather than raw health inflation.
+
+| New invader | Counterplay and visible intent | Forest Edge appearance |
+| --- | --- | --- |
+| **Lantern Bearer** | SIGNAL: while alive, gives other living invaders **+1 attack**. Kill the support unit first. | Original blue-clothed traveler sprite |
+| **Herbalist** | MEND: after your defenders attack, restores up to **3 HP** to the most injured surviving invader. Focus your damage. | Original green-hooded forager |
+| **Poacher** | HUNT: deals **+2 damage** against summoned monsters, but not permanent defenders or empty lanes. Reposition swarms. | Original sword-bearing scout |
+| **Sapper** | SUNDER: deals **+2 damage** against an armored defender; the defender's armor still absorbs attacks. Mix armor with summons. | Original shield-bearing Watchman |
+
+Fights retain one to three adventurers at uniform scale. Unique symbols,
+enemy roles and specific **intent text** explain each ability before the
+turn resolves. No hidden immunities or extra battlefield sprites.
+
+All new enemy names can be captured using Gnaw/Devour and offer an existing
+pair of compatible traits. The game's original five raids, cards, shops,
+decks and combat math are preserved except for these four disclosed enemy
+abilities. There are no changes to animation or image assets.
+
+New runs select a deterministic `encounterPlan` on startup (using the
+existing RNG), and persist it in the v8 save. Saves created before this
+feature automatically use the original five canonical parties, so no
+mid-run adventurers change identity. Save validation checks each authored
+party, lane, HP, and the provenance of any Devoured traits.
+
+Implementation: `dist/forest-enemies.js` (new visitor behavior and
+encounter pools), `dist/siege-engine.js` (support effects and save-compatible
+party selection), `dist/assimilation-engine.js` (new capture origins),
+`dist/siege.js` and `dist/siege/forest-renderer.js` (enemy identity and
+pixel-portrait mapping), and `tests/forest-enemy-variety.test.js`.

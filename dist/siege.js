@@ -3,6 +3,7 @@ import {MAX_MINIONS,MAX_LANE_MINIONS,MAX_BONES,liveMinions} from './swarm-engine
 import {CREATURES} from './creature-engine.js';
 import {cardArt,cardRule,SUIT_STYLES} from './siege/card-art.js';
 import {creatureCardArt} from './siege/creature-card-art.js';
+import {FOREST_ENEMY_ROLES,enemyIntent} from './forest-enemies.js';
 import {previewCardLink} from './siege/link-feedback.js';
 import {renderForestHand,renderForestChain,renderForestPrediction,escapeHTML} from './siege/forest-hand.js';
 import {createForestBattle,featuredInvader,damageSummary} from './siege/forest-renderer.js';
@@ -98,12 +99,19 @@ function renderTargets(){
  const focused=attackFocus();
  $('targets').innerHTML='<button type="button" class="target-btn'+(!state.chainTargetId?' active':'')+
   '" data-target="" '+(state.phase!=='battle'?'disabled':'')+'><span>◎</span><span><b>Auto</b><small>Weakest foe</small></span></button>'+
- state.enemies.filter(e=>e.alive).map(e=>
-  '<button type="button" class="target-btn'+(e.id===focused?.id?' active':'')+
-  '" data-target="'+escapeHTML(e.id)+'" '+(state.phase!=='battle'?'disabled':'')+
-  ' aria-pressed="'+(e.id===focused?.id)+'"><span>⚔</span><span><b>'+escapeHTML(e.name)+
-  '</b><small>Lane '+(e.lane+1)+' · '+e.attack+' ATK</small></span><span class="target-hp">'+
-  e.hp+' HP</span></button>').join('');
+ state.enemies.filter(e=>e.alive).map(e=>{
+  const role=FOREST_ENEMY_ROLES[e.name];
+  const hint=escapeHTML(role?.description||'Attacks the chosen lane.');
+  return '<button type="button" class="target-btn'+(e.id===focused?.id?' active':'')+
+   (role?' special-enemy':'')+'" data-target="'+escapeHTML(e.id)+'" '+
+   (state.phase!=='battle'?'disabled':'')+' title="'+hint+'"'+
+   ' aria-label="Focus '+escapeHTML(e.name)+'. '+hint+'"'+
+   ' aria-pressed="'+(e.id===focused?.id)+'"><span class="target-emblem">'+
+   (role?role.icon:'⚔')+'</span><span><b>'+escapeHTML(e.name)+
+   '</b><small>'+escapeHTML(role?.role||('Lane '+(e.lane+1)))+
+   ' · L'+(e.lane+1)+'</small></span><span class="target-hp">'+
+   e.hp+' HP</span></button>';
+ }).join('');
 }
 
 function renderDefenders(){
@@ -181,7 +189,7 @@ function render(){
  $('enemy-hp').textContent=focus?focus.hp+' / '+focus.maxHp+' HP':'0 / 0 HP';
  $('enemy-health').style.width=focus?(100*focus.hp/focus.maxHp)+'%':'0%';
  $('turn').textContent='TURN '+state.turn;
- $('intent').textContent=focus?'Attack lane '+(focus.lane+1)+' · '+Math.max(0,focus.attack-(focus.weaken||0))+' damage':'No incoming attack';
+ $('intent').textContent=enemyIntent(focus,state.enemies);
  $('poison').textContent=focus&&focus.poison?focus.poison+' poison on this enemy':'';
  renderRoute();renderTargets();renderDefenders();
  $('chain').innerHTML=renderForestChain(state);

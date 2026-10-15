@@ -27,7 +27,13 @@ export const ESSENCE_BY_ENEMY=Object.freeze({
  Archer:['deadeye','barbed-quiver'],
  Rogue:['sticky-fingers','cruel-precision'],
  Mage:['witchfire','mana-gullet'],
- Watchman:['royal-discipline','unyielding-heart']
+ Watchman:['royal-discipline','unyielding-heart'],
+ // Forest Edge visitors reuse two established essence families so all
+ // alternate foes can be Devoured without adding unbalanced new passives.
+ 'Lantern Bearer':['opening-gambit','trail-rations'],
+ Herbalist:['herbal-gut','wild-pockets'],
+ Poacher:['deadeye','barbed-quiver'],
+ Sapper:['shield-drill','iron-reflex']
 });
 export const hasEssence=(s,id)=>Array.isArray(s.essences)&&s.essences.includes(id);
 export const redrawLimit=s=>2+(hasEssence(s,'wild-pockets')?1:0);
