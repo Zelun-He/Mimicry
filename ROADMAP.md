@@ -46,6 +46,11 @@ combat tests, save migration, and a manual browser playtest before release.
   and Mimicling illustrations. Add restrained tribe-specific frames, hover/focus
   responses, readable category/rank labels and Quartermaster previews.
   No card effects, horde thresholds or save rules change.
+- [x] **03h-fix — Enemy sprite proportions and party formation** (`fix/visitor-sprite-proportions`).
+  Restore the original visitor atlas's width/height proportions, use a single
+  physical scale and visible-foot baseline for all invaders, and make target
+  focus a ring instead of a giant foreground actor. Remove CSS constraints
+  that stretched the entire battle canvas on wide or mobile screens.
 - [ ] **03i — Mob/Horde formation cards, Phase 3.**
   Rework queue-slot presentation so duplicates visibly form a growing mob
   and distinguish those formations from ordinary suit/rank combos.
