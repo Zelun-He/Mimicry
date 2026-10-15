@@ -1,10 +1,10 @@
-import {CARDS,FOUNDING_CARDS,OPENING_HAND_SIZE,makeDeck,drawCards,drawOpeningHand,queueCard,unqueueCard,discardCard,analyzeChain,chainSlotCount,findRituals,validateDeck} from './chain-engine.js';
+import {CARDS,FOUNDING_CARDS,OPENING_HAND_SIZE,makeDeck,drawCards,drawOpeningHand,queueCard,unqueueCard,analyzeChain,chainSlotCount,findRituals,validateDeck} from './chain-engine.js';
 import {handSize,cardPower,killHunger,fangDamageBonus,createShop,buyUpgrade,validShopState} from './shop-engine.js';
 import {ESSENCE_TRAITS,ESSENCE_BY_ENEMY,hasEssence,redrawLimit,killGold,hungerCost,combatLocked,captureEssence,chooseEssence,validAssimilation} from './assimilation-engine.js';
 import {MAX_MINIONS,MAX_LANE_MINIONS,MAX_BONES,liveMinions,lanePopulation,summonMinions,earnBone,goblinPackBonus,goblinScavenge,clearMinions,validSwarmState} from './swarm-engine.js';
 import {MAX_WEB,webPrey,consumeWeb,lurePrey,splitSlime,fuseSlimes,mimiclingFeed,validCreatureState} from './creature-engine.js';
 import {validEncounterPlan,generateEncounterPlan,enemyTemplatesFor,authoredRaidsForPlan,enemyAttackBonus} from './forest-enemies.js';
-import {SCHOOLS,emptyStrategy,recordPlayedChain,drawSpecializedCards} from './siege/strategic-draw.js';
+import {SCHOOLS,DRAW_MODES,emptyStrategy,recordPlayedChain,drawSpecializedCards} from './siege/strategic-draw.js';
 export {buyUpgrade} from './shop-engine.js';
 export {chooseEssence} from './assimilation-engine.js';
 // Mimicry 0.2: deterministic, serializable persistent-army battle simulation.
@@ -24,23 +24,28 @@ export const RAIDS=[
 const clamp=(x,min,max)=>Math.max(min,Math.min(max,x));
 function unit(species,id,lane){const def=SPECIES[species];return {id,species,name:def.name,level:1,xp:0,maxHp:def.hp,hp:def.hp,attack:def.attack,lane,armor:0,alive:true,kills:0};}
 function enemiesFor(index,plan){return enemyTemplatesFor(RAIDS,index,plan).map((e,i)=>({...e,id:`e${index}-${i}`,maxHp:e.hp,hp:e.hp,alive:true,poison:0,weaken:0,web:0}));}
-export function newSiege(rng=Math.random){const deck=makeDeck(rng,true);deck.exotic=true;drawOpeningHand(deck,rng);const encounterPlan=generateEncounterPlan(RAIDS,rng);return {version:10,deck,drawCredits:0,...emptyStrategy(),encounterPlan,lastLureTurn:-1,minions:[],bones:0,summonLane:1,nextMinionId:1,lootClaimedTurn:-1,mutations:[],shopOffers:[],essences:[],essenceHistory:[],pendingEssence:null,phase:'battle',raid:0,turn:1,integrity:30,maxIntegrity:30,hunger:0,gold:0,log:['The first raid approaches.'],units:[unit('goblin','u1',1),unit('slime','u2',1),unit('skeleton','u3',0),unit('sporeling','u4',2)],enemies:enemiesFor(0,encounterPlan),selected:null,animations:[],nextId:5,chainTargetId:null};}
+export function newSiege(rng=Math.random){const deck=makeDeck(rng,true);deck.exotic=true;drawOpeningHand(deck,rng);const encounterPlan=generateEncounterPlan(RAIDS,rng);return {version:11,deck,drawCredits:0,drawQueue:[],...emptyStrategy(),encounterPlan,lastLureTurn:-1,minions:[],bones:0,summonLane:1,nextMinionId:1,lootClaimedTurn:-1,mutations:[],shopOffers:[],essences:[],essenceHistory:[],pendingEssence:null,phase:'battle',raid:0,turn:1,integrity:30,maxIntegrity:30,hunger:0,gold:0,log:['The first raid approaches.'],units:[unit('goblin','u1',1),unit('slime','u2',1),unit('skeleton','u3',0),unit('sporeling','u4',2)],enemies:enemiesFor(0,encounterPlan),selected:null,animations:[],nextId:5,chainTargetId:null};}
 const living=(a)=>a.filter(x=>x.alive&&x.hp>0);
 function emit(s,id,state){s.animations.push({id,state});}
 function note(s,msg){s.log.unshift(msg);s.log=s.log.slice(0,16);}
 // Capped hands never lose earned draws; excess waits in drawCredits.
-function grantDraws(s,earned,rng=Math.random){
- s.drawCredits+=earned;
- const room=Math.max(0,handSize(s)-s.deck.hand.length-s.deck.chain.length);
- const before=s.deck.hand.length;
- const drawn=drawSpecializedCards(s,Math.min(room,s.drawCredits),rng);
- s.drawCredits-=drawn;
+function grantDraws(s,earned,rng=Math.random,modes=null){
+ const cards=modes||Array(earned).fill('mixed');
+ if(cards.length!==earned||cards.some(mode=>!DRAW_MODES.includes(mode)))throw Error('Invalid draw grant');
+ s.drawQueue.push(...cards);
+ let drawn=0;
+ while(s.drawQueue.length&&s.deck.hand.length+s.deck.chain.length<handSize(s)){
+  if(!drawSpecializedCards(s,1,rng,{mode:s.drawQueue[0]}))break;
+  s.drawQueue.shift();drawn++;
+ }
+ s.drawCredits=s.drawQueue.length;
  return drawn;
 }
 function awardTakedowns(s,kills,rng=Math.random){
  if(kills<=0)return;
- const gained=grantDraws(s,kills*2,rng);
- note(s,`${kills} invader${kills===1?'':'s'} defeated: +${kills*2} cards${gained<kills*2?' (excess saved)':''}.`);
+ const modes=Array.from({length:kills},()=>['focused','wild']).flat();
+ const gained=grantDraws(s,modes.length,rng,modes);
+ note(s,`${kills} invader${kills===1?'':'s'} defeated: +${modes.length} cards${gained<modes.length?' (excess saved)':''}.`);
 }
 function harm(s,target,amount){const absorbed=Math.min(target.armor||0,amount);target.armor=Math.max(0,(target.armor||0)-absorbed);const actual=Math.min(target.hp,Math.max(0,amount-absorbed));target.hp-=actual;emit(s,target.id,'damage');if(target.hp===0&&target.alive){
   target.alive=false;emit(s,target.id,'death');
@@ -81,7 +86,15 @@ function finishRaid(s,rng=Math.random){
 }
 export function queueCommand(s,id){return s.phase==='battle'&&!combatLocked(s)&&queueCard(s.deck,id);}
 export function unqueueCommand(s,id){return s.phase==='battle'&&!combatLocked(s)&&unqueueCard(s.deck,id);}
-export function redrawCommand(s,id,rng=Math.random){return s.phase==='battle'&&!combatLocked(s)&&discardCard(s.deck,id,rng,handSize(s));}
+export function redrawCommand(s,id,rng=Math.random){
+ if(s.phase!=='battle'||combatLocked(s)||s.deck.discardsLeft<=0)return false;
+ const i=s.deck.hand.findIndex(c=>c.id===id);
+ if(i<0)return false;
+ s.deck.discard.push(s.deck.hand.splice(i,1)[0]);
+ s.deck.discardsLeft--;
+ drawSpecializedCards(s,1,rng);
+ return true;
+}
 export function previewChain(s){return analyzeChain(s.deck.chain);}
 export function previewRituals(s){return findRituals(s.deck.chain);}
 export function setSummonLane(s,lane){
@@ -389,7 +402,7 @@ export function reinforce(s,choice,rng=Math.random){if(s.phase!=='reward'||comba
   grantDraws(s,Math.max(0,OPENING_HAND_SIZE-s.deck.hand.length),rng);
  }s.turn=1;s.phase='battle';s.selected=null;s.chainTargetId=null;s.animations=[];for(const u of s.units)u.armor=u.alive&&hasEssence(s,'unyielding-heart')?4:0;note(s,`Raid ${s.raid+1}: ${RAIDS[s.raid].name}.`);return true;}
 export function restoreSiege(v){
- if(!v||![2,3,4,5,6,7,8,9,10].includes(v.version)||!['battle','reward','won','lost'].includes(v.phase)||
+ if(!v||![2,3,4,5,6,7,8,9,10,11].includes(v.version)||!['battle','reward','won','lost'].includes(v.phase)||
     !Number.isInteger(v.raid)||v.raid<0||v.raid>=RAIDS.length||
     !Array.isArray(v.units)||v.units.length>12||
     !Array.isArray(v.enemies)||v.enemies.length>10||
@@ -418,16 +431,22 @@ export function restoreSiege(v){
  if(v.version>=7&&!validSwarmState(v))return null;
  if(v.version>=8&&!validCreatureState(v))return null;
  if(v.version>=9&&(!Number.isInteger(v.drawCredits)||v.drawCredits<0||v.drawCredits>100))return null;
- if(v.version===10&&(
+ if(v.version>=10&&(
    !v.schoolUse||typeof v.schoolUse!=='object'||Array.isArray(v.schoolUse)||
    SCHOOLS.some(suit=>!Number.isInteger(v.schoolUse[suit])||v.schoolUse[suit]<0||v.schoolUse[suit]>9999)||
    !v.typeUse||typeof v.typeUse!=='object'||Array.isArray(v.typeUse)||
    Object.entries(v.typeUse).some(([type,uses])=>!CARDS[type]||!Number.isInteger(uses)||uses<0||uses>9999)
  ))return null;
+ if(v.version===11&&(
+   !Array.isArray(v.drawQueue)||v.drawQueue.length!==v.drawCredits||
+   v.drawQueue.some(mode=>!DRAW_MODES.includes(mode))||
+   !Array.isArray(v.recentChains)||v.recentChains.length>5||
+   v.recentChains.some(chain=>!Array.isArray(chain)||chain.length>15||chain.some(type=>!CARDS[type]))
+ ))return null;
  if(v.version>=3&&!validateDeck(v.deck,v.version>=4?handSize(v):8,v.version<5,v.version>=6?redrawLimit(v):2,v.version>=7,v.version>=8))return null;
  if(v.version>=3&&v.chainTargetId!==undefined&&v.chainTargetId!==null&&
     (typeof v.chainTargetId!=='string'||!v.enemies.some(e=>e.id===v.chainTargetId&&e.alive)))return null;
- if(v.version>=5&&(v.deck.acquired.length>(v.raid+(v.phase==='reward'?1:0))*(v.version===8?3:v.version===7?2:1)||
+ if(v.version>=5&&(v.deck.acquired.length>(v.raid+(v.phase==='reward'?1:0))*(v.version>=8?3:v.version===7?2:1)||
     v.deck.acquiredAt.some(raid=>raid>=v.raid+(v.phase==='reward'?1:0))))return null;
  const deck=v.version>=3?{...v.deck,acquired:v.version>=5?v.deck.acquired:[],
    acquiredAt:v.version>=5?v.deck.acquiredAt:[]}:makeDeck(()=>0.5);
@@ -451,9 +470,11 @@ export function restoreSiege(v){
   shopOffers=[...shopOffers,exoticOffer];
  }
  const enemies=v.version>=8?v.enemies:v.enemies.map(e=>({...e,web:0}));
- return {...v,version:10,drawCredits:v.version>=9?v.drawCredits:0,
-  schoolUse:v.version===10?v.schoolUse:emptyStrategy().schoolUse,
-  typeUse:v.version===10?v.typeUse:{},deck,encounterPlan:plan,mutations,shopOffers,enemies,
+ return {...v,version:11,drawCredits:v.version>=9?v.drawCredits:0,
+  drawQueue:v.version===11?v.drawQueue:Array(v.version>=9?v.drawCredits:0).fill('mixed'),
+  schoolUse:v.version>=10?v.schoolUse:emptyStrategy().schoolUse,
+  typeUse:v.version>=10?v.typeUse:{},
+  recentChains:v.version===11?v.recentChains:[],deck,encounterPlan:plan,mutations,shopOffers,enemies,
    lastLureTurn:v.version>=8?v.lastLureTurn:-1,
    minions:v.version>=7?v.minions:[],bones:v.version>=7?v.bones:0,
    summonLane:v.version>=7?v.summonLane:1,

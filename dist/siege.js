@@ -13,12 +13,12 @@ import {strategyFocus} from './siege/strategic-draw.js';
 import {MUTATIONS,handSize,upgradeableCards,trainableUnits,cardPower} from './shop-engine.js';
 import {ESSENCE_CAPACITY,ESSENCE_BY_ENEMY,ESSENCE_TRAITS,redrawLimit} from './assimilation-engine.js';
 import {newSiege,restoreSiege,RAIDS,SPECIES,moveUnit,endTurn,devour,gnaw,reinforce,buyUpgrade,chooseEssence,queueCommand,unqueueCommand,redrawCommand,previewChain,previewRituals,targetChain,setSummonLane} from './siege-engine.js';
-const $=id=>document.getElementById(id),KEY='mimicry-siege-v10';
+const $=id=>document.getElementById(id),KEY='mimicry-siege-v11';
 const artCache=new Map();
 const artFor=type=>{if(!artCache.has(type))artCache.set(type,creatureCardArt(type));return artCache.get(type);};
 let state;
 try{
- for(const key of [KEY,'mimicry-siege-v9','mimicry-siege-v8','mimicry-siege-v7','mimicry-siege-v6','mimicry-siege-v5','mimicry-siege-v4','mimicry-siege-v3','mimicry-siege-v2']){
+ for(const key of [KEY,'mimicry-siege-v10','mimicry-siege-v9','mimicry-siege-v8','mimicry-siege-v7','mimicry-siege-v6','mimicry-siege-v5','mimicry-siege-v4','mimicry-siege-v3','mimicry-siege-v2']){
   const raw=localStorage.getItem(key);
   if(!raw)continue;
   state=restoreSiege(JSON.parse(raw));
