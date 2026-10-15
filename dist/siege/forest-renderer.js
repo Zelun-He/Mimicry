@@ -16,6 +16,49 @@ export function featuredInvader(s){
  return foes.find(e=>e.id===s.chainTargetId)||
   [...foes].sort((a,b)=>a.hp-b.hp)[0]||null;
 }
+// The atlas has five side-by-side full-height frames (2,172 × 724 px).
+// Render all visitors with ONE uniform scale. Keep their original proportions
+// rather than squeezing a tall sprite into a guessed width/height.
+export const VISITOR_COLUMNS=5;
+export const VISITOR_HEIGHT=205;
+export const VISITOR_GROUND_Y=328;
+// Measured last opaque pixel in each original 724px-high source frame.
+// Compensating for the transparent padding aligns the *visible feet*, not
+// merely the transparent bottoms of the different frames.
+const VISITOR_FOOT_FRACTIONS=Object.freeze([700,676,676,675,706].map(y=>y/724));
+const VISITOR_X_CENTERS=Object.freeze({
+ 1:[688],
+ 2:[636,787],
+ 3:[584,722,860]
+});
+
+// Stable lane-order formation: changing focus only changes the highlight,
+// never the characters' positions. All enemy sprites use identical scale.
+export function visitorFormation(enemies,sourceWidth,sourceHeight,{bob=0}={}){
+ const units=[...(enemies||[])].filter(e=>e.alive&&e.hp>0)
+  .sort((a,b)=>a.lane-b.lane||String(a.id).localeCompare(String(b.id)));
+ const n=units.length;
+ if(!n)return [];
+ const frameW=sourceWidth/VISITOR_COLUMNS,frameH=sourceHeight;
+ const height=VISITOR_HEIGHT,width=VISITOR_HEIGHT*frameW/frameH;
+ // Current Tier I raids have at most three active invaders.
+ // If future raids add more, spread them evenly through the same region.
+ const centers=VISITOR_X_CENTERS[n]||
+  Array.from({length:n},(_,i)=>555+(330*i/Math.max(n-1,1)));
+ return units.map((enemy,i)=>{
+  const index=visitorSpriteIndex(enemy.name);
+  const x=Math.round(centers[i]-width/2);
+  const y=Math.round(VISITOR_GROUND_Y-VISITOR_FOOT_FRACTIONS[index]*height+bob);
+  return {
+   id:enemy.id,enemy,index,
+   sx:index*frameW,sy:0,sw:frameW,sh:frameH,
+   x,y,w:width,h:height,
+   groundY:VISITOR_GROUND_Y+bob,
+   cx:centers[i]
+  };
+ });
+}
+
 export function damageSummary(previous,current){
  const byId=new Map((current?.enemies||[]).map(e=>[e.id,e]));
  return (previous?.enemies||[]).map(e=>({
@@ -74,28 +117,36 @@ export function createForestBattle(canvas,{reducedMotion=false}={}){
    const sw=hero.naturalWidth/2,sh=hero.naturalHeight/2;
    sprite('mimic',pose%2*sw,Math.floor(pose/2)*sh,sw,sh,heroX,145+bob,280,187);
   }else{ctx.fillStyle='#745744';ctx.fillRect(225,215,150,91);}
-  const enemies=livingInvaders(state),focus=featuredInvader(state);
+  const focus=featuredInvader(state),atlas=ready('visitors');
+  const sourceWidth=atlas?.naturalWidth||2172,sourceHeight=atlas?.naturalHeight||724;
+  const formation=visitorFormation(livingInvaders(state),sourceWidth,sourceHeight,{bob});
   drawBoxes.length=0;
-  const rest=enemies.filter(e=>e!==focus);
-  // Prioritize the selected foe at full size, with smaller companions behind.
-  rest.forEach((e,i)=>{
-   const x=777+i*77,y=190+i*18,w=86,h=131;
-   const atlas=ready('visitors');
-   if(atlas){const sw=atlas.naturalWidth/5;sprite('visitors',visitorSpriteIndex(e.name,viewRaid)*sw,0,sw,atlas.naturalHeight,x,y+bob,w,h);}
-   else{ctx.fillStyle='#ba997c';ctx.fillRect(x+30,y+40,30,70);}
-   drawBoxes.push({id:e.id,x,y,w,h});
-   if(e.poison>0)paintText('☣',x+w/2,y+2,'#e3a5ec',15);
-  });
-  if(focus){
-   const x=608,y=137,w=136,h=197,atlas=ready('visitors');
-   const fx=!reducedMotion&&time<foeShake?Math.sin(time/18)*5:0;
-   ctx.fillStyle='#2b382853';ctx.beginPath();ctx.ellipse(x+69,326,45,9,0,0,Math.PI*2);ctx.fill();
-   if(atlas){const sw=atlas.naturalWidth/5;sprite('visitors',visitorSpriteIndex(focus.name,viewRaid)*sw,0,sw,atlas.naturalHeight,x+fx,y+bob,w,h);}
-   else{ctx.fillStyle='#c3a085';ctx.fillRect(x+48,y+65,36,95);}
-   drawBoxes.push({id:focus.id,x,y,w,h});
-   ctx.fillStyle='#ffdf8b';ctx.fillRect(x+30,343,76,2);
-   if(focus.poison>0)paintText('☣ '+focus.poison,x+70,y-15,'#d5a4e6',15);
-   if(focus.web>0)paintText('⌘ '+focus.web,x+70,y-30,'#c2e5d9',12);
+  // Every enemy is the same physical size. No foreground vs background scale.
+  // A subtle selection ring and a pointer distinguish the current target.
+  for(const actor of formation){
+   const selected=actor.id===focus?.id;
+   const shake=selected&&!reducedMotion&&time<foeShake?Math.sin(time/18)*5:0;
+   const x=actor.x+shake,y=actor.y,w=actor.w,h=actor.h;
+   ctx.fillStyle=selected?'#273a2677':'#263a2852';
+   ctx.beginPath();ctx.ellipse(actor.cx,VISITOR_GROUND_Y+3,35,8,0,0,Math.PI*2);ctx.fill();
+   if(selected){
+    // Selection is communicated by an understated ground ring, not scale.
+    ctx.strokeStyle='#ffdf8b';ctx.lineWidth=2;
+    ctx.beginPath();ctx.ellipse(actor.cx,VISITOR_GROUND_Y+3,45,11,0,0,Math.PI*2);ctx.stroke();
+   }
+   if(atlas)sprite('visitors',actor.sx,actor.sy,actor.sw,actor.sh,x,y,w,h);
+   // Do not display stretched colored blocks before the atlas finishes loading.
+   drawBoxes.push({id:actor.id,x,y,w,h});
+   if(selected){
+    ctx.fillStyle='#ffde89';
+    ctx.beginPath();
+    ctx.moveTo(actor.cx-6,y-12);
+    ctx.lineTo(actor.cx+6,y-12);
+    ctx.lineTo(actor.cx,y-5);
+    ctx.fill();
+   }
+   if(actor.enemy.poison>0)paintText('☣ '+actor.enemy.poison,actor.cx,y-18,'#d5a4e6',13);
+   if(actor.enemy.web>0)paintText('⌘ '+actor.enemy.web,actor.cx,y-34,'#c2e5d9',12);
   }
   // Creature strategy lives in the card hand and defender status row.
   // Do not paint veteran or summoned monster sprites on this battlefield.

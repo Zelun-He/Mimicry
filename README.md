@@ -388,3 +388,27 @@ unique existing art, while school symbols, numbers and effects stay readable.
 This is **presentation only**: no changes to link legality, summon counts,
 armor, damage, reward pricing, ownership, save format or monster behavior.
 See `DESIGN-CREATURE-CARDS.md` and `tests/creature-cards-ui.test.js`.
+
+## Forest Edge enemy presentation fix — uniform, original sprites
+
+The active party now displays the original `assets/visitors.png` atlas in
+**proportion**. The old battle code squeezed the large foe into 136×197 and
+companions into 86×131 regardless of the source frame's aspect ratio,
+distorting and diminishing the smaller adventurers. The updated renderer
+calculates display width from the exact atlas frame width and a single
+fixed 205px frame height, equally for **every** enemy in the encounter.
+Enemies are arranged left-to-right by their actual lanes, always occupy
+fixed positions, and align their **visible feet** to the same ground line
+despite transparent padding differences between source portraits.
+Selecting another foe changes only the understated selector ring and marker,
+never their scale or location.
+
+The canvas is intrinsically 960×420. The matching CSS now preserves the
+original ratio at wide and small screen sizes, rather than overriding
+it with capped/floored heights and stretching pixel art. Existing v8 saves,
+target click regions, damage previews, mob cards, shops and combat are
+unchanged. Sprite sizing and canvas behavior are verified by
+`tests/visitor-sprite-geometry.test.js`.
+
+This is a dedicated **enemy presentation fix**. It does not introduce a new
+formation combat rule or display miniature allied combatants.

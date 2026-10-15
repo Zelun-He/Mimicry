@@ -13,7 +13,10 @@ header{margin-bottom:22px}
 .treasury .divider{margin:0 8px}
 .route{margin:18px 0 14px}
 .battle{border-radius:7px 7px 0 0}
-.battle canvas{height:auto;aspect-ratio:960/420;max-height:540px;object-fit:fill}
+/* A canvas has a 960×420 intrinsic drawing coordinate system. Let its CSS
+   box keep that exact 16:7 ratio at all widths: max-height/min-height
+   overrides otherwise stretch *every* pixel-art character horizontally. */
+.battle canvas{display:block;width:100%;height:auto;aspect-ratio:960/420;max-height:none;min-height:0;object-fit:contain;image-rendering:pixelated}
 .battle-top{z-index:2}
 .identity{min-width:196px}
 .identity .eyebrow{font-size:9px}
@@ -169,7 +172,7 @@ body:has(.outcome:not([hidden])){overflow:hidden}
  .treasury small{font-size:8px}
  .treasury .divider{margin:0 4px}
  .route-step span{display:none}
- .battle canvas{min-height:265px;object-fit:cover}
+ .battle canvas{min-height:0;object-fit:contain}
  .identity{min-width:0;width:37%;padding:8px}
  .identity h2{font-size:15px}
  .battle-top{top:8px;left:8px;right:8px}
@@ -207,7 +210,7 @@ body:has(.outcome:not([hidden])){overflow:hidden}
  .prediction #preview b{font-size:16px}
  .hand>.card{flex-basis:124px;min-width:124px}
  .table-footer{flex-wrap:wrap}
- .battle canvas{min-height:280px}
+ .battle canvas{min-height:0}
  .field-actions button{max-width:95px}
  .target-btn{flex:1;min-width:124px}
 }
