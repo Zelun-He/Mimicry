@@ -51,6 +51,10 @@ combat tests, save migration, and a manual browser playtest before release.
   physical scale and visible-foot baseline for all invaders, and make target
   focus a ring instead of a giant foreground actor. Remove CSS constraints
   that stretched the entire battle canvas on wide or mobile screens.
+- [x] **03h-sword — Corrected Novice visitor sword atlas** (`fix/novice-full-sword-sprite`).
+  Reconstruct complete sprite sheet from original pixel art (5 independent
+  482px cells), eliminate severed sword fragment, preserve equal-scale
+  sprites, grounded idle and Classic mode aspect ratio.
 - [x] **03h-idle — Grounded idle animation** (`fix/grounded-idle-sway`).
   Restore subtle asynchronous Mimic/visitor breathing-sway motion using a
   tiny rotation around each sprite's actual foot baseline. No vertical

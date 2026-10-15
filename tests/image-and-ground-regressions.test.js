@@ -89,7 +89,7 @@ test('idle animation preserves sprite draw rectangles and the visible boot basel
  globalThis.Image=class{
   constructor(){this.complete=true;this.naturalWidth=1536;this.naturalHeight=1024;}
   set src(path){this._src=path;
-   if(path==='assets/visitors.png'){this.naturalWidth=2172;this.naturalHeight=724;}
+   if(path==='assets/visitors.png'){this.naturalWidth=2410;this.naturalHeight=724;}
   }
   get src(){return this._src;}
  };
@@ -111,7 +111,7 @@ test('idle animation preserves sprite draw rectangles and the visible boot basel
   for(const entry of first){
    const args=entry.args;
    const foot=entry.path==='assets/visitors.png'
-    ? args[5]+args[7]*(VISITOR_FOOT_ROWS[Math.round(args[0]/(2172/5))]/724)
+    ? args[5]+args[7]*(VISITOR_FOOT_ROWS[Math.round(args[0]/(2410/5))]/724)
     : args[5]+args[7]*(MIMIC_FOOT_ROWS[0]/512);
    assert.ok(Math.abs(foot-VISITOR_GROUND_Y)<.51,`${entry.path} floats by ${foot-VISITOR_GROUND_Y}px`);
   }

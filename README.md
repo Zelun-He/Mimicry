@@ -494,3 +494,12 @@ reduced-motion` option disables every idle rotation, and the normal
 attack/shake poses remain available. See
 `tests/grounded-idle-sway.test.js` for animation, foot contact, and
 accessible reduced-motion checks.
+
+## Fixed visitor sword sprite
+
+The Forest Edge visitor atlas has been repaired: **five independent
+482×724-pixel frames**, a complete Novice/Guard sword, no stray fragment
+on the Wanderer, and properly grounded feet in all encounters. The
+original human sprite artwork is preserved; the Siege and Classic
+renderers both use the corrected dimensions. No combat/save changes.
+See `SPRITE-ATLAS-FIX.md` for the source-accurate repair and tests.

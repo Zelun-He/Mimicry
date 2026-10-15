@@ -5,7 +5,7 @@ import {RAIDS,newSiege} from '../dist/siege-engine.js';
 import {VISITOR_COLUMNS,VISITOR_HEIGHT,VISITOR_GROUND_Y,VISITOR_FOOT_ROWS,MIMIC_FOOT_ROWS,visitorFormation,
  visitorSpriteIndex,featuredInvader,createForestBattle} from '../dist/siege/forest-renderer.js';
 
-const W=2172,H=724;
+const W=2410,H=724;
 const fractions=VISITOR_FOOT_ROWS.map(row=>row/H);
 const fighters=index=>RAIDS[index].enemies.map((e,i)=>({
  ...e,id:'e'+index+'-'+i,alive:true,maxHp:e.hp
@@ -18,7 +18,7 @@ test('the actual original visitor atlas has five full-height frames',()=>{
  assert.equal(png.readUInt32BE(20),H);
  assert.equal(VISITOR_COLUMNS,5);
  assert.equal(VISITOR_HEIGHT,205);
- assert.deepEqual(VISITOR_FOOT_ROWS,[700,676,676,675,706]);
+ assert.deepEqual(VISITOR_FOOT_ROWS,[713,713,713,713,713]);
  assert.deepEqual(MIMIC_FOOT_ROWS,[512,512,488,478]);
 });
 

@@ -32,7 +32,7 @@ function setupScene(reducedMotion){
   constructor(){this.complete=true;this.naturalWidth=1536;this.naturalHeight=1024;}
   set src(path){
    this._src=path;
-   if(path==='assets/visitors.png'){this.naturalWidth=2172;this.naturalHeight=724;}
+   if(path==='assets/visitors.png'){this.naturalWidth=2410;this.naturalHeight=724;}
   }
   get src(){return this._src;}
  };
@@ -85,7 +85,7 @@ test('Mimic and all enemies sway independently without translating boots off the
    }
    const hero=actors.find(e=>e.path==='assets/mimic.png');
    const visitors=actors.filter(e=>e.path==='assets/visitors.png');
-   const footprints=visitorFormation(env.state.enemies,2172,724);
+   const footprints=visitorFormation(env.state.enemies,2410,724);
    for(const [i,visitor] of visitors.entries()){
     const g=footprints[i];
     assert.deepEqual(visitor.args,[g.sx,0,g.sw,g.sh,g.x,g.y,g.w,g.h]);
@@ -116,7 +116,7 @@ test('reduced-motion drawing uses original untransformed sprites and remains int
   assert.equal(env.events.filter(e=>['save','restore','rotate','translate'].includes(e.op)).length,0);
   assert.equal(env.events.filter(e=>e.op==='drawImage'&&e.path==='assets/visitors.png').length,4);
   assert.equal(env.events.filter(e=>e.op==='drawImage'&&e.path==='assets/mimic.png').length,2);
-  const actor=visitorFormation(env.state.enemies,2172,724)[0];
+  const actor=visitorFormation(env.state.enemies,2410,724)[0];
   assert.equal(env.battle.hitTarget(actor.cx,actor.y+actor.h/2),actor.id);
   assert.deepEqual(env.state,env.copy);
  }finally{env.restore();}
