@@ -4,6 +4,7 @@ import {ESSENCE_TRAITS,ESSENCE_BY_ENEMY,hasEssence,redrawLimit,killGold,hungerCo
 import {MAX_MINIONS,MAX_LANE_MINIONS,MAX_BONES,liveMinions,lanePopulation,summonMinions,earnBone,goblinPackBonus,goblinScavenge,clearMinions,validSwarmState} from './swarm-engine.js';
 import {MAX_WEB,webPrey,consumeWeb,lurePrey,splitSlime,fuseSlimes,mimiclingFeed,validCreatureState} from './creature-engine.js';
 import {validEncounterPlan,generateEncounterPlan,enemyTemplatesFor,authoredRaidsForPlan,enemyAttackBonus} from './forest-enemies.js';
+import {SCHOOLS,emptyStrategy,recordPlayedChain,drawSpecializedCards} from './siege/strategic-draw.js';
 export {buyUpgrade} from './shop-engine.js';
 export {chooseEssence} from './assimilation-engine.js';
 // Mimicry 0.2: deterministic, serializable persistent-army battle simulation.
@@ -23,7 +24,7 @@ export const RAIDS=[
 const clamp=(x,min,max)=>Math.max(min,Math.min(max,x));
 function unit(species,id,lane){const def=SPECIES[species];return {id,species,name:def.name,level:1,xp:0,maxHp:def.hp,hp:def.hp,attack:def.attack,lane,armor:0,alive:true,kills:0};}
 function enemiesFor(index,plan){return enemyTemplatesFor(RAIDS,index,plan).map((e,i)=>({...e,id:`e${index}-${i}`,maxHp:e.hp,hp:e.hp,alive:true,poison:0,weaken:0,web:0}));}
-export function newSiege(rng=Math.random){const deck=makeDeck(rng,true);deck.exotic=true;drawOpeningHand(deck,rng);const encounterPlan=generateEncounterPlan(RAIDS,rng);return {version:9,deck,drawCredits:0,encounterPlan,lastLureTurn:-1,minions:[],bones:0,summonLane:1,nextMinionId:1,lootClaimedTurn:-1,mutations:[],shopOffers:[],essences:[],essenceHistory:[],pendingEssence:null,phase:'battle',raid:0,turn:1,integrity:30,maxIntegrity:30,hunger:0,gold:0,log:['The first raid approaches.'],units:[unit('goblin','u1',1),unit('slime','u2',1),unit('skeleton','u3',0),unit('sporeling','u4',2)],enemies:enemiesFor(0,encounterPlan),selected:null,animations:[],nextId:5,chainTargetId:null};}
+export function newSiege(rng=Math.random){const deck=makeDeck(rng,true);deck.exotic=true;drawOpeningHand(deck,rng);const encounterPlan=generateEncounterPlan(RAIDS,rng);return {version:10,deck,drawCredits:0,...emptyStrategy(),encounterPlan,lastLureTurn:-1,minions:[],bones:0,summonLane:1,nextMinionId:1,lootClaimedTurn:-1,mutations:[],shopOffers:[],essences:[],essenceHistory:[],pendingEssence:null,phase:'battle',raid:0,turn:1,integrity:30,maxIntegrity:30,hunger:0,gold:0,log:['The first raid approaches.'],units:[unit('goblin','u1',1),unit('slime','u2',1),unit('skeleton','u3',0),unit('sporeling','u4',2)],enemies:enemiesFor(0,encounterPlan),selected:null,animations:[],nextId:5,chainTargetId:null};}
 const living=(a)=>a.filter(x=>x.alive&&x.hp>0);
 function emit(s,id,state){s.animations.push({id,state});}
 function note(s,msg){s.log.unshift(msg);s.log=s.log.slice(0,16);}
@@ -32,8 +33,7 @@ function grantDraws(s,earned,rng=Math.random){
  s.drawCredits+=earned;
  const room=Math.max(0,handSize(s)-s.deck.hand.length-s.deck.chain.length);
  const before=s.deck.hand.length;
- drawCards(s.deck,before+Math.min(room,s.drawCredits),rng);
- const drawn=s.deck.hand.length-before;
+ const drawn=drawSpecializedCards(s,Math.min(room,s.drawCredits),rng);
  s.drawCredits-=drawn;
  return drawn;
 }
@@ -291,6 +291,7 @@ function resolveChain(s){
 export function endTurn(s,rng=Math.random){if(s.phase!=='battle'||combatLocked(s))return false;s.animations=[];let frenzy=0;
  const enemiesAtStart=living(s.enemies).length;
  const playedChainLength=chainSlotCount(s.deck.chain);
+ recordPlayedChain(s,s.deck.chain);
  if(s.deck){if(s.deck.chain.length)frenzy=resolveChain(s);s.deck.discard.push(...s.deck.chain);s.deck.chain=[];s.deck.discardsLeft=redrawLimit(s);}
  s.chainTargetId=null;
 s.selected=null;
@@ -388,7 +389,7 @@ export function reinforce(s,choice,rng=Math.random){if(s.phase!=='reward'||comba
   grantDraws(s,Math.max(0,OPENING_HAND_SIZE-s.deck.hand.length),rng);
  }s.turn=1;s.phase='battle';s.selected=null;s.chainTargetId=null;s.animations=[];for(const u of s.units)u.armor=u.alive&&hasEssence(s,'unyielding-heart')?4:0;note(s,`Raid ${s.raid+1}: ${RAIDS[s.raid].name}.`);return true;}
 export function restoreSiege(v){
- if(!v||![2,3,4,5,6,7,8,9].includes(v.version)||!['battle','reward','won','lost'].includes(v.phase)||
+ if(!v||![2,3,4,5,6,7,8,9,10].includes(v.version)||!['battle','reward','won','lost'].includes(v.phase)||
     !Number.isInteger(v.raid)||v.raid<0||v.raid>=RAIDS.length||
     !Array.isArray(v.units)||v.units.length>12||
     !Array.isArray(v.enemies)||v.enemies.length>10||
@@ -416,7 +417,13 @@ export function restoreSiege(v){
  if(v.version>=6&&!validAssimilation(v,authoredRaidsForPlan(RAIDS,plan)))return null;
  if(v.version>=7&&!validSwarmState(v))return null;
  if(v.version>=8&&!validCreatureState(v))return null;
- if(v.version===9&&(!Number.isInteger(v.drawCredits)||v.drawCredits<0||v.drawCredits>100))return null;
+ if(v.version>=9&&(!Number.isInteger(v.drawCredits)||v.drawCredits<0||v.drawCredits>100))return null;
+ if(v.version===10&&(
+   !v.schoolUse||typeof v.schoolUse!=='object'||Array.isArray(v.schoolUse)||
+   SCHOOLS.some(suit=>!Number.isInteger(v.schoolUse[suit])||v.schoolUse[suit]<0||v.schoolUse[suit]>9999)||
+   !v.typeUse||typeof v.typeUse!=='object'||Array.isArray(v.typeUse)||
+   Object.entries(v.typeUse).some(([type,uses])=>!CARDS[type]||!Number.isInteger(uses)||uses<0||uses>9999)
+ ))return null;
  if(v.version>=3&&!validateDeck(v.deck,v.version>=4?handSize(v):8,v.version<5,v.version>=6?redrawLimit(v):2,v.version>=7,v.version>=8))return null;
  if(v.version>=3&&v.chainTargetId!==undefined&&v.chainTargetId!==null&&
     (typeof v.chainTargetId!=='string'||!v.enemies.some(e=>e.id===v.chainTargetId&&e.alive)))return null;
@@ -444,7 +451,9 @@ export function restoreSiege(v){
   shopOffers=[...shopOffers,exoticOffer];
  }
  const enemies=v.version>=8?v.enemies:v.enemies.map(e=>({...e,web:0}));
- return {...v,version:9,drawCredits:v.version===9?v.drawCredits:0,deck,encounterPlan:plan,mutations,shopOffers,enemies,
+ return {...v,version:10,drawCredits:v.version>=9?v.drawCredits:0,
+  schoolUse:v.version===10?v.schoolUse:emptyStrategy().schoolUse,
+  typeUse:v.version===10?v.typeUse:{},deck,encounterPlan:plan,mutations,shopOffers,enemies,
    lastLureTurn:v.version>=8?v.lastLureTurn:-1,
    minions:v.version>=7?v.minions:[],bones:v.version>=7?v.bones:0,
    summonLane:v.version>=7?v.summonLane:1,

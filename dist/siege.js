@@ -9,15 +9,16 @@ import {renderForestHand,renderForestChain,renderForestPrediction,escapeHTML} fr
 import {cardVisualIdentity,payoffReady} from './siege/card-presentation.js';
 import {renderShopCardPreview} from './siege/card-face.js';
 import {createForestBattle,featuredInvader,damageSummary} from './siege/forest-renderer.js';
+import {strategyFocus} from './siege/strategic-draw.js';
 import {MUTATIONS,handSize,upgradeableCards,trainableUnits,cardPower} from './shop-engine.js';
 import {ESSENCE_CAPACITY,ESSENCE_BY_ENEMY,ESSENCE_TRAITS,redrawLimit} from './assimilation-engine.js';
 import {newSiege,restoreSiege,RAIDS,SPECIES,moveUnit,endTurn,devour,gnaw,reinforce,buyUpgrade,chooseEssence,queueCommand,unqueueCommand,redrawCommand,previewChain,previewRituals,targetChain,setSummonLane} from './siege-engine.js';
-const $=id=>document.getElementById(id),KEY='mimicry-siege-v9';
+const $=id=>document.getElementById(id),KEY='mimicry-siege-v10';
 const artCache=new Map();
 const artFor=type=>{if(!artCache.has(type))artCache.set(type,creatureCardArt(type));return artCache.get(type);};
 let state;
 try{
- for(const key of [KEY,'mimicry-siege-v8','mimicry-siege-v7','mimicry-siege-v6','mimicry-siege-v5','mimicry-siege-v4','mimicry-siege-v3','mimicry-siege-v2']){
+ for(const key of [KEY,'mimicry-siege-v9','mimicry-siege-v8','mimicry-siege-v7','mimicry-siege-v6','mimicry-siege-v5','mimicry-siege-v4','mimicry-siege-v3','mimicry-siege-v2']){
   const raw=localStorage.getItem(key);
   if(!raw)continue;
   state=restoreSiege(JSON.parse(raw));
@@ -226,6 +227,12 @@ function render(){
   'No stolen traits yet. Finish an enemy with Gnaw or Devour.';
  $('log').innerHTML=state.log.map(line=>'<div>'+escapeHTML(line)+'</div>').join('');
  $('deck-count').textContent=state.deck.hand.length+'/'+handSize(state)+' held · '+state.deck.draw.length+' draw · '+state.deck.discard.length+' discard'+(state.drawCredits?' · '+state.drawCredits+' banked':'');
+ const focusPlan=strategyFocus(state);
+ const focusNames={fang:'FANG',shell:'SHELL',bloom:'BLOOM',venom:'VENOM',hunger:'HUNGER'};
+ const focusStage=['WIDE POOL','EXPLORING','LEANING IN','FOCUSED','SPECIALIZED'][focusPlan.stage];
+ $('hand-hint').textContent=discardMode?'DISCARD MODE · Click one card to replace it':
+  'Draw style: '+focusStage+(focusPlan.primary&&focusPlan.stage?' · '+focusNames[focusPlan.primary]+(focusPlan.secondary?' / '+focusNames[focusPlan.secondary]:''):' · all schools');
+
  renderRoster();renderOverlay();
  if(!busy)battle.setState(state);
  save();

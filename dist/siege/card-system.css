@@ -186,3 +186,8 @@
  .card.premium-card,.card.premium-card *{transition:none!important;animation:none!important}
  .card.premium-card:is(:hover,:focus-visible):not(.card-inactive){transform:none!important}
 }
+
+/* The number of cards can grow from five to ten without crushing each card. */
+@media(min-width:1321px){
+ .hand{grid-template-columns:repeat(auto-fit,minmax(156px,1fr));gap:12px}
+}
