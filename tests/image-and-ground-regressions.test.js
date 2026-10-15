@@ -60,7 +60,7 @@ test('every type of card renders with well-formed attributes; shop preview never
  assert.ok(!html.includes('<img'));
  const js=file('dist/siege.js');
  assert.ok(js.includes('artCache.set(type,creatureCardArt(type))'));
- assert.ok(js.includes('artFor(previewType)'));
+ assert.ok(js.includes('renderShopCardPreview(previewType,{artFor})'));
 });
 
 test('source sprite atlas stays undistorted in both small cards and wide Quartermaster previews',()=>{

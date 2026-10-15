@@ -6,6 +6,8 @@ import {creatureCardArt} from './siege/creature-card-art.js';
 import {FOREST_ENEMY_ROLES,enemyIntent} from './forest-enemies.js';
 import {previewCardLink} from './siege/link-feedback.js';
 import {renderForestHand,renderForestChain,renderForestPrediction,escapeHTML} from './siege/forest-hand.js';
+import {cardVisualIdentity,payoffReady} from './siege/card-presentation.js';
+import {renderShopCardPreview} from './siege/card-face.js';
 import {createForestBattle,featuredInvader,damageSummary} from './siege/forest-renderer.js';
 import {MUTATIONS,handSize,upgradeableCards,trainableUnits,cardPower} from './shop-engine.js';
 import {ESSENCE_CAPACITY,ESSENCE_BY_ENEMY,ESSENCE_TRAITS,redrawLimit} from './assimilation-engine.js';
@@ -38,16 +40,17 @@ function shopHTML(){
   const icon=isCard?'⚔':isMonster?'⬟':isRare?'✦':isTribal?'☠':isExotic?'✳':'◈';
   const desc=isCard?'Choose an eligible command: +2 base power per level, maximum twice.':
     isMonster?'Choose a surviving defender: +2 attack and +4 maximum HP.':
-    isRare?rare.description:isTribal?'Choose a Goblin or Skeleton card; duplicate recruits can form mobs.':isExotic?'Choose one Spider, Slime, or Mimicling card. New creatures join your summon deck.':mutation.description;
+    isRare?'A new '+cardVisualIdentity(offer.cardType).role.toLowerCase()+' for your next draw. Review its effect below.':isTribal?'Pick a Goblin or Skeleton card to strengthen your swarm.':isExotic?'Discover a Spider, Slime, or Mimicling command.':mutation.description;
   const choices=isCard?cards:units;
   const selector=(isCard||isMonster)&&!offer.sold?`<label class="shop-select">${isCard?'Command to improve':'Defender to train'}<select data-shop-target>${choices.map(x=>`<option value="${x.id}">${isCard?`${CARDS[x.type].name} ${x.level?`+${x.level}`:''} · power ${cardPower(state,x)}`:`${x.name} · Lv${x.level} · ${x.attack} ATK`}</option>`).join('')}</select></label>`:(isTribal||isExotic)&&!offer.sold?`<label class='shop-select'>Choose a creature card<select data-shop-target>${offer.options.map(type=>`<option value='${type}'>${CARDS[type].tribe.toUpperCase()} · ${CARDS[type].name}</option>`).join('')}</select></label>`:'';
   const cannotBuy=offer.sold||state.gold<offer.cost||((isCard||isMonster)&&!choices.length)||
     ((isRare||isTribal||isExotic)&&state.deck.acquired.length>=12);
   const typeLabel=isCard?'CARD ENHANCEMENT':isMonster?'ARMY TRAINING':
     isRare?`${rare.rarity.toUpperCase()} · ${rare.suit.toUpperCase()} ${rare.rank||'★'}`:isTribal?'GOBLIN OR SKELETON':isExotic?'SPIDER · SLIME · MIMICLING':'MIMIC MUTATION';
-  const extra=isRare?`<div class="shop-card-detail"><span>ONE NEW COMMAND</span><strong>${rare.kind.toUpperCase()} ${rare.power?'· '+rare.power+' POWER':''}</strong><small>In your next draw · ${STARTER_DECK.length+FOUNDING_CARDS.length+state.deck.acquired.length} currently owned</small></div>`:(isTribal||isExotic)?`<div class='shop-card-detail'><span>${isExotic?'NEW MONSTER FAMILY':'CHOOSE YOUR SWARM'}</span>${offer.options.map(type=>`<small>${CARDS[type].name}: ${CARDS[type].description}</small>`).join('')}</div>`:'';
+  const extra=isRare?`<div class="shop-card-detail"><span>ONE NEW COMMAND</span><small>Next draw · ${STARTER_DECK.length+FOUNDING_CARDS.length+state.deck.acquired.length} currently owned</small></div>`:
+   (isTribal||isExotic)?`<div class="shop-card-detail"><span>CHOOSE YOUR COMMAND</span><small>Use the selector below to view each card's rules and role.</small></div>`:'';
   const previewType=isRare?offer.cardType:(isTribal||isExotic)?(offer.sold?offer.purchasedType:offer.options[0]):null;
-  const preview=previewType?`<div class="shop-offer__card-preview" aria-hidden="true">${artFor(previewType)}</div><span class="shop-offer__selected-name">${CARDS[previewType].name}</span>`:'';
+  const preview=previewType?`<div class="shop-offer__card-preview">${renderShopCardPreview(previewType,{artFor})}</div><span class="shop-offer__selected-name">PREVIEW · ${CARDS[previewType].name}</span>`:'';
   return `<article class="shop-offer ${isRare?'shop-rare '+rare.rarity:''} ${isTribal?'shop-tribal':''} ${isExotic?'shop-exotic':''} ${offer.sold?'shop-sold':''}" data-shop-offer="${offer.id}"><div class="shop-icon">${icon}</div><div class="shop-type">${typeLabel}</div><h3>${name}</h3><p>${desc}</p>${preview}${extra}${selector}<button data-buy="${offer.id}" ${cannotBuy?'disabled':''}>${offer.sold?'PURCHASED':`BUY · ${offer.cost} GOLD`}</button></article>`;
  }).join('');
  return `<section class="quartermaster"><div class="shop-head"><div><span class="eyebrow">THE GOBLIN QUARTERMASTER</span><h3>Wares from the fallen</h3><p>Build your ecosystem: Goblin/Skeleton swarms plus Spider, Slime, and Mimicling creatures.</p></div><strong>◈ ${state.gold} GOLD</strong></div><div class="shop-grid">${offers}</div><div class="shop-footer"><span class="eyebrow">FREE RAID REINFORCEMENT</span><p>Keep any unspent gold. Choose one free reward below when you are ready for the next raid.</p></div></section>`;
@@ -194,7 +197,8 @@ function render(){
  renderRoute();renderTargets();renderDefenders();
  $('chain').innerHTML=renderForestChain(state);
  $('preview').innerHTML=renderForestPrediction(state);
- $('hand').innerHTML=renderForestHand(state,{artFor,ruleFor:cardRule});
+ $('hand').innerHTML=renderForestHand(state,{artFor,ruleFor:cardRule,discardMode});
+ resetCardInspection();
  $('redraw-count').textContent=state.deck.discardsLeft;
  $('redraw').disabled=busy||locked||!state.deck.discardsLeft||!state.deck.hand.length;
  $('redraw').setAttribute('aria-pressed',String(discardMode));
@@ -239,6 +243,22 @@ function tone(freq=420,seconds=.065){
  }catch{}
 }
 
+function resetCardInspection(){
+ $('card-inspector').innerHTML='<strong>Inspect a card</strong>'+
+  '<span class="inspect-help">Hover, focus, or tap a card to see its exact action and link.</span>';
+}
+function showCardInspection(id){
+ const card=state.deck.hand.find(c=>c.id===id);
+ if(!card)return;
+ const def=CARDS[card.type],view=cardVisualIdentity(card.type);
+ const hint=previewCardLink(state.deck,card),synergy=payoffReady(state,card.type);
+ const link=state.deck.chain.length?(hint.legal?hint.explanation:'Cannot link: '+hint.explanation):
+  'Any card can open a new chain.';
+ $('card-inspector').innerHTML='<strong>'+escapeHTML(def.name)+'</strong>'+
+  '<span>'+escapeHTML(view.main+' '+view.detail)+'</span>'+
+  '<span class="inspect-synergy">'+escapeHTML(link)+'</span>'+
+  (synergy?'<span class="inspect-synergy">✦ SYNERGY READY</span>':'');
+}
 function handleCard(id){
  if(busy||state.phase!=='battle'||state.pendingEssence)return;
  if(discardMode){
@@ -333,16 +353,21 @@ function attachEvents(){
   if(!button||button.contains(event.relatedTarget))return;
   const hint=previewCardLink(state.deck,button.dataset.cardId);
   $('link-description').textContent=hint.legal?hint.label+' · '+hint.explanation:hint.explanation;
+  showCardInspection(button.dataset.cardId);
  });
  $('hand').addEventListener('focusin',event=>{
   const button=event.target.closest('button[data-card-id]');
   if(!button)return;
   const hint=previewCardLink(state.deck,button.dataset.cardId);
   $('link-description').textContent=hint.label+' · '+hint.explanation;
+  showCardInspection(button.dataset.cardId);
  });
  $('hand').addEventListener('mouseout',event=>{
   const button=event.target.closest('button[data-card-id]');
-  if(button&&!button.contains(event.relatedTarget))$('link-description').textContent='LINK: same school · same number · rank +1 · Hunger wild';
+  if(button&&!button.contains(event.relatedTarget)){
+   $('link-description').textContent='LINK: same school · same number · rank +1 · Hunger wild';
+   resetCardInspection();
+  }
  });
  $('chain').addEventListener('click',event=>{
   const button=event.target.closest('button[data-unqueue]');
@@ -370,7 +395,7 @@ function attachEvents(){
   const select=event.target.closest('[data-shop-target]'),offer=select?.closest('[data-shop-offer]');
   if(!offer||!['tribal','exotic'].includes(offer.dataset.shopOffer))return;
   const art=offer.querySelector('.shop-offer__card-preview'),label=offer.querySelector('.shop-offer__selected-name');
-  if(CARDS[select.value]&&art&&label){art.innerHTML=artFor(select.value);label.textContent=CARDS[select.value].name;}
+  if(CARDS[select.value]&&art&&label){art.innerHTML=renderShopCardPreview(select.value,{artFor});label.textContent='PREVIEW · '+CARDS[select.value].name;}
  });
  $('rewards').addEventListener('click',event=>{
   if(busy)return;

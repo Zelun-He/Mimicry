@@ -123,7 +123,7 @@ test('parchment UI loads just one new CSS file, and no creature sprites return t
  assert.ok(!read('dist/siege/forest-renderer.js').includes('creature-portraits.png'));
  const js=read('dist/siege.js');
  assert.ok(js.includes('artCache.set(type,creatureCardArt(type))'));
- assert.ok(js.includes('artFor(offer.cardType)')||js.includes('artFor(previewType)'));
+ assert.ok(js.includes('renderShopCardPreview(previewType,{artFor})'));
 });
 
 test('tribe framing respects link readability, keyboard use and reduced motion',()=>{

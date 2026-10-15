@@ -56,6 +56,13 @@ combat tests, save migration, and a manual browser playtest before release.
   Sapper), readable enemy intent and focus chips, and authored alternate
   human visitor parties within the original five raids. Save-compatible
   encounter plan, old saves keep canonical encounters, Devour still works.
+- [x] **03h3 — Premium card anatomy and authored roles** (`feature/premium-card-layout`).
+  Map all 36 real commands to authored roles, scan-friendly keywords and
+  truthful primary/secondary rules. Shared card-face hierarchy across
+  hand and Quartermaster, redesigned frame treatments by mechanical category
+  and rarity, contextual link/status footer (no repeated START badges),
+  resource-vs-link-rank distinction, combo-ready state, inspect row, keyboard
+  focus and reduced motion. No balance, deck or save changes.
 - [ ] **03i — Mob/Horde formation cards, Phase 3.**
   Rework queue-slot presentation so duplicates visibly form a growing mob
   and distinguish those formations from ordinary suit/rank combos.
