@@ -1,0 +1,188 @@
+/* Mimicry card system v1: the hand is a collectible deck, not eight copies of
+   the same UI tile. Loaded AFTER forest-game.css and creature-cards.css.
+   No gameplay values live in this stylesheet. */
+.hand{display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:8px;align-items:stretch}
+.hand>.card.premium-card,.shop-card-face{
+ --school-ink:var(--suit,#61745a);
+ --frame-deep:#46583e;
+ --frame-light:#ead9b0;
+ --frame-ornament:#e4cea0;
+ --card-surface:#f7edcf;
+ --art-sheen:#fff0c544;
+ box-sizing:border-box;
+ position:relative;isolation:isolate;
+ width:100%;min-width:0;
+ min-height:306px;height:306px;
+ display:flex;flex-direction:column;gap:4px;
+ padding:7px 7px 8px;
+ border:1px solid #b5ac91;border-top:4px solid var(--school-ink);
+ border-radius:8px;
+ color:#263f32;
+ background:linear-gradient(160deg,#fffaf0 0%,#f4edda 48%,#e8dbbb 100%);
+ box-shadow:0 3px 0 #c4b998,0 6px 12px #333b2830,inset 0 0 0 1px #fff9e5;
+ overflow:hidden;
+ text-align:left;
+ -webkit-tap-highlight-color:transparent;
+}
+.card.premium-card:before{content:"";pointer-events:none;position:absolute;inset:3px;border:1px solid #897c5147;
+ border-radius:4px;z-index:0}
+.card.premium-card>span{position:relative;z-index:1}
+.card.premium-card.card-attack{--frame-deep:#883f39;--frame-ornament:#e2a18a}
+.card.premium-card.card-defense{--frame-deep:#395e72;--frame-ornament:#b2d4dd}
+.card.premium-card.card-recovery{--frame-deep:#40704c;--frame-ornament:#b8dda1}
+.card.premium-card.card-summon{--frame-deep:#725636;--frame-ornament:#dfc889}
+.card.premium-card.card-engine{--frame-deep:#566b3d;--frame-ornament:#c4d28b}
+.card.premium-card.card-finisher{--frame-deep:#79535e;--frame-ornament:#e0b2cb}
+.card.premium-card.card-utility{--frame-deep:#526348;--frame-ornament:#bfd0ac}
+.card.premium-card.rarity-rare,.shop-card-face.rarity-rare{
+ background:linear-gradient(153deg,#fffaf1 0%,#f0e2c6 65%,#e1cfab 100%);
+ border-color:#ba9a64;border-top-color:var(--school-ink);
+}
+.card.premium-card.rarity-legendary,.shop-card-face.rarity-legendary{
+ --frame-deep:#564030;--frame-light:#fff0c7;--frame-ornament:#f2cc77;
+ border:1px solid #c69b49;border-top:4px solid #d9ac54;
+ background:linear-gradient(140deg,#ffefc6 0%,#f5e1b5 50%,#d8bd87 100%);
+ box-shadow:0 3px 0 #94743e,0 7px 16px #2d201b33,inset 0 0 0 1px #fff4ce;
+}
+.card.premium-card.rarity-legendary:before{border-color:#a48146}
+.card.premium-card.rarity-legendary:after{content:"♛";position:absolute;right:-2px;top:80px;
+ font-size:72px;color:#ad81411a;transform:rotate(-25deg);pointer-events:none}
+.card.premium-card.tribe-card{border-top-color:var(--tribe-ink,var(--school-ink))}
+.card.premium-card .card-top{display:flex;align-items:center;justify-content:space-between;
+ min-height:32px;height:32px;gap:4px;flex:none;padding:0 2px}
+.card.premium-card .card-rank{display:flex;flex-direction:column;align-items:flex-start;justify-content:center;
+ gap:0;align-self:center;flex:none;margin:0;color:#31533e;font:900 27px/.92 Georgia,serif;
+ letter-spacing:-.04em;text-shadow:0 1px #fff9e1}
+.card.premium-card .card-rank small{margin:3px 0 0;font:900 8px/1 system-ui,sans-serif;
+ letter-spacing:.1em;color:#72826a;text-shadow:none}
+.card.premium-card .card-top-right{display:flex;align-items:center;justify-content:flex-end;
+ gap:6px;min-width:0}
+.card.premium-card .card-rarity{font:900 7px/1.2 system-ui,sans-serif;
+ letter-spacing:.055em;background:#493f3a;color:#fce7be;padding:3px 4px;
+ border-radius:2px;white-space:nowrap}
+.card.premium-card.rarity-legendary .card-rarity{background:#5b3d24;color:#ffe4a7}
+.card.premium-card .card-symbol{display:flex;flex-direction:column;align-items:center;justify-content:center;
+ gap:2px;margin:0;line-height:1;font-size:23px;color:var(--school-ink);text-shadow:none}
+.card.premium-card .card-symbol small{font:900 7px/1 system-ui,sans-serif;letter-spacing:.06em;
+ color:#526350;text-shadow:none}
+.card.premium-card .card-identity{display:flex;flex-direction:column;align-items:flex-start;
+ gap:3px;flex:none;min-height:43px;margin:0;padding:0 2px}
+.card.premium-card .card-type{font:900 8px/1.1 system-ui,sans-serif;letter-spacing:.08em;
+ color:#7d7861;text-transform:uppercase;max-width:100%;white-space:nowrap;
+ overflow:hidden;text-overflow:ellipsis}
+.card.premium-card .card-name{font:800 14px/1.08 Georgia,serif;letter-spacing:-.015em;
+ color:#274034;text-align:left;max-width:100%;min-height:0;max-height:33px;
+ overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;
+ margin:0}
+.card.premium-card .card-portrait{position:relative;flex:0 0 103px;width:100%;
+ height:103px;min-height:0;overflow:hidden;margin:0;
+ border:2px solid var(--frame-deep);border-radius:4px;
+ background:linear-gradient(145deg,#293d36,#4d5a46);
+ box-shadow:inset 0 0 0 2px #ead8ac8a,0 2px 0 #b9b295}
+.card.premium-card .card-portrait:before{content:"";position:absolute;inset:3px;
+ border:1px solid #fff4d28a;z-index:2;pointer-events:none}
+.card.premium-card .card-portrait:after{content:"";position:absolute;left:0;right:0;top:0;
+ height:25%;background:linear-gradient(180deg,#ffffff24,transparent);
+ z-index:2;pointer-events:none}
+.card.premium-card .card-portrait .card-art{width:100%;height:100%;object-fit:contain;
+ display:block}
+.card.premium-card .card-portrait .creature-art{height:100%;width:100%}
+.card.premium-card .card-portrait .creature-art__focus{max-width:none}
+.card.premium-card .card-resource{position:absolute;right:4px;bottom:4px;
+ background:#30261fdc;border:1px solid #c8a066;border-radius:3px;
+ color:#f7dc9a;padding:4px 5px;font:900 8px/1.1 system-ui,sans-serif;z-index:5;
+ white-space:nowrap}
+.card.premium-card .card-effect{display:flex;flex-direction:column;align-items:flex-start;
+ gap:3px;flex:1 1 51px;min-height:44px;max-height:none;
+ padding:5px 3px 0;margin:0;overflow:hidden;text-align:left;
+ color:#4d624f;line-height:1.18}
+.card.premium-card .card-effect-primary{display:-webkit-box;-webkit-box-orient:vertical;
+ -webkit-line-clamp:2;overflow:hidden;font:800 11px/1.16 system-ui,sans-serif;
+ color:#2e4633}
+.card.premium-card .card-effect-secondary{display:-webkit-box;-webkit-box-orient:vertical;
+ -webkit-line-clamp:2;overflow:hidden;font:500 9px/1.2 system-ui,sans-serif;
+ color:#69725b}
+.card.premium-card .card-keywords{display:flex;flex:none;align-items:center;gap:4px;
+ height:16px;min-height:16px;margin:0;padding:0 2px;overflow:hidden}
+.card.premium-card .card-keyword{display:block;min-width:0;max-width:55%;
+ padding:3px 5px 2px;border:1px solid #b9bfa6;border-radius:3px;background:#e0e8d2;
+ color:#51694e;font:900 8px/1 system-ui,sans-serif;letter-spacing:.025em;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card.premium-card .card-link{display:flex;justify-content:space-between;align-items:center;
+ gap:4px;flex:0 0 23px;height:23px;min-height:23px;max-height:none;margin:0;
+ padding:3px 6px;border-radius:3px;
+ background:var(--frame-deep);color:#fff4d7;box-shadow:inset 0 1px #ffffff27;
+ font:900 9px/1.1 system-ui,sans-serif;letter-spacing:.06em;text-align:left}
+.card.premium-card .card-role{color:#fff3d7;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.card.premium-card .card-link-status{max-width:54%;min-width:0;text-align:right;
+ white-space:nowrap;overflow:hidden;text-overflow:ellipsis;color:#dbf0ce;font-size:8px}
+.card.premium-card .card-cost{display:none}
+.card.premium-card .card-ready-marker{position:absolute;z-index:4;left:4px;bottom:4px;
+ background:#2c6d43;color:#fff2cf;padding:3px 5px;border:1px solid #ffe69c;
+ border-radius:2px;font:900 8px/1 system-ui,sans-serif;letter-spacing:.05em;
+ box-shadow:0 1px 4px #0008}
+.card.premium-card.is-combo-ready{border-color:#cdaa59;border-top-color:#e0bc70;
+ box-shadow:0 3px 0 #c4b998,0 0 0 1px #c7a952,0 0 14px #dbb8626c}
+.card.premium-card.is-combo-ready .card-link{background:#47734c}
+.card.premium-card:is(:hover,:focus-visible):not(.card-inactive){
+ transform:translateY(-6px) scale(1.018);
+ box-shadow:0 5px 0 #aaac88,0 14px 24px #0004,0 0 14px var(--art-sheen);
+ border-color:#b79d60;
+ outline:2px solid var(--school-ink);
+ outline-offset:1px;
+ z-index:5
+}
+.card.premium-card.card-inactive{opacity:.71;filter:saturate(.8);cursor:help}
+.card.premium-card.card-inactive .card-name,.card.premium-card.card-inactive .card-effect-primary{color:#4d5e4d}
+.card.premium-card.card-inactive:is(:hover,:focus-visible){transform:none;box-shadow:0 3px 0 #c4b998}
+.card.premium-card.is-discarding{opacity:1;filter:none;border-color:#b7713e;cursor:crosshair}
+.card.premium-card.is-discarding .card-link{background:#82512d}
+.card.premium-card.is-discarding:is(:hover,:focus-visible){outline:2px solid #b7713e}
+.card.premium-card[data-link-kind="stack"] .card-link-status{color:#f1e5a4}
+.card.premium-card[data-link-kind="wild"] .card-link-status{color:#f8dca3}
+
+/* Dynamic rules inspector: disclose full mechanics without cramming the hand. */
+.card-inspector{display:flex;align-items:center;flex-wrap:wrap;gap:7px 14px;
+ margin:9px 0 0;padding:10px 14px;min-height:40px;
+ border-radius:5px;border-left:3px solid #b9a15f;
+ background:#e3e8d1;color:#456046;font:500 11px/1.4 system-ui,sans-serif}
+.card-inspector strong{color:#254936;font-size:12px}
+.card-inspector .inspect-synergy{font-weight:800;color:#507649}
+.card-inspector em{color:#72816a;font-family:Georgia,serif}
+.card-inspector .inspect-help{color:#7a866e}
+.card-inspector b{color:#375843}
+
+/* Quartermaster previews use the SAME complete rules hierarchy, not a
+   stretched art image and an unrelated green description underneath. */
+.shop-offer .shop-offer__card-preview{height:auto;min-height:0;width:100%;
+ margin:12px 0 6px;display:flex;justify-content:center;overflow:visible}
+.shop-card-face.card{width:min(100%,240px);min-width:0;height:308px;min-height:308px;
+ pointer-events:none;transform:none!important;box-shadow:0 4px 0 #aa946f,0 6px 12px #100e0e46}
+.shop-card-face.card .card-name,.shop-card-face.card .card-effect-primary{color:#294132}
+.shop-card-face.card .card-portrait{height:106px;flex-basis:106px}
+.shop-offer .shop-offer__selected-name{display:block;color:#e8ddb9!important;
+ font-size:11px;margin-bottom:6px;text-align:center;font-weight:800}
+.shop-offer .shop-card-detail{margin-top:6px;font-size:11px}
+.shop-offer .shop-card-detail small{display:block;line-height:1.5;margin-top:3px}
+.shop-offer .shop-card-detail strong{font-size:12px}
+.shop-offer .shop-select{margin-top:7px}
+.shop-offer .shop-select select{width:100%}
+
+/* At laptop sizes, use a horizontally scrollable, consistently legible rail.
+   Never compress eight cards into 70px-wide thumbnails. */
+@media(max-width:1320px){
+ .hand{display:flex;overflow-x:auto;overflow-y:visible;gap:9px;
+   scroll-snap-type:x proximity;padding:8px 4px 16px}
+ .hand>.card.premium-card{flex:0 0 166px;width:166px;min-width:166px;
+   max-width:166px;scroll-snap-align:start}
+}
+@media(max-width:700px){
+ .hand>.card.premium-card{flex-basis:163px;width:163px;min-width:163px;max-width:163px}
+ .card.premium-card .card-name{font-size:13px}
+ .shop-card-face.card{width:min(100%,234px);max-width:none}
+ .card-inspector{font-size:10px;padding:9px}
+}
+@media(prefers-reduced-motion:reduce){
+ .card.premium-card,.card.premium-card *{transition:none!important;animation:none!important}
+ .card.premium-card:is(:hover,:focus-visible):not(.card-inactive){transform:none!important}
+}

@@ -5,28 +5,43 @@ import {creatureCardArt,creatureCardIdentity} from './creature-card-art.js';
 import {previewChain} from '../siege-engine.js';
 import {previewCardLink,queuedLinkKinds} from './link-feedback.js';
 import {cardPower} from '../shop-engine.js';
+import {presentationFor,payoffReady,cardFullRules} from './card-presentation.js';
+import {cardFaceClass,renderCardFace} from './card-face.js';
 export function escapeHTML(value){return String(value).replace(/[&<>"']/g,character=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[character]));}
 
-export function renderForestHand(s,{artFor,ruleFor}={}){
+export function renderForestHand(s,{artFor,ruleFor,discardMode=false}={}){
  const locked=s.phase!=='battle'||Boolean(s.pendingEssence);
- return s.deck.hand.map((card,i)=>{
+ return s.deck.hand.map(card=>{
   const def=CARDS[card.type],link=previewCardLink(s.deck,card);
-  const playable=!locked&&link.legal;
-  const htmlName=escapeHTML(def.name),id=escapeHTML(card.id),rank=def.rank||'★';
-  const rule=escapeHTML((ruleFor||cardRule)(card.type));
-  const mark=SUIT_STYLES[def.suit].symbol;
+  const canPlay=!locked&&link.legal;
+  const canDiscard=!locked&&s.deck.discardsLeft>0;
+  const active=discardMode?canDiscard:canPlay;
   const family=creatureCardIdentity(card.type);
-  return '<button type="button" class="card '+def.suit+' '+(playable?'playable':'card-inactive')+
-   (link.kind==='stack'&&playable?' is-stack':'')+
-   (family?' tribe-card tribe-'+family.key:'')+
+  const identity=presentationFor(card.type),isReady=canPlay&&payoffReady(s,card.type);
+  const id=escapeHTML(card.id),name=escapeHTML(def.name),rank=def.rank||'★';
+  // On an empty chain, roles explain cards instead of repeating "START" ×8.
+  // With a chain, show the exact link reason where it is relevant.
+  const linkText=locked?'WAIT':discardMode?'REDRAW':
+   s.deck.chain.length?(canPlay?link.short:'NO LINK'):'';
+  const summary=escapeHTML((ruleFor||cardRule)(card.type));
+  const accessible=escapeHTML([
+   def.name,identity.role,def.suit+' link rank '+rank,
+   family?family.name+' creature':'',cardFullRules(card.type),summary,
+   canPlay?link.label:link.explanation,
+   isReady?'Synergy ready.':''
+  ].filter(Boolean).join('. '));
+  return '<button type="button" class="card '+def.suit+' '+(active?'playable':'card-inactive')+
+   ' '+cardFaceClass(card.type)+(canPlay&&link.kind==='stack'?' is-stack':'')+
+   (discardMode?' is-discarding':'')+(isReady?' is-combo-ready':'')+
    '" data-card-id="'+id+'" data-school="'+def.suit+'" data-link-kind="'+link.kind+
-   '" data-rarity="'+(def.rarity||'common')+'"'+(family?' data-tribe="'+family.key+'"':'')+
-   ' aria-disabled="'+(!playable)+'" aria-label="'+htmlName+', '+def.suit+' rank '+rank+
-   '. '+rule+'. '+(family?family.name+' family. ':'')+(playable?link.label:link.explanation)+
-   '"><span class="card-top"><span class="card-rank">'+rank+'</span><span class="card-symbol">'+mark+'</span></span>'+
-   '<span class="card-portrait">'+(artFor||creatureCardArt)(card.type)+'</span>'+
-   '<span class="card-name">'+htmlName+(card.level?' +'+card.level:'')+'</span>'+
-   '<span class="card-effect">'+rule+'</span><span class="card-link">'+
+   '" data-rarity="'+(def.rarity||'common')+'" data-role="'+identity.role.toLowerCase()+'"'+
+   (family?' data-tribe="'+family.key+'"':'')+
+   ' aria-disabled="'+(!active)+'" aria-label="'+accessible+'">'+
+   renderCardFace(card.type,{artFor,level:card.level||0,linkText,ready:isReady})+
+   '</button>';
+ }).join('');
+}
+lass="card-effect">'+rule+'</span><span class="card-link">'+
    (locked?'WAIT':link.symbol+' '+link.short)+'</span></button>';
  }).join('');
 }

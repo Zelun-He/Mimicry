@@ -448,3 +448,36 @@ encounter pools), `dist/siege-engine.js` (support effects and save-compatible
 party selection), `dist/assimilation-engine.js` (new capture origins),
 `dist/siege.js` and `dist/siege/forest-renderer.js` (enemy identity and
 pixel-portrait mapping), and `tests/forest-enemy-variety.test.js`.
+
+## Premium cards: shared hand and Quartermaster layout
+
+All **36 existing commands** now have explicit role metadata, authored
+one-line primary effects and shorter secondary conditions, plus two mechanically
+relevant keyword chips. The card's big number means **LINK RANK** (same rank,
+next rank, same school), **not a mana cost**. Hunger's actual numeric
+resource requirement is shown separately on applicable card artwork.
+
+Replaces eight identical "START" ribbons with **STRIKE, LINKER, GUARD,
+RECOVERY, SUMMON, PAYOFF, FINISHER, COMMAND, etc.** and reserves the
+footer's right side for the *current legal link reason* when another card is
+already queued. Creature cards retain the existing sprite-board artwork,
+while action cards keep their distinct symbolic illustrations.
+
+The same **shared HTML card anatomy** renders the eight-card hand and
+Quartermaster's chosen/rare command previews, so shops no longer show a
+tiny floating portrait unrelated to the real card. Shop selectors update
+the entire preview, including rules and role. Card hover/focus shows a
+compact readable inspector with the exact link explanation. Combo-ready
+badges are only visual cues based on visible resources/targets and never
+change playability or combat.
+
+Implementation: `dist/siege/card-presentation.js` (complete 36-card metadata),
+`dist/siege/card-face.js` (shared face and shop renderer),
+`dist/siege/card-system.css` (school/type/rarity hierarchy, viewport
+responsiveness), `dist/siege/forest-hand.js` and `dist/siege.js`.
+`tests/premium-card-layout.test.js` ensures rules, save neutrality,
+real role mappings, shop presentation, interactions and accessibility.
+See `DESIGN-PREMIUM-CARDS.md`.
+
+The core combat simulation, link legality, shop costs, purchases,
+summoning, Gold, Hunger and v8 save format are unchanged.
