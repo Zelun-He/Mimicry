@@ -4,7 +4,7 @@ import {
  rest,handLimit
 } from './demons-engine.js';
 import {createForestBattle} from './siege/forest-renderer.js';
-import {creatureCardArt} from './siege/creature-card-art.js';
+import {creatureCardArt,creatureCardIdentity} from './siege/creature-card-art.js';
 import {SUIT_STYLES} from './siege/card-art.js';
 import {escapeCardHTML} from './siege/card-face.js';
 
@@ -57,6 +57,7 @@ function cardHTML(card){
  // Intrinsic card-art SVGs are wide; crop their decorative side margins
  // rather than letterboxing the illustration or stretching character sprites.
  const illustration=creatureCardArt(type).replace('<svg class="card-art"','<svg preserveAspectRatio="xMidYMid slice" class="card-art"');
+ const illustratedCreature=Boolean(creatureCardIdentity(type));
  const category={spades:'attack',clubs:'defense',hearts:'recovery',diamonds:'finisher'}[card.suit];
  const index='<span class="playing-index" aria-hidden="true"><strong>'+rank+'</strong><span>'+suit+'</span></span>';
  return '<button type="button" class="card premium-card poker-card '+school+' suit-'+card.suit+
@@ -65,7 +66,7 @@ function cardHTML(card){
   '" data-card="'+escape(card.id)+'" data-school="'+school+'" data-suit="'+card.suit+
   '" aria-pressed="'+active+'" aria-label="'+escape(label)+' of '+escape(SUIT_NAMES[card.suit])+
   (critical?', critical card':'')+(unused?', unscored in selection':'')+(active?', selected '+selectedOrder:'')+'">'+
-  '<span class="playing-art" aria-hidden="true">'+illustration+'</span>'+
+  '<span class="playing-art '+(illustratedCreature?'playing-art--creature':'playing-art--engraving')+'" aria-hidden="true">'+illustration+'</span>'+
   '<span class="playing-index-corner playing-index-top">'+index+'</span>'+
   '<span class="playing-index-corner playing-index-bottom">'+index+'</span>'+
   (critical?'<span class="playing-critical" aria-hidden="true" title="Critical card">✦</span>':'')+
@@ -174,14 +175,18 @@ $('hand').addEventListener('click',event=>{
  const element=event.target.closest('[data-card]');
  if(element)cardClicked(element.dataset.card);
 });
-$('hand').addEventListener('pointerover',event=>{
- const el=event.target.closest('[data-card]');if(!el)return;
+// The cards themselves are intentionally free of rules text; disclose details
+// only through the existing inspector on hover OR keyboard focus.
+function inspectCard(event){
+ const el=event.target.closest?.('[data-card]');if(!el)return;
  const card=state.hand.find(c=>c.id===el.dataset.card);if(!card)return;
  $('card-inspector').innerHTML='<strong>'+(RANK_SYMBOLS[card.rank]||card.rank)+' '+SUIT_SYMBOLS[card.suit]+
   ' · '+escape(RANK_NAMES[card.rank]||card.rank)+' of '+escape(SUIT_NAMES[card.suit])+'</strong>'+
   (card.critical?'<span class="inspect-help">Critical card · +25% damage when it scores.</span>':
    '<span class="inspect-help">Select matching ranks or build a straight or flush.</span>');
-});
+}
+$('hand').addEventListener('pointerover',inspectCard);
+$('hand').addEventListener('focusin',inspectCard);
 $('chain').addEventListener('click',event=>{const b=event.target.closest('[data-unselect]');if(b)cardClicked(b.dataset.unselect);});
 $('clear').addEventListener('click',()=>{state.selected=[];render();});
 $('sort').addEventListener('click',()=>{sortHand(state);render();});

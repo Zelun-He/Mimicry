@@ -55,7 +55,21 @@ test('poker cards are illustration-first playing cards without repetitive copy',
  assert.ok(face.includes('preserveAspectRatio="xMidYMid slice"'));
  assert.ok(face.includes("aria-pressed="));
  assert.ok(css.includes('.playing-art .creature-art__sprite'));
- assert.ok(css.includes('aspect-ratio:5/7'));
+ assert.ok(css.includes('aspect-ratio:5 / 7'));
  assert.ok(css.includes('playing-index-bottom'));
  assert.ok(css.includes('image-rendering:pixelated'));
+});
+
+test('illustration takes the card face; creature sprites are not stretched or labeled',()=>{
+ const css=read('dist/siege/forest-poker.css');
+ const app=read('dist/forest-poker.js');
+ assert.ok(css.includes('inset:7px'));
+ assert.ok(css.includes('aspect-ratio:5 / 7'));
+ assert.ok(css.includes('aspect-ratio:80 / 69'));
+ assert.ok(css.includes('aspect-ratio:1 / 1;object-fit:contain'));
+ assert.ok(css.includes('.creature-art__family'));
+ assert.ok(css.includes('display:none'));
+ assert.ok(app.includes('creatureCardIdentity(type)'));
+ assert.ok(app.includes("addEventListener('focusin',inspectCard)"));
+ assert.ok(!app.includes('Combine ranks and schools for a stronger hand.'));
 });
