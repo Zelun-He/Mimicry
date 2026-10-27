@@ -39,3 +39,23 @@ test('old premium illustrated-card design is used with selected poker states',()
  assert.ok(css.includes('overflow-x:auto'));
  assert.ok(css.includes('prefers-reduced-motion:reduce'));
 });
+
+test('poker cards are illustration-first playing cards without repetitive copy',()=>{
+ const js=read('dist/forest-poker.js');
+ const css=read('dist/siege/forest-poker.css');
+ const start=js.indexOf('function cardHTML(card){'),end=js.indexOf('function renderSelected(){',start);
+ const face=js.slice(start,end);
+ for(const selector of ['playing-art','playing-index-top','playing-index-bottom','playing-critical','playing-selected']){
+  assert.ok(face.includes(selector),selector);
+ }
+ for(const obsolete of ['card-effect-primary','card-effect-secondary','card-keywords','card-role','card-court','Combine ranks and schools','Pair ranks or build a five-card suit']){
+  assert.ok(!face.includes(obsolete),obsolete);
+ }
+ assert.ok(face.includes("creatureCardArt(type)"));
+ assert.ok(face.includes('preserveAspectRatio="xMidYMid slice"'));
+ assert.ok(face.includes("aria-pressed="));
+ assert.ok(css.includes('.playing-art .creature-art__sprite'));
+ assert.ok(css.includes('aspect-ratio:5/7'));
+ assert.ok(css.includes('playing-index-bottom'));
+ assert.ok(css.includes('image-rendering:pixelated'));
+});
