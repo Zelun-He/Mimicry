@@ -43,34 +43,34 @@ function artType(card){
   14:{hearts:'feast',diamonds:'mirror',clubs:'decree',spades:'execute'}};
  return court[card.rank]?.[card.suit]||candidates[(card.rank-2)%candidates.length];
 }
+// The front of each card follows a real playing-card silhouette: two opposing
+// corner indices surrounding a single large illustration. Tactical copy belongs
+// in the hand preview/inspector, never repeated on the card itself.
 function cardHTML(card){
  const type=artType(card),school=SUIT_TO_SCHOOL[card.suit],style=SUIT_STYLES[school];
- const display=RANK_SYMBOLS[card.rank]||card.rank;
- const symbol=SUIT_SYMBOLS[card.suit];
- const label=RANK_NAMES[card.rank]||String(card.rank);
+ const rank=RANK_SYMBOLS[card.rank]||String(card.rank);
+ const suit=SUIT_SYMBOLS[card.suit],label=RANK_NAMES[card.rank]||String(card.rank);
  const active=state.selected.includes(card.id),selectedOrder=state.selected.indexOf(card.id)+1;
  const score=evaluateHand(selectedCards(state),state.sigils,state.round-1);
  const unused=active&&score?.unusedIds.includes(card.id);
  const critical=card.critical===true;
- const svg=creatureCardArt(type);
+ // Intrinsic card-art SVGs are wide; crop their decorative side margins
+ // rather than letterboxing the illustration or stretching character sprites.
+ const illustration=creatureCardArt(type).replace('<svg class="card-art"','<svg preserveAspectRatio="xMidYMid slice" class="card-art"');
  const category={spades:'attack',clubs:'defense',hearts:'recovery',diamonds:'finisher'}[card.suit];
+ const index='<span class="playing-index" aria-hidden="true"><strong>'+rank+'</strong><span>'+suit+'</span></span>';
  return '<button type="button" class="card premium-card poker-card '+school+' suit-'+card.suit+
   ' card-'+category+(critical?' is-critical':'')+(active?' is-selected':' playable')+
   (unused?' is-unscored':'')+'" style="--suit:'+style.ink+';--school-ink:'+style.ink+
   '" data-card="'+escape(card.id)+'" data-school="'+school+'" data-suit="'+card.suit+
   '" aria-pressed="'+active+'" aria-label="'+escape(label)+' of '+escape(SUIT_NAMES[card.suit])+
-  (critical?', critical card':'')+(active?', selected '+selectedOrder:'')+'">'+
-  '<span class="card-top"><span class="card-rank">'+display+'<small>RANK</small></span>'+
-  '<span class="card-top-right"><span class="card-symbol">'+symbol+'<small>'+escape(SUIT_NAMES[card.suit].toUpperCase())+'</small></span></span></span>'+
-  '<span class="card-identity"><span class="card-type">'+escape(SUIT_NAMES[card.suit])+' · '+escape(label)+'</span>'+
-  '<span class="card-name">'+display+' '+symbol+' <span class="card-court">'+escape(label)+'</span></span></span>'+
-  '<span class="card-portrait">'+svg+(critical?'<span class="card-critical-mark">✦ CRITICAL</span>':'')+'</span>'+
-  '<span class="card-effect"><strong class="card-effect-primary">'+escape(label)+' of '+escape(SUIT_NAMES[card.suit])+'</strong>'+
-  '<span class="card-effect-secondary">'+(critical?'Scores +25% damage when used.': 'Pair ranks or build a five-card suit.')+'</span></span>'+
-  '<span class="card-keywords"><span class="card-keyword">'+symbol+' '+escape(SUIT_NAMES[card.suit].toUpperCase())+'</span>'+
-  '<span class="card-keyword">'+(critical?'CRIT':card.rank>=11?'COURT':'NUMBER')+'</span></span>'+
-  '<span class="card-link"><span class="card-role">'+(unused?'UNSCORED':active?'SELECTED '+selectedOrder:'CHOOSE CARD')+'</span>'+
-  '<span class="card-link-status">'+(active?'✓':symbol)+'</span></span></button>';
+  (critical?', critical card':'')+(unused?', unscored in selection':'')+(active?', selected '+selectedOrder:'')+'">'+
+  '<span class="playing-art" aria-hidden="true">'+illustration+'</span>'+
+  '<span class="playing-index-corner playing-index-top">'+index+'</span>'+
+  '<span class="playing-index-corner playing-index-bottom">'+index+'</span>'+
+  (critical?'<span class="playing-critical" aria-hidden="true" title="Critical card">✦</span>':'')+
+  (active?'<span class="playing-selected" aria-hidden="true">'+selectedOrder+'</span>':'')+
+  '</button>';
 }
 function renderSelected(){
  const picked=selectedCards(state);
@@ -177,9 +177,10 @@ $('hand').addEventListener('click',event=>{
 $('hand').addEventListener('pointerover',event=>{
  const el=event.target.closest('[data-card]');if(!el)return;
  const card=state.hand.find(c=>c.id===el.dataset.card);if(!card)return;
- $('card-inspector').innerHTML='<strong>'+escape(RANK_NAMES[card.rank]||card.rank)+' of '+
-  escape(SUIT_NAMES[card.suit])+'</strong><span class="inspect-help">Rank '+card.rank+
-  ' · '+escape(SUIT_NAMES[card.suit])+' suit · pair ranks or collect five of one suit.</span>';
+ $('card-inspector').innerHTML='<strong>'+(RANK_SYMBOLS[card.rank]||card.rank)+' '+SUIT_SYMBOLS[card.suit]+
+  ' · '+escape(RANK_NAMES[card.rank]||card.rank)+' of '+escape(SUIT_NAMES[card.suit])+'</strong>'+
+  (card.critical?'<span class="inspect-help">Critical card · +25% damage when it scores.</span>':
+   '<span class="inspect-help">Select matching ranks or build a straight or flush.</span>');
 });
 $('chain').addEventListener('click',event=>{const b=event.target.closest('[data-unselect]');if(b)cardClicked(b.dataset.unselect);});
 $('clear').addEventListener('click',()=>{state.selected=[];render();});
