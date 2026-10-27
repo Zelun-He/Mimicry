@@ -1,0 +1,87 @@
+
+/* Cohesive 52-card Bestiary series. Each of the four conventional poker suits
+   represents one of Mimicry's monster factions. The same perspective, atlas
+   scale and pixel-rendering rules apply to every card. */
+.hand>.card.premium-card.poker-card>.playing-art{
+ inset:7px;
+ border:1px solid #a79d80;
+ background:#172822;
+}
+.hand>.card.premium-card.poker-card .playing-art>.bestiary-scene{
+ position:absolute;inset:0;
+ display:block;width:100%;height:100%;
+ overflow:hidden;
+}
+.bestiary-environment{
+ position:absolute;inset:0;
+ width:100%;height:100%;
+ shape-rendering:crispEdges;
+ image-rendering:pixelated;
+}
+.bestiary-halo{
+ position:absolute;z-index:1;
+ left:50%;top:45%;width:66%;aspect-ratio:1;
+ transform:translate(-50%,-50%);
+ border-radius:50%;
+ background:radial-gradient(circle,#eaf7c34d 0%,#f9f1ae24 35%,transparent 70%);
+ pointer-events:none;
+}
+.bestiary-scene--spades{--portrait-glow:#e8a776}
+.bestiary-scene--clubs{--portrait-glow:#d0e8db}
+.bestiary-scene--hearts{--portrait-glow:#bbdb93}
+.bestiary-scene--diamonds{--portrait-glow:#cfb2e7}
+.bestiary-scene .bestiary-halo{
+ background:radial-gradient(circle,color-mix(in srgb,var(--portrait-glow) 42%,transparent),transparent 69%);
+}
+.bestiary-hero,.bestiary-companion{
+ position:absolute;z-index:3;
+ display:flex;align-items:center;justify-content:center;
+ left:50%;top:52%;
+ width:82%;aspect-ratio:80 / 69;
+ transform:translate(-50%,-50%);
+ filter:drop-shadow(0 4px 3px #071b20b5);
+}
+.bestiary-companion{
+ z-index:2;left:26%;top:65%;width:51%;
+ opacity:.65;
+ filter:brightness(.7) drop-shadow(0 3px 2px #070f18b0);
+}
+.bestiary-tier--royal .bestiary-hero{width:92%;top:49%}
+.bestiary-tier--scout .bestiary-hero{width:79%;top:55%}
+.bestiary-tier--veteran .bestiary-hero{width:86%;top:49%}
+.bestiary-sprite{
+ display:block;flex:none;
+ width:100%;height:auto;
+ aspect-ratio:80 / 69;
+ background-image:url("./creature-portraits.png");
+ background-size:500% 100%;background-repeat:no-repeat;
+ image-rendering:pixelated;
+}
+.bestiary-sprite--goblin{background-position:0% 50%}
+.bestiary-sprite--skeleton{background-position:25% 50%}
+.bestiary-sprite--slime{background-position:50% 50%}
+.bestiary-sprite--sporeling{background-position:75% 50%}
+.bestiary-sprite--king-mimic{background-position:100% 50%}
+.bestiary-scene .creature-art__illustration{
+ display:block;flex:none;
+ width:100%;height:auto;
+ max-height:100%;aspect-ratio:1;
+ image-rendering:pixelated;object-fit:contain;
+}
+.bestiary-crest{
+ position:absolute;z-index:4;
+ left:50%;top:14%;width:42%;
+ transform:translateX(-50%);
+ filter:drop-shadow(0 2px 2px #10101077);
+}
+.hand>.card.premium-card.poker-card.suit-hearts,
+.hand>.card.premium-card.poker-card.suit-diamonds{--pip:#b04340}
+.hand>.card.premium-card.poker-card.suit-spades,
+.hand>.card.premium-card.poker-card.suit-clubs{--pip:#263d38}
+.hand>.card.premium-card.poker-card .playing-index-corner{
+ background:#fff8eecf;
+ backdrop-filter:blur(2px);
+}
+@media(prefers-reduced-motion:reduce){
+ .bestiary-hero,.bestiary-companion,.bestiary-crest{animation:none!important;transition:none!important}
+}

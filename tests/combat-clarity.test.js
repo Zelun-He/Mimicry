@@ -40,36 +40,31 @@ test('old premium illustrated-card design is used with selected poker states',()
  assert.ok(css.includes('prefers-reduced-motion:reduce'));
 });
 
-test('poker cards are illustration-first playing cards without repetitive copy',()=>{
- const js=read('dist/forest-poker.js');
- const css=read('dist/siege/forest-poker.css');
+test('poker cards are illustration-first with shared bestiary sprites and no spell art',()=>{
+ const js=read('dist/forest-poker.js'),css=read('dist/siege/bestiary-deck.css');
  const start=js.indexOf('function cardHTML(card){'),end=js.indexOf('function renderSelected(){',start);
  const face=js.slice(start,end);
  for(const selector of ['playing-art','playing-index-top','playing-index-bottom','playing-critical','playing-selected']){
   assert.ok(face.includes(selector),selector);
  }
- for(const obsolete of ['card-effect-primary','card-effect-secondary','card-keywords','card-role','card-court','Combine ranks and schools','Pair ranks or build a five-card suit']){
+ for(const obsolete of ['card-effect-primary','card-effect-secondary','card-keywords','card-role','card-court','cardArt(type)','creatureCardArt(type)','artType(card)','vial','bloom']){
   assert.ok(!face.includes(obsolete),obsolete);
  }
- assert.ok(face.includes("creatureCardArt(type)"));
- assert.ok(face.includes('preserveAspectRatio="xMidYMid slice"'));
- assert.ok(face.includes("aria-pressed="));
- assert.ok(css.includes('.playing-art .creature-art__sprite'));
- assert.ok(css.includes('aspect-ratio:5 / 7'));
- assert.ok(css.includes('playing-index-bottom'));
+ assert.ok(face.includes('renderBestiaryPortrait(card)'));
+ assert.ok(face.includes('aria-pressed='));
+ assert.ok(css.includes('bestiary-hero'));
  assert.ok(css.includes('image-rendering:pixelated'));
 });
 
-test('illustration takes the card face; creature sprites are not stretched or labeled',()=>{
- const css=read('dist/siege/forest-poker.css');
+test('bestiary illustrations preserve original sprite aspect ratio at every rank',()=>{
+ const css=read('dist/siege/bestiary-deck.css');
  const app=read('dist/forest-poker.js');
- assert.ok(css.includes('inset:7px'));
- assert.ok(css.includes('aspect-ratio:5 / 7'));
  assert.ok(css.includes('aspect-ratio:80 / 69'));
- assert.ok(css.includes('aspect-ratio:1 / 1;object-fit:contain'));
- assert.ok(css.includes('.creature-art__family'));
- assert.ok(css.includes('display:none'));
- assert.ok(app.includes('creatureCardIdentity(type)'));
+ assert.ok(css.includes('aspect-ratio:1'));
+ assert.ok(css.includes('.bestiary-sprite--goblin'));
+ assert.ok(css.includes('.bestiary-sprite--skeleton'));
+ assert.ok(css.includes('.bestiary-sprite--slime'));
+ assert.ok(css.includes('.bestiary-scene--diamonds'));
+ assert.ok(app.includes('bestiaryIdentity(card.suit,card.rank)'));
  assert.ok(app.includes("addEventListener('focusin',inspectCard)"));
- assert.ok(!app.includes('Combine ranks and schools for a stronger hand.'));
 });

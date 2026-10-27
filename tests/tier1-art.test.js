@@ -108,6 +108,6 @@ test('Forest Edge visuals, canvas and original card art return to the active rou
  assert.ok(renderer.includes('assets/forest.png'));
  assert.ok(renderer.includes('assets/mimic.png'));
  assert.ok(renderer.includes('assets/visitors.png'));
- assert.ok(app.includes('creatureCardArt(type)'));
+ assert.ok(app.includes('renderBestiaryPortrait(card)'));
  assert.ok(app.includes('createForestBattle'));
 });

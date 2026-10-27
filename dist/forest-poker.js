@@ -4,7 +4,7 @@ import {
  rest,handLimit
 } from './demons-engine.js';
 import {createForestBattle} from './siege/forest-renderer.js';
-import {creatureCardArt,creatureCardIdentity} from './siege/creature-card-art.js';
+import {renderBestiaryPortrait,bestiaryIdentity} from './siege/bestiary-deck-art.js';
 import {SUIT_STYLES} from './siege/card-art.js';
 import {escapeCardHTML} from './siege/card-face.js';
 
@@ -14,12 +14,6 @@ try{state=restoreBattle(JSON.parse(localStorage.getItem(KEY)||'null'));}catch{}
 state??=newBattle();
 const reduceMotion=window.matchMedia?.('(prefers-reduced-motion: reduce)').matches||false;
 const forest=createForestBattle($('world'),{reducedMotion:reduceMotion});
-const ART={
- fang:['strike','blood','ambush','execute','frenzy','goblin-recruit','pack-attack','loot-fallen','sacrifice'],
- shell:['fortify','guard','thorns','counter','skeleton-recruit','bone-march','bone-wall','rattle-dead','tithe'],
- bloom:['mend','roots','regrow','symbiosis','harvest','slime-summon','gel-fusion'],
- venom:['bite','corrode','contagion','detonate','spider-summon','silken-prison']
-};
 const SPRITE_NAMES=['Farmhand','Scout','Guard','Mage','Watchman'];
 const HAND_GUIDE=['High Card · only highest card scores','Pair · matching ranks · 2 scoring','Two Pair · 2 pairs · 4 scoring','Three of a Kind · 3 scoring','Straight · 5 sequential ranks','Flush · 5 of the same suit','Full House · three + two','Four of a Kind · 4 scoring','Straight Flush · 5 sequential cards of one suit','The Mimic’s Hand · 10, J, Q, K, A of one suit'];
 let logOpen=false,guideOpen=false,deckViewOpen=false;
@@ -35,29 +29,20 @@ function save(){
  try{localStorage.setItem(KEY,JSON.stringify(state));$('save-status').textContent='Progress saved on this device';}
  catch{$('save-status').textContent='Progress saved for this session only';}
 }
-function artType(card){
- const school=SUIT_TO_SCHOOL[card.suit],candidates=ART[school];
- const court={11:{hearts:'symbiosis',diamonds:'spider-summon',clubs:'skeleton-recruit',spades:'goblin-recruit'},
-  12:{hearts:'harvest',diamonds:'silken-prison',clubs:'tithe',spades:'ambush'},
-  13:{hearts:'slime-summon',diamonds:'detonate',clubs:'bone-march',spades:'pack-attack'},
-  14:{hearts:'feast',diamonds:'mirror',clubs:'decree',spades:'execute'}};
- return court[card.rank]?.[card.suit]||candidates[(card.rank-2)%candidates.length];
-}
 // The front of each card follows a real playing-card silhouette: two opposing
 // corner indices surrounding a single large illustration. Tactical copy belongs
 // in the hand preview/inspector, never repeated on the card itself.
 function cardHTML(card){
- const type=artType(card),school=SUIT_TO_SCHOOL[card.suit],style=SUIT_STYLES[school];
+ const school=SUIT_TO_SCHOOL[card.suit],style=SUIT_STYLES[school];
  const rank=RANK_SYMBOLS[card.rank]||String(card.rank);
  const suit=SUIT_SYMBOLS[card.suit],label=RANK_NAMES[card.rank]||String(card.rank);
  const active=state.selected.includes(card.id),selectedOrder=state.selected.indexOf(card.id)+1;
  const score=evaluateHand(selectedCards(state),state.sigils,state.round-1);
  const unused=active&&score?.unusedIds.includes(card.id);
  const critical=card.critical===true;
- // Intrinsic card-art SVGs are wide; crop their decorative side margins
- // rather than letterboxing the illustration or stretching character sprites.
- const illustration=creatureCardArt(type).replace('<svg class="card-art"','<svg preserveAspectRatio="xMidYMid slice" class="card-art"');
- const illustratedCreature=Boolean(creatureCardIdentity(type));
+ // All 52 cards now use one coherent creature-focused bestiary, independent
+ // from the obsolete command/spell art that originally filled the deck.
+ const illustration=renderBestiaryPortrait(card);
  const category={spades:'attack',clubs:'defense',hearts:'recovery',diamonds:'finisher'}[card.suit];
  const index='<span class="playing-index" aria-hidden="true"><strong>'+rank+'</strong><span>'+suit+'</span></span>';
  return '<button type="button" class="card premium-card poker-card '+school+' suit-'+card.suit+
@@ -66,7 +51,7 @@ function cardHTML(card){
   '" data-card="'+escape(card.id)+'" data-school="'+school+'" data-suit="'+card.suit+
   '" aria-pressed="'+active+'" aria-label="'+escape(label)+' of '+escape(SUIT_NAMES[card.suit])+
   (critical?', critical card':'')+(unused?', unscored in selection':'')+(active?', selected '+selectedOrder:'')+'">'+
-  '<span class="playing-art '+(illustratedCreature?'playing-art--creature':'playing-art--engraving')+'" aria-hidden="true">'+illustration+'</span>'+
+  '<span class="playing-art playing-art--bestiary" aria-hidden="true">'+illustration+'</span>'+
   '<span class="playing-index-corner playing-index-top">'+index+'</span>'+
   '<span class="playing-index-corner playing-index-bottom">'+index+'</span>'+
   (critical?'<span class="playing-critical" aria-hidden="true" title="Critical card">✦</span>':'')+
@@ -180,8 +165,10 @@ $('hand').addEventListener('click',event=>{
 function inspectCard(event){
  const el=event.target.closest?.('[data-card]');if(!el)return;
  const card=state.hand.find(c=>c.id===el.dataset.card);if(!card)return;
+ const creature=bestiaryIdentity(card.suit,card.rank);
  $('card-inspector').innerHTML='<strong>'+(RANK_SYMBOLS[card.rank]||card.rank)+' '+SUIT_SYMBOLS[card.suit]+
   ' · '+escape(RANK_NAMES[card.rank]||card.rank)+' of '+escape(SUIT_NAMES[card.suit])+'</strong>'+
+  '<span class="inspect-help">'+escape(creature.faction)+' · '+escape(creature.species.replace('-', ' '))+'</span>'+
   (card.critical?'<span class="inspect-help">Critical card · +25% damage when it scores.</span>':
    '<span class="inspect-help">Select matching ranks or build a straight or flush.</span>');
 }
