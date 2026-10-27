@@ -44,7 +44,7 @@ function cardHTML(card){
  const selectedOrder=state.selected.indexOf(card.id)+1;
  const svg=creatureCardArt(type);
  return '<button type="button" class="card premium-card poker-card '+card.suit+
-  ' card-attack '+(active?'is-selected':'playable')+'" data-card="'+escape(card.id)+
+  ' card-'+({fang:'attack',shell:'defense',bloom:'recovery',venom:'finisher'}[card.suit])+' '+(active?'is-selected':'playable')+'" data-card="'+escape(card.id)+
   '" data-school="'+card.suit+'" aria-pressed="'+active+'" aria-label="'+escape(label)+' of '+escape(SUIT_NAMES[card.suit])+
   (active?', selected '+selectedOrder:'')+'">'+
   '<span class="card-top"><span class="card-rank">'+card.rank+'<small>RANK</small></span>'+
