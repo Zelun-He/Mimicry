@@ -8,6 +8,7 @@ test('restored Forest Edge canvas supports poker selection, redraw, attack, and 
   constructor(id){this.id=id;this.innerHTML='';this.textContent='';this.hidden=false;this.disabled=false;
    this.style={};this.listeners={};this.dataset={};}
   addEventListener(type,fn){this.listeners[type]=fn;}
+  setAttribute(name,value){(this.attrs??=new Map()).set(name,value);}
   click(){this.listeners.click?.({target:this});}
   getContext(){return {imageSmoothingEnabled:false};}
   showModal(){this.open=true;}
@@ -50,6 +51,12 @@ test('restored Forest Edge canvas supports poker selection, redraw, attack, and 
   assert.equal(state.round,2);
   assert.equal(state.hand.length,8);
   assert.ok(state.lastAttack?.damage>0);
+  assert.equal(state.version,2);
+  get('sort').click();
+  state=restoreBattle(JSON.parse(saved.get('mimicry-demons-v1')));
+  assert.equal(state.sortMode,'suit');
+  get('deck-toggle').click();
+  assert.ok(get('deck-overview').innerHTML.includes('52-CARD DECK'));
   get('how').click();
   assert.equal(get('help').open,true);
   get('close-help').click();
