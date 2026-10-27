@@ -42,7 +42,7 @@ export function shuffle(cards,rng=Math.random){
  return a;
 }
 export function cardValue(card){return card.rank===14?11:card.rank>=11?10:card.rank;}
-export function criticalChance(s){return 0.05+(s.sigils.includes('luck')?0.10:0);}
+export function criticalChance(s){return s.sigils.includes('luck')?0.15:0.05;}
 function straightRanks(cards){
  if(cards.length!==5)return false;
  const ranks=cards.map(c=>c.rank).sort((a,b)=>a-b);
