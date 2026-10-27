@@ -148,15 +148,18 @@ test('the illustrated shop card preview reuses every rules section, not just a s
  assert.ok(cardInspectorText('ambush').includes('Deal 7 damage.'));
 });
 
-test('active route uses poker cards with selected styles and responsive layout',()=>{
- const index=read('dist/index.html'),siege=read('dist/siege.html'),css=read('dist/demons.css');
+test('premium creature-card styling is restored around poker combinations',()=>{
+ const index=read('dist/index.html'),siege=read('dist/siege.html');
+ const original=read('dist/siege/card-system.css'),poker=read('dist/siege/forest-poker.css');
  assert.equal(index,siege);
  assert.ok(index.includes('id="hand"'));
- assert.ok(index.includes('id="preview-name"'));
- assert.ok(index.includes('src="demons.js"'));
- assert.ok(css.includes('.poker-card.chosen'));
- assert.ok(css.includes('overflow-x:auto'));
- assert.ok(css.includes('prefers-reduced-motion:reduce'));
+ assert.ok(index.includes('id="card-inspector"'));
+ assert.ok(index.includes('src="forest-poker.js"'));
+ assert.ok(index.includes('href="siege/card-system.css"'));
+ assert.ok(original.includes('.card.premium-card'));
+ assert.ok(poker.includes('.poker-card.is-selected'));
+ assert.ok(poker.includes('overflow-x:auto'));
+ assert.ok(poker.includes('prefers-reduced-motion:reduce'));
 });
 
 test('combo-ready marker appears only with live, visible prerequisites and does not mutate state',()=>{

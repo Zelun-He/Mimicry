@@ -112,14 +112,15 @@ test('creature art and previews do not alter saved combat or card-link behavior'
  assert.ok(renderForestHand(state).includes('class="card')===false);
 });
 
-test('current battle imports poker assets rather than legacy creature/card modules',()=>{
- const html=read('dist/index.html');
+test('poker adapter uses original creature-card illustrations and styles',()=>{
+ const html=read('dist/index.html'),app=read('dist/forest-poker.js');
  assert.equal(html,read('dist/siege.html'));
- assert.ok(html.includes('href="demons.css"'));
- assert.ok(html.includes('src="demons.js"'));
- assert.ok(!html.includes('href="siege/creature-cards.css"'));
+ assert.ok(html.includes('href="siege/creature-cards.css"'));
+ assert.ok(html.includes('href="siege/card-system.css"'));
+ assert.ok(html.includes('href="siege/forest-poker.css"'));
+ assert.ok(html.includes('src="forest-poker.js"'));
+ assert.ok(app.includes('creatureCardArt(type)'));
  assert.ok(!html.includes('src="siege.js"'));
- assert.ok(read('dist/demons.js').includes('toggleCard(state'));
 });
 
 test('tribe framing respects link readability, keyboard use and reduced motion',()=>{

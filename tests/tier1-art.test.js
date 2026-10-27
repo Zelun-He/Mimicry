@@ -93,12 +93,21 @@ test('first-run tips react to player actions without locking game rules or alter
  assert.equal(s.turn>=1,true);
  assert.ok(nextActionTip(s).title.length>0);
 });
-test('Tier I retains forest scenery while the home route uses poker combat',()=>{
- const html=read('dist/index.html'),css=read('dist/demons.css');
+test('Forest Edge visuals, canvas and original card art return to the active route',()=>{
+ const html=read('dist/index.html'),app=read('dist/forest-poker.js');
+ const css=read('dist/siege/forest-game.css'),renderer=read('dist/siege/forest-renderer.js');
+ assert.ok(html.includes('href="style.css"'));
+ assert.ok(html.includes('href="siege/forest-game.css"'));
+ assert.ok(html.includes('href="siege/creature-cards.css"'));
+ assert.ok(html.includes('id="world"'));
  assert.ok(html.includes('id="hand"'));
+ assert.ok(html.includes('id="chain"'));
  assert.ok(html.includes('id="attack"'));
- assert.ok(html.includes('id="clock"'));
- assert.ok(html.includes('src="demons.js"'));
- assert.ok(css.includes('siege/scenes/fernway.svg'));
- assert.ok(css.includes('.battlefield'));
+ assert.ok(html.includes('src="forest-poker.js"'));
+ assert.ok(css.includes('.battle canvas'));
+ assert.ok(renderer.includes('assets/forest.png'));
+ assert.ok(renderer.includes('assets/mimic.png'));
+ assert.ok(renderer.includes('assets/visitors.png'));
+ assert.ok(app.includes('creatureCardArt(type)'));
+ assert.ok(app.includes('createForestBattle'));
 });

@@ -12,14 +12,16 @@ const root=resolve(dirname(fileURLToPath(import.meta.url)),'..');
 const read=p=>readFileSync(resolve(root,p),'utf8');
 const sample=()=>newSiege(()=>0.5);
 
-test('index and siege URLs expose the poker battle and preserve classic prototype',()=>{
- const index=read('dist/index.html'),siege=read('dist/siege.html');
- assert.equal(index,siege);
- for(const id of ['hand','attack','discard','clock','enemy-name','enemy-health','shop','continue','overlay']){
-  assert.ok(index.includes('id="'+id+'"'),id);
+test('index and siege URLs serve the restored forest with poker adapter',()=>{
+ const html=read('dist/index.html');
+ assert.equal(html,read('dist/siege.html'));
+ for(const id of ['world','route','enemy-name','enemy-health','hand','chain','attack','redraw','clock','rewards']){
+  assert.ok(html.includes('id="'+id+'"'),id);
  }
- assert.ok(index.includes('href="demons.css"'));
- assert.ok(index.includes('src="demons.js"'));
+ assert.ok(html.includes('href="style.css"'));
+ assert.ok(html.includes('href="siege/forest-game.css"'));
+ assert.ok(html.includes('href="siege/card-system.css"'));
+ assert.ok(html.includes('src="forest-poker.js"'));
  assert.ok(read('dist/classic.html').includes('src="main.js"'));
 });
 
@@ -98,10 +100,11 @@ test('multiple actual Siege invaders retain individual identities and focus',()=
  assert.deepEqual(damageSummary(before,s),[{id:s.enemies[1].id,name:'Forager',damage:5}]);
 });
 
-test('active poker hand uses accessible, responsive card styling',()=>{
- const css=read('dist/demons.css'),html=read('dist/index.html');
+test('the restored parchment table and premium cards frame the poker hand',()=>{
+ const css=read('dist/siege/forest-poker.css'),html=read('dist/index.html');
  assert.ok(css.includes('.poker-card'));
  assert.ok(css.includes('overflow-x:auto'));
  assert.ok(css.includes('prefers-reduced-motion:reduce'));
- assert.ok(html.indexOf('class="battlefield"')<html.indexOf('id="hand"'));
+ assert.ok(html.indexOf('class="battle"')<html.indexOf('class="table"'));
+ assert.ok(html.indexOf('id="chain"')<html.indexOf('id="hand"'));
 });
