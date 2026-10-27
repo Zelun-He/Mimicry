@@ -119,7 +119,9 @@ test('poker adapter uses original creature-card illustrations and styles',()=>{
  assert.ok(html.includes('href="siege/card-system.css"'));
  assert.ok(html.includes('href="siege/forest-poker.css"'));
  assert.ok(html.includes('src="forest-poker.js"'));
- assert.ok(app.includes('creatureCardArt(type)'));
+ assert.ok(app.includes('renderBestiaryPortrait(card)'));
+ assert.ok(html.includes('href="siege/bestiary-deck.css"'));
+ assert.ok(!app.includes('creatureCardArt(type)'));
  assert.ok(!html.includes('src="siege.js"'));
 });
 
